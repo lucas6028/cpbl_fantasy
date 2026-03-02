@@ -250,6 +250,14 @@ export default function LeaguePage() {
   const [weekDropdownOpen, setWeekDropdownOpen] = useState(false);
   const weekDropdownRef = useRef(null);
 
+  // Draft reset state
+  const [draftResetNeeded, setDraftResetNeeded] = useState(false);
+  const [draftResetReason, setDraftResetReason] = useState('');
+  const [newDraftTime, setNewDraftTime] = useState('');
+  const [draftResetError, setDraftResetError] = useState('');
+  const [draftResetSaving, setDraftResetSaving] = useState(false);
+  const [draftResetSuccess, setDraftResetSuccess] = useState(false);
+
   useEffect(() => {
     if (!leagueId) return;
 
@@ -293,6 +301,24 @@ export default function LeaguePage() {
     };
 
     fetchLeagueData();
+  }, [leagueId]);
+
+  // Fetch draft reset status
+  useEffect(() => {
+    if (!leagueId) return;
+    const checkDraftReset = async () => {
+      try {
+        const res = await fetch(`/api/league/${leagueId}/draft-reset`);
+        const data = await res.json();
+        if (data.success && data.needsReset) {
+          setDraftResetNeeded(true);
+          setDraftResetReason(data.resetRecord?.reset_reason || '');
+        }
+      } catch (e) {
+        console.error('Failed to check draft reset:', e);
+      }
+    };
+    checkDraftReset();
   }, [leagueId]);
 
   const [currentWeek, setCurrentWeek] = useState(1);
@@ -675,6 +701,67 @@ export default function LeaguePage() {
 
     return () => clearInterval(interval);
   }, [leagueSettings]);
+
+  // Validate and submit new draft time
+  const handleDraftResetSubmit = async () => {
+    setDraftResetError('');
+    if (!newDraftTime) {
+      setDraftResetError('Please select a date and time');
+      return;
+    }
+
+    const draftDateTime = new Date(newDraftTime);
+    if (isNaN(draftDateTime.getTime())) {
+      setDraftResetError('Invalid date/time');
+      return;
+    }
+
+    // Must be at least tomorrow 00:00
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    if (draftDateTime < tomorrow) {
+      setDraftResetError('Draft time must be at least tomorrow (00:00)');
+      return;
+    }
+
+    // Must be at least 2 days before start_scoring_on
+    if (leagueSettings?.start_scoring_on) {
+      const parts = leagueSettings.start_scoring_on.split('.');
+      if (parts.length === 3) {
+        const scoringDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        scoringDate.setHours(0, 0, 0, 0);
+        const latestDraftDate = new Date(scoringDate);
+        latestDraftDate.setDate(latestDraftDate.getDate() - 2);
+        latestDraftDate.setHours(23, 59, 59, 999);
+        if (draftDateTime > latestDraftDate) {
+          setDraftResetError('Draft time must be at least 2 days before season start');
+          return;
+        }
+      }
+    }
+
+    setDraftResetSaving(true);
+    try {
+      const res = await fetch(`/api/league/${leagueId}/draft-reset`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newDraftTime }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDraftResetSuccess(true);
+        setDraftResetNeeded(false);
+        setTimeout(() => window.location.reload(), 1500);
+      } else {
+        setDraftResetError(data.error || 'Failed to update draft time');
+      }
+    } catch (e) {
+      setDraftResetError('Network error');
+    } finally {
+      setDraftResetSaving(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -1579,6 +1666,84 @@ export default function LeaguePage() {
           </div>
         )}
 
+        {/* Draft Reset Section */}
+        {draftResetNeeded && (currentUserRole === 'Commissioner' || currentUserRole === 'Co-Commissioner') && (
+          <div className="mb-4 sm:mb-8 bg-gradient-to-r from-red-600/20 to-orange-600/20 backdrop-blur-lg border border-red-500/30 rounded-2xl p-4 sm:p-8 shadow-2xl">
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-2 mb-2 sm:mb-4">
+                <svg className="w-6 h-6 sm:w-8 sm:h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <h2 className="text-xl sm:text-3xl font-black bg-gradient-to-r from-red-300 via-orange-300 to-yellow-300 bg-clip-text text-transparent">
+                  Draft Reset Required
+                </h2>
+              </div>
+
+              {draftResetReason && (
+                <div className="mb-4 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-xl inline-block">
+                  <span className="text-sm text-red-300 font-medium">Reason: {draftResetReason}</span>
+                </div>
+              )}
+
+              <p className="text-sm sm:text-base text-slate-300 mb-4 sm:mb-6">
+                Please select a new draft date and time to reschedule.
+              </p>
+
+              {draftResetSuccess ? (
+                <div className="inline-flex items-center gap-3 bg-gradient-to-r from-green-600/80 to-emerald-600/80 backdrop-blur-md px-8 py-4 rounded-full border border-green-400/50 shadow-lg shadow-green-500/30">
+                  <svg className="w-6 h-6 text-green-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-xl font-black text-white">Draft Time Updated!</span>
+                </div>
+              ) : (
+                <div className="max-w-md mx-auto space-y-4">
+                  <div>
+                    <label className="block text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">
+                      New Draft Date & Time
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={newDraftTime}
+                      onChange={(e) => {
+                        setNewDraftTime(e.target.value);
+                        setDraftResetError('');
+                      }}
+                      className="w-full px-4 py-3 bg-slate-800/80 border border-white/10 rounded-xl text-white font-medium focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all"
+                    />
+                  </div>
+
+                  {leagueSettings?.start_scoring_on && (
+                    <p className="text-xs text-slate-500">
+                      Must be at least tomorrow & 2 days before season start ({leagueSettings.start_scoring_on})
+                    </p>
+                  )}
+
+                  {draftResetError && (
+                    <div className="px-4 py-2 bg-red-500/20 border border-red-500/30 rounded-xl">
+                      <span className="text-sm text-red-300 font-bold">{draftResetError}</span>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleDraftResetSubmit}
+                    disabled={draftResetSaving || !newDraftTime}
+                    className="w-full py-3 sm:py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black text-base sm:text-lg rounded-xl border border-purple-400/30 shadow-lg shadow-purple-500/30 transition-all duration-300"
+                  >
+                    {draftResetSaving ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Saving...
+                      </span>
+                    ) : (
+                      'Confirm New Draft Time'
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         {/* League Members Section */}
         <div className="mb-4 sm:mb-8 bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl shadow-2xl overflow-hidden">
           <div className="bg-gradient-to-r from-green-600/80 to-emerald-600/80 backdrop-blur-sm p-3 sm:p-6 border-b border-green-400/30">
