@@ -179,7 +179,7 @@ export default function Navbar() {
     <nav className="sticky top-0 z-[50] bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 text-white shadow-2xl border-b border-blue-500/30">
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f46e510_1px,transparent_1px),linear-gradient(to_bottom,#4f46e510_1px,transparent_1px)] bg-[size:14px_24px] pointer-events-none"></div>
 
-      <div className="relative px-6 py-4 flex items-center justify-between">
+      <div className="relative px-3 sm:px-6 py-2 sm:py-4 flex items-center justify-between">
         <Link
           href="/home"
           className="flex items-center space-x-3 group"
@@ -190,11 +190,11 @@ export default function Navbar() {
         >
           <div className="relative">
             <div className="absolute inset-0 bg-blue-500 blur-xl opacity-50 group-hover:opacity-75 transition-opacity"></div>
-            <div className="relative flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-lg shadow-lg">
-              <span className="text-xl font-bold">⚾</span>
+            <div className="relative flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-lg shadow-lg">
+              <span className="text-base sm:text-xl font-bold">⚾</span>
             </div>
           </div>
-          <div className="text-lg font-bold tracking-wider bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
+          <div className="text-sm sm:text-lg font-bold tracking-wider bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
             CPBL FANTASY
           </div>
         </Link>
