@@ -363,8 +363,8 @@ export default function DraftPage() {
                 const data = await res.json();
                 setDraftState(data);
 
-                // Stop polling if draft is complete
-                if (data.status === 'complete' || (!data.currentPick && (!data.nextPicks || data.nextPicks.length === 0))) {
+                // Stop polling if draft is complete (but NOT if pre-draft)
+                if (data.status === 'complete' || (data.status !== 'pre-draft' && !data.currentPick && (!data.nextPicks || data.nextPicks.length === 0))) {
                     shouldContinue = false;
                     // Ensure status shows complete if implicit
                     if (data.status !== 'complete') {
