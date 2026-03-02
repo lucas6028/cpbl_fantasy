@@ -67,12 +67,32 @@ export default function DraftPage() {
     const [viewingRosterAssignments, setViewingRosterAssignments] = useState([]);
     const [viewingLoading, setViewingLoading] = useState(false);
 
+    // League Status Gate
+    const [leagueStatus, setLeagueStatus] = useState(null);
+
     // Fetch Manager ID
     useEffect(() => {
         const cookie = document.cookie.split('; ').find(row => row.startsWith('user_id='));
         const userId = cookie?.split('=')[1];
         if (userId) setMyManagerId(userId);
     }, []);
+
+    // Poll League Status
+    useEffect(() => {
+        let active = true;
+        const checkStatus = async () => {
+            try {
+                const res = await fetch(`/api/league/${leagueId}`);
+                const data = await res.json();
+                if (active && data.success && data.status) {
+                    setLeagueStatus(data.status);
+                }
+            } catch (e) { console.error(e); }
+            if (active) setTimeout(checkStatus, 5000);
+        };
+        checkStatus();
+        return () => { active = false; };
+    }, [leagueId]);
 
     // Filter Reset Logic
     useEffect(() => {
@@ -1028,7 +1048,23 @@ export default function DraftPage() {
     };
 
     return (
-        <div className="h-screen bg-slate-900 text-white p-4 font-sans flex flex-col overflow-hidden">
+        <div className="h-screen bg-slate-900 text-white p-4 font-sans flex flex-col overflow-hidden relative">
+
+            {/* Block access when league status is not 'drafting now' */}
+            {leagueStatus !== null && leagueStatus !== 'drafting now' && (
+                <div className="absolute inset-0 z-[100] flex items-center justify-center bg-slate-900/60" style={{ backdropFilter: 'blur(6px)' }}>
+                    <div className="bg-slate-900/95 border border-purple-500/30 rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 text-center">
+                        <h2 className="text-xl font-black text-white mb-2">Draft Room Locked</h2>
+                        <p className="text-slate-400 text-sm mb-6">Current status: <span className="text-purple-300 font-bold">{leagueStatus}</span></p>
+                        <button
+                            onClick={() => router.push(`/league/${leagueId}`)}
+                            className="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-6 rounded-xl transition-all"
+                        >
+                            Back to League
+                        </button>
+                    </div>
+                </div>
+            )}
             <LegendModal
                 isOpen={showLegend}
                 onClose={() => setShowLegend(false)}
