@@ -25,21 +25,42 @@ export default function AmericanDatePicker({ value, onChange, minDate, disabled,
                 setViewDate(new Date());
             }
             // Calculate popup position (fixed positioning uses viewport coordinates)
-            if (inputRef.current) {
-                const rect = inputRef.current.getBoundingClientRect();
-                setPopupPosition({
-                    top: rect.bottom + 8,
-                    left: rect.left
-                });
-            }
+            updatePosition();
         }
+    }, [show]);
+
+    // Recalculate position on scroll/resize so popup stays anchored to the input
+    const updatePosition = () => {
+        if (inputRef.current) {
+            const rect = inputRef.current.getBoundingClientRect();
+            const popupHeight = 380; // approximate popup height
+            const viewportHeight = window.innerHeight;
+            // If there's not enough space below, show above
+            const spaceBelow = viewportHeight - rect.bottom;
+            const showAbove = spaceBelow < popupHeight && rect.top > popupHeight;
+            setPopupPosition({
+                top: showAbove ? rect.top - popupHeight - 8 : rect.bottom + 8,
+                left: Math.max(8, Math.min(rect.left, window.innerWidth - 316)) // keep within viewport
+            });
+        }
+    };
+
+    useEffect(() => {
+        if (!show) return;
+        const handleScrollOrResize = () => updatePosition();
+        window.addEventListener('scroll', handleScrollOrResize, true);
+        window.addEventListener('resize', handleScrollOrResize);
+        return () => {
+            window.removeEventListener('scroll', handleScrollOrResize, true);
+            window.removeEventListener('resize', handleScrollOrResize);
+        };
     }, [show]);
 
     // Click outside to close (check both container and portal popup)
     useEffect(() => {
         const handleClickOutside = (event) => {
             const popupEl = document.getElementById('datepicker-portal-popup');
-            if (containerRef.current && !containerRef.current.contains(event.target) && 
+            if (containerRef.current && !containerRef.current.contains(event.target) &&
                 (!popupEl || !popupEl.contains(event.target))) {
                 setShow(false);
             }
@@ -159,7 +180,7 @@ export default function AmericanDatePicker({ value, onChange, minDate, disabled,
 
             {/* Popup via Portal */}
             {show && typeof document !== 'undefined' && createPortal(
-                <div 
+                <div
                     id="datepicker-portal-popup"
                     style={{ position: 'fixed', top: popupPosition.top, left: popupPosition.left, zIndex: 9999 }}
                     className="bg-slate-900 border border-purple-500/50 rounded-xl shadow-2xl p-4 w-[300px] animate-scaleIn"
