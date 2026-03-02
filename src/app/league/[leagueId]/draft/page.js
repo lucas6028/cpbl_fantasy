@@ -364,11 +364,12 @@ export default function DraftPage() {
                 setDraftState(data);
 
                 // Stop polling if draft is complete (but NOT if pre-draft)
-                if (data.status === 'complete' || (data.status !== 'pre-draft' && !data.currentPick && (!data.nextPicks || data.nextPicks.length === 0))) {
+                const isComplete = data.status === 'complete' || data.status === 'completed';
+                if (isComplete || (data.status !== 'pre-draft' && !data.currentPick && (!data.nextPicks || data.nextPicks.length === 0))) {
                     shouldContinue = false;
                     // Ensure status shows complete if implicit
-                    if (data.status !== 'complete') {
-                        setDraftState(prev => ({ ...prev, status: 'complete' }));
+                    if (!isComplete) {
+                        setDraftState(prev => ({ ...prev, status: 'completed' }));
                     }
                 }
 
@@ -913,9 +914,9 @@ export default function DraftPage() {
     };
 
     const formatTime = (seconds) => {
-        if (seconds > 86400) return `${Math.floor(seconds / 86400)}d`;
-        if (seconds > 3600) return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
-        if (seconds > 60) return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+        if (seconds >= 86400) return `${Math.floor(seconds / 86400)}d ${Math.floor((seconds % 86400) / 3600)}h`;
+        if (seconds >= 3600) return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
+        if (seconds >= 60) return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
         return seconds;
     };
 
@@ -1153,8 +1154,8 @@ export default function DraftPage() {
                 {/* Timer & On The Clock */}
                 <div className="bg-gradient-to-r from-slate-800 to-slate-900 border border-purple-500/30 rounded-xl shadow-lg p-3 flex items-center shrink-0 min-w-[250px] gap-4">
                     <div className="flex flex-col items-center justify-center min-w-[80px]">
-                        <div className={`text-3xl font-mono font-black tracking-tighter tabular-nums drop-shadow-[0_0_10px_rgba(0,0,0,0.5)] ${timeLeft < 10 && draftState?.status !== 'pre-draft' && draftState?.status !== 'complete' ? 'text-red-500 animate-pulse' : 'text-green-400'}`}>
-                            {draftState?.status === 'complete' ? (
+                        <div className={`text-3xl font-mono font-black tracking-tighter tabular-nums drop-shadow-[0_0_10px_rgba(0,0,0,0.5)] ${timeLeft < 10 && draftState?.status !== 'pre-draft' && draftState?.status !== 'complete' && draftState?.status !== 'completed' ? 'text-red-500 animate-pulse' : 'text-green-400'}`}>
+                            {draftState?.status === 'complete' || draftState?.status === 'completed' ? (
                                 <span className="text-xl text-green-400 whitespace-nowrap">Finished</span>
                             ) : timeLeft < 0 && draftState?.status !== 'pre-draft' ? (
                                 <span className="text-xl text-red-500 animate-pulse whitespace-nowrap">Auto...</span>
@@ -1163,7 +1164,7 @@ export default function DraftPage() {
                             )}
                         </div>
                         <div className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold mt-0.5">
-                            {draftState?.status === 'pre-draft' ? 'Starts In' : draftState?.status === 'complete' ? '' : 'Time Left'}
+                            {draftState?.status === 'pre-draft' ? 'Starts In' : (draftState?.status === 'complete' || draftState?.status === 'completed') ? '' : 'Time Left'}
                         </div>
                     </div>
 
