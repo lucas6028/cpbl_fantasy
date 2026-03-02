@@ -425,8 +425,8 @@ function SchedulePreview({ leagueId, settings, onValidationChange, onScheduleCha
 
   if (loading) {
     return (
-      <div className="mb-8 p-6 bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl shadow-2xl">
-        <h2 className="text-2xl font-bold text-white mb-4">📅 Schedule Preview</h2>
+      <div className="mb-8 p-3 sm:p-6 bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl shadow-2xl">
+        <h2 className="text-lg sm:text-2xl font-bold text-white mb-3 sm:mb-4">📅 Schedule Preview</h2>
         <p className="text-purple-300">Loading schedule data...</p>
       </div>
     );
@@ -443,8 +443,8 @@ function SchedulePreview({ leagueId, settings, onValidationChange, onScheduleCha
 
   if (!settings?.scoring?.['Start Scoring On']) {
     return (
-      <div className="mb-8 p-6 bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl shadow-2xl">
-        <h2 className="text-2xl font-bold text-white mb-4">📅 Schedule Preview</h2>
+      <div className="mb-8 p-3 sm:p-6 bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl shadow-2xl">
+        <h2 className="text-lg sm:text-2xl font-bold text-white mb-3 sm:mb-4">📅 Schedule Preview</h2>
         <p className="text-purple-300">Please set &quot;Start Scoring On&quot; to see the schedule preview</p>
       </div>
     );
@@ -452,24 +452,24 @@ function SchedulePreview({ leagueId, settings, onValidationChange, onScheduleCha
 
   if (filteredSchedule.length === 0) {
     return (
-      <div className="mb-8 p-6 bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl shadow-2xl">
-        <h2 className="text-2xl font-bold text-white mb-4">📅 Schedule Preview</h2>
+      <div className="mb-8 p-3 sm:p-6 bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl shadow-2xl">
+        <h2 className="text-lg sm:text-2xl font-bold text-white mb-3 sm:mb-4">📅 Schedule Preview</h2>
         <p className="text-purple-300">No schedule data available for the selected dates</p>
       </div>
     );
   }
 
   return (
-    <div className="mb-8 p-6 bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl shadow-2xl">
-      <h2 className="text-2xl font-bold text-white mb-4">📅 Schedule Preview</h2>
+    <div className="mb-8 p-3 sm:p-6 bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl shadow-2xl">
+      <h2 className="text-lg sm:text-2xl font-bold text-white mb-3 sm:mb-4">📅 Schedule Preview</h2>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm border-collapse">
+        <table className="w-full text-xs sm:text-sm border-collapse">
           <thead>
             <tr className="bg-slate-800/60 border-b-2 border-purple-500/30">
-              <th className="px-4 py-2 text-left font-semibold text-purple-300">Week</th>
-              <th className="px-4 py-2 text-left font-semibold text-purple-300">Type</th>
-              <th className="px-4 py-2 text-left font-semibold text-purple-300">Start Date</th>
-              <th className="px-4 py-2 text-left font-semibold text-purple-300">End Date</th>
+              <th className="px-2 sm:px-4 py-2 text-left font-semibold text-purple-300">Week</th>
+              <th className="px-2 sm:px-4 py-2 text-left font-semibold text-purple-300 hidden sm:table-cell">Type</th>
+              <th className="px-2 sm:px-4 py-2 text-left font-semibold text-purple-300">Start</th>
+              <th className="px-2 sm:px-4 py-2 text-left font-semibold text-purple-300">End</th>
             </tr>
           </thead>
           <tbody>
@@ -485,8 +485,13 @@ function SchedulePreview({ leagueId, settings, onValidationChange, onScheduleCha
                       : 'bg-slate-800/20 hover:bg-slate-800/40'
                   }`}
               >
-                <td className="px-4 py-2 text-white font-medium">{week.week_label}</td>
-                <td className="px-4 py-2 text-purple-200">
+                <td className="px-2 sm:px-4 py-1.5 sm:py-2 text-white font-medium">
+                  <div className="flex items-center gap-1.5">
+                    {week.week_label}
+                    <span className={`sm:hidden inline-block w-2 h-2 rounded-full ${week.week_type === 'playoffs' ? 'bg-purple-400' : week.week_type === 'makeup' ? 'bg-yellow-400' : week.week_type === 'preparation' ? 'bg-green-400' : 'bg-blue-400'}`}></span>
+                  </div>
+                </td>
+                <td className="px-2 sm:px-4 py-1.5 sm:py-2 text-purple-200 hidden sm:table-cell">
                   <span className={`px-2 py-1 rounded text-xs font-semibold ${week.week_type === 'playoffs'
                     ? 'bg-purple-500/80 text-purple-100'
                     : week.week_type === 'makeup'
@@ -498,8 +503,8 @@ function SchedulePreview({ leagueId, settings, onValidationChange, onScheduleCha
                     {week.week_type === 'playoffs' ? 'Playoffs' : week.week_type === 'makeup' ? 'Makeup' : week.week_type === 'preparation' ? 'Preparation' : 'Regular'}
                   </span>
                 </td>
-                <td className="px-4 py-2 text-purple-200">{week.week_start}</td>
-                <td className="px-4 py-2 text-purple-200">{week.week_end}</td>
+                <td className="px-2 sm:px-4 py-1.5 sm:py-2 text-purple-200">{week.week_start}</td>
+                <td className="px-2 sm:px-4 py-1.5 sm:py-2 text-purple-200">{week.week_end}</td>
               </tr>
             ))}
           </tbody>

@@ -425,8 +425,8 @@ function SchedulePreview({ settings, onValidationChange, onScheduleChange }) {
 
   if (loading) {
     return (
-      <div className="mb-8 p-6 bg-white border border-blue-200 rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">📅 Schedule Preview</h2>
+      <div className="mb-8 p-3 sm:p-6 bg-white border border-blue-200 rounded-lg shadow-md">
+        <h2 className="text-lg sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">📅 Schedule Preview</h2>
         <p className="text-gray-600">Loading schedule data...</p>
       </div>
     );
@@ -434,8 +434,8 @@ function SchedulePreview({ settings, onValidationChange, onScheduleChange }) {
 
   if (error) {
     return (
-      <div className="mb-8 p-6 bg-white border border-blue-200 rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">📅 Schedule Preview</h2>
+      <div className="mb-8 p-3 sm:p-6 bg-white border border-blue-200 rounded-lg shadow-md">
+        <h2 className="text-lg sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">📅 Schedule Preview</h2>
         <p className="text-red-600">{error}</p>
       </div>
     );
@@ -443,8 +443,8 @@ function SchedulePreview({ settings, onValidationChange, onScheduleChange }) {
 
   if (!settings?.scoring?.['Start Scoring On']) {
     return (
-      <div className="mb-8 p-6 bg-white border border-blue-200 rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">📅 Schedule Preview</h2>
+      <div className="mb-8 p-3 sm:p-6 bg-white border border-blue-200 rounded-lg shadow-md">
+        <h2 className="text-lg sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">📅 Schedule Preview</h2>
         <p className="text-gray-600">Please set &quot;Start Scoring On&quot; to see the schedule preview</p>
       </div>
     );
@@ -452,24 +452,24 @@ function SchedulePreview({ settings, onValidationChange, onScheduleChange }) {
 
   if (filteredSchedule.length === 0) {
     return (
-      <div className="mb-8 p-6 bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl shadow-2xl">
-        <h2 className="text-2xl font-bold text-purple-300 mb-4">📅 Schedule Preview</h2>
+      <div className="mb-8 p-3 sm:p-6 bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl shadow-2xl">
+        <h2 className="text-lg sm:text-2xl font-bold text-purple-300 mb-3 sm:mb-4">📅 Schedule Preview</h2>
         <p className="text-purple-300/70">No schedule data available for the selected dates</p>
       </div>
     );
   }
 
   return (
-    <div className="mb-8 p-6 bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl shadow-2xl">
-      <h2 className="text-2xl font-bold text-purple-300 mb-4">📅 Schedule Preview</h2>
+    <div className="mb-8 p-3 sm:p-6 bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl shadow-2xl">
+      <h2 className="text-lg sm:text-2xl font-bold text-purple-300 mb-3 sm:mb-4">📅 Schedule Preview</h2>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm border-collapse">
+        <table className="w-full text-xs sm:text-sm border-collapse">
           <thead>
             <tr className="bg-gradient-to-r from-slate-800/80 to-slate-700/80 border-b-2 border-purple-500/50">
-              <th className="px-4 py-2 text-left font-bold text-purple-200">Week</th>
-              <th className="px-4 py-2 text-left font-bold text-purple-200">Type</th>
-              <th className="px-4 py-2 text-left font-bold text-purple-200">Start Date</th>
-              <th className="px-4 py-2 text-left font-bold text-purple-200">End Date</th>
+              <th className="px-2 sm:px-4 py-2 text-left font-bold text-purple-200">Week</th>
+              <th className="px-2 sm:px-4 py-2 text-left font-bold text-purple-200 hidden sm:table-cell">Type</th>
+              <th className="px-2 sm:px-4 py-2 text-left font-bold text-purple-200">Start</th>
+              <th className="px-2 sm:px-4 py-2 text-left font-bold text-purple-200">End</th>
             </tr>
           </thead>
           <tbody>
@@ -485,8 +485,13 @@ function SchedulePreview({ settings, onValidationChange, onScheduleChange }) {
                       : 'bg-slate-900/40 hover:bg-purple-500/20'
                   } border-purple-500/20 transition-colors`}
               >
-                <td className="px-4 py-2 text-white font-medium">{week.week_label}</td>
-                <td className="px-4 py-2 text-purple-300">
+                <td className="px-2 sm:px-4 py-1.5 sm:py-2 text-white font-medium">
+                  <div className="flex items-center gap-1.5">
+                    {week.week_label}
+                    <span className={`sm:hidden inline-block w-2 h-2 rounded-full ${week.week_type === 'playoffs' ? 'bg-purple-400' : week.week_type === 'makeup' ? 'bg-yellow-400' : week.week_type === 'preparation' ? 'bg-green-400' : 'bg-blue-400'}`}></span>
+                  </div>
+                </td>
+                <td className="px-2 sm:px-4 py-1.5 sm:py-2 text-purple-300 hidden sm:table-cell">
                   <span className={`px-2 py-1 rounded text-xs font-semibold shadow-lg ${week.week_type === 'playoffs'
                     ? 'bg-purple-500/80 text-purple-100 shadow-purple-500/50'
                     : week.week_type === 'makeup'
@@ -498,8 +503,8 @@ function SchedulePreview({ settings, onValidationChange, onScheduleChange }) {
                     {week.week_type === 'playoffs' ? 'Playoffs' : week.week_type === 'makeup' ? 'Makeup' : week.week_type === 'preparation' ? 'Preparation' : 'Regular'}
                   </span>
                 </td>
-                <td className="px-4 py-2 text-purple-300">{week.week_start}</td>
-                <td className="px-4 py-2 text-purple-300">{week.week_end}</td>
+                <td className="px-2 sm:px-4 py-1.5 sm:py-2 text-purple-300">{week.week_start}</td>
+                <td className="px-2 sm:px-4 py-1.5 sm:py-2 text-purple-300">{week.week_end}</td>
               </tr>
             ))}
           </tbody>
