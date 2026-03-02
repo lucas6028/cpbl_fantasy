@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import LegendModal from '../../../../components/LegendModal';
 import MoveModal from './MoveModal';
@@ -355,6 +355,7 @@ export default function RosterPage() {
         };
 
         fetchRosterForDate();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedDate]);
 
 

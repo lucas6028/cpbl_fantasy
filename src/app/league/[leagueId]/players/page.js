@@ -818,6 +818,21 @@ export default function PlayersPage() {
       const settings = settingsData.data || {};
       const rosterConfig = settings.roster_positions || {}; // e.g. { Minor: 2, C: 1, ... }
 
+      // 🚨 MAJOR-on-NA Block: if any of your players is MAJOR but sitting on NA slot, block ALL adds
+      const majorOnNaPlayers = myRoster.filter(
+        p => p.position === 'NA' && (p.real_life_status || '').toUpperCase() === 'MAJOR'
+      );
+      if (majorOnNaPlayers.length > 0) {
+        const nameList = majorOnNaPlayers.map(p => p.name).join(', ');
+        setErrorMessage(
+          `Cannot add player: [${nameList}] is now MAJOR but still occupying an NA slot. Please move them to a regular slot first.`
+        );
+        setShowError(true);
+        setTimeout(() => setShowError(false), 6000);
+        setCheckingAdd(false);
+        return;
+      }
+
       // Limits
       const onTeamLimit = parseInt(settings.foreigner_on_team_limit) || 999;
       const activeLimit = parseInt(settings.foreigner_active_limit) || 999;
@@ -976,6 +991,26 @@ export default function PlayersPage() {
     }
 
     if (isWaiver) {
+      // 🚨 MAJOR-on-NA Block: fetch roster and check before opening waiver modal
+      try {
+        const rosterRes = await fetch(`/api/league/${leagueId}/roster?manager_id=${myManagerId}`);
+        const rosterData = await rosterRes.json();
+        const myRoster = rosterData.roster || [];
+        const majorOnNaPlayers = myRoster.filter(
+          p => p.position === 'NA' && (p.real_life_status || '').toUpperCase() === 'MAJOR'
+        );
+        if (majorOnNaPlayers.length > 0) {
+          const nameList = majorOnNaPlayers.map(p => p.name).join(', ');
+          setErrorMessage(
+            `Cannot claim player: [${nameList}] is now MAJOR but still occupying an NA slot. Please move them to a regular slot first.`
+          );
+          setShowError(true);
+          setTimeout(() => setShowError(false), 6000);
+          return;
+        }
+      } catch (e) {
+        console.error('Waiver MAJOR-on-NA check failed:', e);
+      }
       setPlayerToAdd(player);
       setWaiverMode(true);
       setShowConfirmAdd(true);
@@ -989,6 +1024,27 @@ export default function PlayersPage() {
     if (!pendingAddPlayer || !dropCandidateID) return;
 
     if (checkTradeInvolvement(dropCandidateID)) return;
+
+    // 🚨 MAJOR-on-NA Block for Add-Drop
+    try {
+      const rosterRes = await fetch(`/api/league/${leagueId}/roster?manager_id=${myManagerId}`);
+      const rosterData = await rosterRes.json();
+      const myRoster = rosterData.roster || [];
+      const majorOnNaPlayers = myRoster.filter(
+        p => p.position === 'NA' && (p.real_life_status || '').toUpperCase() === 'MAJOR'
+      );
+      if (majorOnNaPlayers.length > 0) {
+        const nameList = majorOnNaPlayers.map(p => p.name).join(', ');
+        setErrorMessage(
+          `Cannot add-drop: [${nameList}] is now MAJOR but still occupying an NA slot. Please move them to a regular slot first.`
+        );
+        setShowError(true);
+        setTimeout(() => setShowError(false), 6000);
+        return;
+      }
+    } catch (e) {
+      console.error('Add-drop MAJOR-on-NA check failed:', e);
+    }
 
     setIsAdding(true);
     try {
