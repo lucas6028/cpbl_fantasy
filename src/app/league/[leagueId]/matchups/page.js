@@ -105,7 +105,7 @@ export default function MatchupsPage() {
     // Fetch player stats when tab switches to 'stats' or matchup changes
     useEffect(() => {
         if (activeTab !== 'stats' || !leagueId || !selectedWeek || !matchups[selectedMatchupIndex]) return;
-        
+
         const fetchPlayerStats = async () => {
             setPlayerStatsLoading(true);
             try {
@@ -213,17 +213,17 @@ export default function MatchupsPage() {
 
     // Build batter columns: AB + league categories
     const batterColumns = ['AB', ...(scroingSettings?.batter_categories?.map(cat => getAbbr(cat)) || [])];
-    
+
     // Build pitcher columns: IP + league categories  
     const pitcherColumns = ['IP', ...(scroingSettings?.pitcher_categories?.map(cat => getAbbr(cat)) || [])];
 
     const activeMatchup = matchups[selectedMatchupIndex];
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-8">
-            <div className="max-w-7xl mx-auto space-y-8">
-                <div className="flex items-center justify-between">
-                    <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">Matchups</h1>
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4 sm:p-8">
+            <div className="max-w-7xl mx-auto space-y-4 sm:space-y-8">
+                <div className="flex items-center justify-between gap-2">
+                    <h1 className="text-2xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">Matchups</h1>
                     <div className="relative flex items-center bg-slate-800/80 rounded-full p-1.5 border border-white/10 shadow-lg">
                         <button
                             onClick={() => {
@@ -233,17 +233,17 @@ export default function MatchupsPage() {
                                 }
                             }}
                             disabled={availableWeeks.indexOf(parseInt(selectedWeek)) <= 0 || loading}
-                            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 text-white disabled:opacity-30 disabled:hover:bg-transparent transition-all"
+                            className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full hover:bg-white/10 text-white disabled:opacity-30 disabled:hover:bg-transparent transition-all"
                         >
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                            <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                         </button>
 
                         <button
                             onClick={() => setWeekDropdownOpen(!weekDropdownOpen)}
-                            className="flex flex-col items-center min-w-[160px] px-4 hover:bg-white/5 rounded-2xl py-1 transition-all group"
+                            className="flex flex-col items-center min-w-[100px] sm:min-w-[160px] px-2 sm:px-4 hover:bg-white/5 rounded-2xl py-1 transition-all group"
                         >
-                            <div className="flex items-center gap-2">
-                                <span className="text-lg font-black text-white tracking-wide group-hover:text-cyan-300 transition-colors">
+                            <div className="flex items-center gap-1 sm:gap-2">
+                                <span className="text-sm sm:text-lg font-black text-white tracking-wide group-hover:text-cyan-300 transition-colors">
                                     WEEK {selectedWeek}
                                 </span>
                                 <svg className={`w-4 h-4 text-white/50 transition-transform duration-300 ${weekDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -251,7 +251,7 @@ export default function MatchupsPage() {
                                 </svg>
                             </div>
                             {scheduleData.find(w => w.week_number === parseInt(selectedWeek)) && (
-                                <span className="text-xs font-bold text-cyan-300/80 uppercase tracking-widest">
+                                <span className="text-[10px] sm:text-xs font-bold text-cyan-300/80 uppercase tracking-widest">
                                     {new Date(scheduleData.find(w => w.week_number === parseInt(selectedWeek)).week_start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(scheduleData.find(w => w.week_number === parseInt(selectedWeek)).week_end).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                 </span>
                             )}
@@ -265,9 +265,9 @@ export default function MatchupsPage() {
                                 }
                             }}
                             disabled={availableWeeks.indexOf(parseInt(selectedWeek)) >= availableWeeks.length - 1 || loading}
-                            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 text-white disabled:opacity-30 disabled:hover:bg-transparent transition-all"
+                            className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full hover:bg-white/10 text-white disabled:opacity-30 disabled:hover:bg-transparent transition-all"
                         >
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                            <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                         </button>
 
                         {/* Custom Dropdown Content */}
@@ -331,7 +331,7 @@ export default function MatchupsPage() {
                                     key={idx}
                                     onClick={() => setSelectedMatchupIndex(idx)}
                                     className={`
-                                    min-w-[280px] cursor-pointer rounded-lg border p-3 flex flex-col justify-center transition-all
+                                    min-w-[220px] sm:min-w-[280px] cursor-pointer rounded-lg border p-2.5 sm:p-3 flex flex-col justify-center transition-all
                                     ${isSelected
                                             ? 'bg-purple-600/30 border-purple-400 shadow-md ring-1 ring-purple-400'
                                             : 'bg-slate-800/60 border-purple-500/30 hover:border-purple-400/50 hover:bg-slate-800/80'
@@ -369,33 +369,33 @@ export default function MatchupsPage() {
                 ) : !loading && activeMatchup && (
                     <div className="bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl shadow-2xl overflow-hidden">
                         {/* Header */}
-                        <div className="bg-gradient-to-r from-purple-600/80 to-blue-600/80 backdrop-blur-sm p-6 border-b border-purple-400/30">
+                        <div className="bg-gradient-to-r from-purple-600/80 to-blue-600/80 backdrop-blur-sm p-3 sm:p-6 border-b border-purple-400/30">
                             <div className="flex justify-between items-center px-2 md:px-8">
                                 {/* Manager 1 */}
                                 <div className="flex items-center gap-3 md:gap-4 flex-1">
                                     <div className="min-w-0">
-                                        <div className="flex items-center gap-2">
-                                            <div className="font-bold text-lg md:text-xl truncate text-white">{activeMatchup.manager1.nickname}</div>
-                                            <div className="text-sm font-bold text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">{activeMatchup.manager1.record}</div>
+                                        <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+                                            <div className="font-bold text-sm sm:text-lg md:text-xl truncate text-white">{activeMatchup.manager1.nickname}</div>
+                                            <div className="text-[10px] sm:text-sm font-bold text-cyan-300 bg-cyan-500/10 px-1.5 sm:px-2 py-0.5 rounded border border-cyan-500/20">{activeMatchup.manager1.record}</div>
                                         </div>
                                         <div className="text-xs md:text-sm text-purple-200 truncate">{activeMatchup.manager1.team_name}</div>
                                     </div>
                                 </div>
 
-                                <div className="px-4 text-center shrink-0">
-                                    <div className="flex items-center gap-3">
-                                        <div className="text-3xl md:text-4xl font-black text-white">{activeMatchup.score_a || 0}</div>
-                                        <div className="text-xl md:text-2xl font-bold text-white/70">VS</div>
-                                        <div className="text-3xl md:text-4xl font-black text-white">{activeMatchup.score_b || 0}</div>
+                                <div className="px-2 sm:px-4 text-center shrink-0">
+                                    <div className="flex items-center gap-1.5 sm:gap-3">
+                                        <div className="text-2xl sm:text-3xl md:text-4xl font-black text-white">{activeMatchup.score_a || 0}</div>
+                                        <div className="text-base sm:text-xl md:text-2xl font-bold text-white/70">VS</div>
+                                        <div className="text-2xl sm:text-3xl md:text-4xl font-black text-white">{activeMatchup.score_b || 0}</div>
                                     </div>
                                 </div>
 
                                 {/* Manager 2 */}
                                 <div className="flex items-center gap-3 md:gap-4 flex-1 justify-end text-right">
                                     <div className="min-w-0 flex flex-col items-end">
-                                        <div className="flex items-center gap-2">
-                                            <div className="text-sm font-bold text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">{activeMatchup.manager2.record}</div>
-                                            <div className="font-bold text-lg md:text-xl truncate text-white">{activeMatchup.manager2.nickname}</div>
+                                        <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-end">
+                                            <div className="text-[10px] sm:text-sm font-bold text-cyan-300 bg-cyan-500/10 px-1.5 sm:px-2 py-0.5 rounded border border-cyan-500/20">{activeMatchup.manager2.record}</div>
+                                            <div className="font-bold text-sm sm:text-lg md:text-xl truncate text-white">{activeMatchup.manager2.nickname}</div>
                                         </div>
                                         <div className="text-xs md:text-sm text-purple-200 truncate">{activeMatchup.manager2.team_name}</div>
                                     </div>
@@ -407,21 +407,19 @@ export default function MatchupsPage() {
                         <div className="flex justify-center border-b border-purple-500/20 bg-slate-900/50">
                             <button
                                 onClick={() => setActiveTab('categories')}
-                                className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-all ${
-                                    activeTab === 'categories'
-                                        ? 'text-purple-300 border-b-2 border-purple-500 bg-purple-500/10'
-                                        : 'text-slate-400 hover:text-purple-300 hover:bg-purple-500/5'
-                                }`}
+                                className={`px-4 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-bold uppercase tracking-wider transition-all ${activeTab === 'categories'
+                                    ? 'text-purple-300 border-b-2 border-purple-500 bg-purple-500/10'
+                                    : 'text-slate-400 hover:text-purple-300 hover:bg-purple-500/5'
+                                    }`}
                             >
                                 Categories
                             </button>
                             <button
                                 onClick={() => setActiveTab('stats')}
-                                className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-all ${
-                                    activeTab === 'stats'
-                                        ? 'text-cyan-300 border-b-2 border-cyan-500 bg-cyan-500/10'
-                                        : 'text-slate-400 hover:text-cyan-300 hover:bg-cyan-500/5'
-                                }`}
+                                className={`px-4 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-bold uppercase tracking-wider transition-all ${activeTab === 'stats'
+                                    ? 'text-cyan-300 border-b-2 border-cyan-500 bg-cyan-500/10'
+                                    : 'text-slate-400 hover:text-cyan-300 hover:bg-cyan-500/5'
+                                    }`}
                             >
                                 Player Stats
                             </button>
@@ -429,88 +427,88 @@ export default function MatchupsPage() {
 
                         {/* Categories Tab Content */}
                         {activeTab === 'categories' && (
-                        <div className="overflow-x-auto">
-                            {/* Stats Table */}
-                            <div className="w-full">
-                                <Table>
-                                    <TableHeader className="hidden">
-                                        <TableRow>
-                                            <TableHead className="w-[40%] text-right text-purple-300">Manager 1</TableHead>
-                                            <TableHead className="w-[20%] text-center text-purple-300">Category</TableHead>
-                                            <TableHead className="w-[40%] text-left text-purple-300">Manager 2</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody className="divide-y divide-purple-500/10">
-                                        {/* Batting Stats */}
-                                        <TableRow className="bg-slate-900/40 hover:bg-slate-900/40">
-                                            <TableCell colSpan={3} className="font-bold text-center text-xs uppercase tracking-widest text-purple-400 py-2">Batting</TableCell>
-                                        </TableRow>
-                                        {/* AB - 只在不是計分項目時顯示 */}
-                                        {!scroingSettings?.batter_categories?.some(cat => getAbbr(cat).toLowerCase() === 'ab') && (
-                                            <TableRow className="hover:bg-slate-800/30 border-0">
-                                                <TableCell className="w-[40%] text-right font-mono text-lg md:text-xl font-medium text-gray-400 py-3 pr-8 md:pr-12">{activeMatchup.manager1_stats.b_ab || 0}</TableCell>
-                                                <TableCell className="w-[20%] text-center font-bold text-sm text-gray-400 uppercase tracking-wider py-3">AB</TableCell>
-                                                <TableCell className="w-[40%] text-left font-mono text-lg md:text-xl font-medium text-gray-400 py-3 pl-8 md:pl-12">{activeMatchup.manager2_stats.b_ab || 0}</TableCell>
+                            <div className="overflow-x-auto">
+                                {/* Stats Table */}
+                                <div className="w-full">
+                                    <Table>
+                                        <TableHeader className="hidden">
+                                            <TableRow>
+                                                <TableHead className="w-[40%] text-right text-purple-300">Manager 1</TableHead>
+                                                <TableHead className="w-[20%] text-center text-purple-300">Category</TableHead>
+                                                <TableHead className="w-[40%] text-left text-purple-300">Manager 2</TableHead>
                                             </TableRow>
-                                        )}
-                                        {scroingSettings?.batter_categories?.map(cat => {
-                                            const dbCol = getDbCol(cat, 'batter');
-                                            const val1 = activeMatchup.manager1_stats[dbCol];
-                                            const val2 = activeMatchup.manager2_stats[dbCol];
-                                            const abbr = getAbbr(cat);
-                                            const weight = scroingSettings?.category_weights?.batter?.[cat];
-                                            const isFantasyPoints = scroingSettings?.scoring_type === 'Head-to-Head Fantasy Points';
-                                            return (
-                                                <TableRow key={cat} className="hover:bg-slate-800/30 border-0">
-                                                    <TableCell className="w-[40%] text-right font-mono text-lg md:text-xl font-medium text-purple-100 py-3 pr-8 md:pr-12">{formatStat(val1, dbCol)}</TableCell>
-                                                    <TableCell className="w-[20%] text-center py-3">
-                                                        <span className="font-bold text-sm text-purple-300 uppercase tracking-wider">{abbr}</span>
-                                                        {isFantasyPoints && weight !== undefined && (
-                                                            <span className="ml-1 text-xs text-yellow-300 font-bold">x{weight}</span>
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell className="w-[40%] text-left font-mono text-lg md:text-xl font-medium text-purple-100 py-3 pl-8 md:pl-12">{formatStat(val2, dbCol)}</TableCell>
+                                        </TableHeader>
+                                        <TableBody className="divide-y divide-purple-500/10">
+                                            {/* Batting Stats */}
+                                            <TableRow className="bg-slate-900/40 hover:bg-slate-900/40">
+                                                <TableCell colSpan={3} className="font-bold text-center text-xs uppercase tracking-widest text-purple-400 py-2">Batting</TableCell>
+                                            </TableRow>
+                                            {/* AB - 只在不是計分項目時顯示 */}
+                                            {!scroingSettings?.batter_categories?.some(cat => getAbbr(cat).toLowerCase() === 'ab') && (
+                                                <TableRow className="hover:bg-slate-800/30 border-0">
+                                                    <TableCell className="w-[40%] text-right font-mono text-base sm:text-lg md:text-xl font-medium text-gray-400 py-2 sm:py-3 pr-4 sm:pr-8 md:pr-12">{activeMatchup.manager1_stats.b_ab || 0}</TableCell>
+                                                    <TableCell className="w-[20%] text-center font-bold text-xs sm:text-sm text-gray-400 uppercase tracking-wider py-2 sm:py-3">AB</TableCell>
+                                                    <TableCell className="w-[40%] text-left font-mono text-base sm:text-lg md:text-xl font-medium text-gray-400 py-2 sm:py-3 pl-4 sm:pl-8 md:pl-12">{activeMatchup.manager2_stats.b_ab || 0}</TableCell>
                                                 </TableRow>
-                                            );
-                                        })}
+                                            )}
+                                            {scroingSettings?.batter_categories?.map(cat => {
+                                                const dbCol = getDbCol(cat, 'batter');
+                                                const val1 = activeMatchup.manager1_stats[dbCol];
+                                                const val2 = activeMatchup.manager2_stats[dbCol];
+                                                const abbr = getAbbr(cat);
+                                                const weight = scroingSettings?.category_weights?.batter?.[cat];
+                                                const isFantasyPoints = scroingSettings?.scoring_type === 'Head-to-Head Fantasy Points';
+                                                return (
+                                                    <TableRow key={cat} className="hover:bg-slate-800/30 border-0">
+                                                        <TableCell className="w-[40%] text-right font-mono text-base sm:text-lg md:text-xl font-medium text-purple-100 py-2 sm:py-3 pr-4 sm:pr-8 md:pr-12">{formatStat(val1, dbCol)}</TableCell>
+                                                        <TableCell className="w-[20%] text-center py-2 sm:py-3">
+                                                            <span className="font-bold text-xs sm:text-sm text-purple-300 uppercase tracking-wider">{abbr}</span>
+                                                            {isFantasyPoints && weight !== undefined && (
+                                                                <span className="ml-1 text-xs text-yellow-300 font-bold">x{weight}</span>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell className="w-[40%] text-left font-mono text-base sm:text-lg md:text-xl font-medium text-purple-100 py-2 sm:py-3 pl-4 sm:pl-8 md:pl-12">{formatStat(val2, dbCol)}</TableCell>
+                                                    </TableRow>
+                                                );
+                                            })}
 
 
-                                        {/* Pitching Stats */}
-                                        <TableRow className="bg-slate-900/40 hover:bg-slate-900/40">
-                                            <TableCell colSpan={3} className="font-bold text-center text-xs uppercase tracking-widest text-purple-400 py-2 mt-4">Pitching</TableCell>
-                                        </TableRow>
-                                        {/* IP - 只在不是計分項目時顯示 */}
-                                        {!scroingSettings?.pitcher_categories?.some(cat => getAbbr(cat).toLowerCase() === 'ip') && (
-                                            <TableRow className="hover:bg-slate-800/30 border-0">
-                                                <TableCell className="w-[40%] text-right font-mono text-lg md:text-xl font-medium text-gray-400 py-3 pr-8 md:pr-12">{activeMatchup.manager1_stats.p_ip || '0.0'}</TableCell>
-                                                <TableCell className="w-[20%] text-center font-bold text-sm text-gray-400 uppercase tracking-wider py-3">IP</TableCell>
-                                                <TableCell className="w-[40%] text-left font-mono text-lg md:text-xl font-medium text-gray-400 py-3 pl-8 md:pl-12">{activeMatchup.manager2_stats.p_ip || '0.0'}</TableCell>
+                                            {/* Pitching Stats */}
+                                            <TableRow className="bg-slate-900/40 hover:bg-slate-900/40">
+                                                <TableCell colSpan={3} className="font-bold text-center text-xs uppercase tracking-widest text-purple-400 py-2 mt-4">Pitching</TableCell>
                                             </TableRow>
-                                        )}
-                                        {scroingSettings?.pitcher_categories?.map(cat => {
-                                            const dbCol = getDbCol(cat, 'pitcher');
-                                            const val1 = activeMatchup.manager1_stats[dbCol];
-                                            const val2 = activeMatchup.manager2_stats[dbCol];
-                                            const abbr = getAbbr(cat);
-                                            const weight = scroingSettings?.category_weights?.pitcher?.[cat];
-                                            const isFantasyPoints = scroingSettings?.scoring_type === 'Head-to-Head Fantasy Points';
-                                            return (
-                                                <TableRow key={cat} className="hover:bg-slate-800/30 border-0">
-                                                    <TableCell className="w-[40%] text-right font-mono text-lg md:text-xl font-medium text-purple-100 py-3 pr-8 md:pr-12">{formatStat(val1, dbCol)}</TableCell>
-                                                    <TableCell className="w-[20%] text-center py-3">
-                                                        <span className="font-bold text-sm text-purple-300 uppercase tracking-wider">{abbr}</span>
-                                                        {isFantasyPoints && weight !== undefined && (
-                                                            <span className="ml-1 text-xs text-yellow-300 font-bold">x{weight}</span>
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell className="w-[40%] text-left font-mono text-lg md:text-xl font-medium text-purple-100 py-3 pl-8 md:pl-12">{formatStat(val2, dbCol)}</TableCell>
+                                            {/* IP - 只在不是計分項目時顯示 */}
+                                            {!scroingSettings?.pitcher_categories?.some(cat => getAbbr(cat).toLowerCase() === 'ip') && (
+                                                <TableRow className="hover:bg-slate-800/30 border-0">
+                                                    <TableCell className="w-[40%] text-right font-mono text-base sm:text-lg md:text-xl font-medium text-gray-400 py-2 sm:py-3 pr-4 sm:pr-8 md:pr-12">{activeMatchup.manager1_stats.p_ip || '0.0'}</TableCell>
+                                                    <TableCell className="w-[20%] text-center font-bold text-xs sm:text-sm text-gray-400 uppercase tracking-wider py-2 sm:py-3">IP</TableCell>
+                                                    <TableCell className="w-[40%] text-left font-mono text-base sm:text-lg md:text-xl font-medium text-gray-400 py-2 sm:py-3 pl-4 sm:pl-8 md:pl-12">{activeMatchup.manager2_stats.p_ip || '0.0'}</TableCell>
                                                 </TableRow>
-                                            );
-                                        })}
-                                    </TableBody>
-                                </Table>
+                                            )}
+                                            {scroingSettings?.pitcher_categories?.map(cat => {
+                                                const dbCol = getDbCol(cat, 'pitcher');
+                                                const val1 = activeMatchup.manager1_stats[dbCol];
+                                                const val2 = activeMatchup.manager2_stats[dbCol];
+                                                const abbr = getAbbr(cat);
+                                                const weight = scroingSettings?.category_weights?.pitcher?.[cat];
+                                                const isFantasyPoints = scroingSettings?.scoring_type === 'Head-to-Head Fantasy Points';
+                                                return (
+                                                    <TableRow key={cat} className="hover:bg-slate-800/30 border-0">
+                                                        <TableCell className="w-[40%] text-right font-mono text-base sm:text-lg md:text-xl font-medium text-purple-100 py-2 sm:py-3 pr-4 sm:pr-8 md:pr-12">{formatStat(val1, dbCol)}</TableCell>
+                                                        <TableCell className="w-[20%] text-center py-2 sm:py-3">
+                                                            <span className="font-bold text-xs sm:text-sm text-purple-300 uppercase tracking-wider">{abbr}</span>
+                                                            {isFantasyPoints && weight !== undefined && (
+                                                                <span className="ml-1 text-xs text-yellow-300 font-bold">x{weight}</span>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell className="w-[40%] text-left font-mono text-base sm:text-lg md:text-xl font-medium text-purple-100 py-2 sm:py-3 pl-4 sm:pl-8 md:pl-12">{formatStat(val2, dbCol)}</TableCell>
+                                                    </TableRow>
+                                                );
+                                            })}
+                                        </TableBody>
+                                    </Table>
+                                </div>
                             </div>
-                        </div>
                         )}
 
                         {/* Stats Tab Content - Player Level Stats */}
@@ -525,7 +523,7 @@ export default function MatchupsPage() {
                                     <div className="space-y-8">
                                         {/* Manager 1 Batting */}
                                         <div>
-                                            <h3 className="text-lg font-bold text-purple-300 mb-3 flex items-center gap-2">
+                                            <h3 className="text-base sm:text-lg font-bold text-purple-300 mb-2 sm:mb-3 flex items-center gap-2">
                                                 <span className="w-2 h-5 bg-purple-500 rounded-full"></span>
                                                 {activeMatchup.manager1.nickname} - Batting
                                             </h3>
@@ -564,7 +562,7 @@ export default function MatchupsPage() {
 
                                         {/* Manager 2 Batting */}
                                         <div>
-                                            <h3 className="text-lg font-bold text-cyan-300 mb-3 flex items-center gap-2">
+                                            <h3 className="text-base sm:text-lg font-bold text-cyan-300 mb-2 sm:mb-3 flex items-center gap-2">
                                                 <span className="w-2 h-5 bg-cyan-500 rounded-full"></span>
                                                 {activeMatchup.manager2.nickname} - Batting
                                             </h3>
@@ -603,7 +601,7 @@ export default function MatchupsPage() {
 
                                         {/* Manager 1 Pitching */}
                                         <div>
-                                            <h3 className="text-lg font-bold text-purple-300 mb-3 flex items-center gap-2">
+                                            <h3 className="text-base sm:text-lg font-bold text-purple-300 mb-2 sm:mb-3 flex items-center gap-2">
                                                 <span className="w-2 h-5 bg-purple-500 rounded-full"></span>
                                                 {activeMatchup.manager1.nickname} - Pitching
                                             </h3>
@@ -642,7 +640,7 @@ export default function MatchupsPage() {
 
                                         {/* Manager 2 Pitching */}
                                         <div>
-                                            <h3 className="text-lg font-bold text-cyan-300 mb-3 flex items-center gap-2">
+                                            <h3 className="text-base sm:text-lg font-bold text-cyan-300 mb-2 sm:mb-3 flex items-center gap-2">
                                                 <span className="w-2 h-5 bg-cyan-500 rounded-full"></span>
                                                 {activeMatchup.manager2.nickname} - Pitching
                                             </h3>
