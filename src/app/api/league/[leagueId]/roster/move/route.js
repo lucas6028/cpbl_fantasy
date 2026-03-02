@@ -61,7 +61,7 @@ export async function POST(request, { params }) {
                 gameDateObj.setHours(gHour, gMin, 0, 0);
 
                 const isGameStarted = taiwanTime >= gameDateObj;
-                const isPostponed = gameData.game_status === 'Postponed' || gameData.game_status === 'PPD';
+                const isPostponed = gameData.is_postponed === true;
 
                 if (isGameStarted && !isPostponed) {
                     // Rule 1: Starter Locked

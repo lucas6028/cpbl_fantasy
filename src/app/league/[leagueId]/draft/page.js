@@ -369,8 +369,10 @@ export default function DraftPage() {
         });
     };
 
-    // Poll Draft State (Smart Polling)
+    // Poll Draft State (Smart Polling) — only when league status is 'drafting now'
     useEffect(() => {
+        if (leagueStatus !== 'drafting now') return;
+
         let active = true;
         let timeoutId;
 
@@ -419,14 +421,11 @@ export default function DraftPage() {
                         }
                         // Smooth Update
                         setTimeLeft(prev => {
-                            // Always force update if pick changed or remaining time is large/new
-                            // But if just ticking down, avoid jitter
                             const newTime = diff > 0 ? diff : 0;
                             if (Math.abs(prev - newTime) <= 2 && prev > 0) return prev;
                             return newTime;
                         });
                     } else if (data.currentPick?.deadline) {
-                        // Simply: deadline - now
                         const deadline = new Date(data.currentPick.deadline).getTime();
                         diff = Math.floor((deadline - now) / 1000);
 
@@ -439,19 +438,10 @@ export default function DraftPage() {
                             });
                         }
 
-                        // Smooth Update logic
-                        // If the server says time is up (0 or less), pass 0.
-                        // But if we are locally at -1 (showing Auto Picking), keep it at -1 unless server resets.
-                        // Actually, if pickId changed (handled by effect dependency or data), we reset.
-                        // Here we just handle the periodic sync.
                         setTimeLeft(prev => {
                             const newTime = diff > 0 ? diff : 0;
-                            // If we are showing Auto Picking (-1) and server says 0, stay at -1
                             if (prev === -1 && newTime === 0) return -1;
-
-                            // If difference is small, trust local timer
                             if (Math.abs(prev - newTime) <= 2 && prev > 0) return prev;
-
                             return newTime;
                         });
 
@@ -473,7 +463,7 @@ export default function DraftPage() {
             active = false;
             clearTimeout(timeoutId);
         };
-    }, [leagueId, router]);
+    }, [leagueId, router, leagueStatus]);
 
     // Timer Tick
     useEffect(() => {

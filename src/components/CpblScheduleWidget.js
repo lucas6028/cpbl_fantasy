@@ -122,7 +122,7 @@ export default function CpblScheduleWidget() {
 
                     {/* Date Picker Popup */}
                     {showDatePicker && (
-                        <div className="absolute top-full left-0 mt-2 z-50 bg-slate-900 border border-purple-500/50 rounded-xl shadow-2xl p-4 w-[260px]">
+                        <div className="absolute top-full left-0 mt-2 z-[999] bg-slate-900 border border-purple-500/50 rounded-xl shadow-2xl p-4 w-[260px]">
                             {/* Month Nav */}
                             <div className="flex justify-between items-center mb-4">
                                 <button
