@@ -666,7 +666,7 @@ export default function DraftPage() {
     // ---------------------------------------------------------
 
     const { takenIds, recentPicks, myTeam, upcomingPicks, viewingTeam, foreignerCount, managerForeignerCounts } = useMemo(() => {
-        if (!draftState?.picks) return { takenIds: new Set(), recentPicks: [], myTeam: [], upcomingPicks: [] };
+        if (!draftState?.picks) return { takenIds: new Set(), recentPicks: [], myTeam: [], upcomingPicks: [], viewingTeam: [], foreignerCount: 0, managerForeignerCounts: {} };
         const picks = draftState.picks;
 
         // Coerce player_id to string to ensure safe set properties
@@ -1173,7 +1173,10 @@ export default function DraftPage() {
                                 <div className="text-sm font-bold text-slate-300">Live Draft Room</div>
                                 {draftState?.status === 'pre-draft' && draftState.startTime && (
                                     <div className="text-xs text-slate-400 mt-1">
-                                        Starts: {new Date(draftState.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        {new Date(draftState.startTime).toLocaleString('en-US', {
+                                            month: 'short', day: 'numeric',
+                                            hour: 'numeric', minute: '2-digit', hour12: true
+                                        })}
                                     </div>
                                 )}
                             </>
@@ -1295,6 +1298,48 @@ export default function DraftPage() {
                     </div>
                 )}
             </div>
+
+            {/* Pre-Draft Countdown Overlay */}
+            {draftState?.status === 'pre-draft' && !draftState?.currentPick && (
+                <div className="flex flex-col items-center justify-center py-16 px-4">
+                    <div className="text-center mb-8">
+                        <h2 className="text-3xl md:text-4xl font-black bg-gradient-to-r from-purple-300 via-pink-300 to-cyan-300 bg-clip-text text-transparent mb-2">
+                            Draft Starting Soon
+                        </h2>
+                        {draftState.startTime && (
+                            <p className="text-slate-400 text-sm">
+                                {new Date(draftState.startTime).toLocaleString('en-US', {
+                                    year: 'numeric', month: 'long', day: 'numeric',
+                                    hour: 'numeric', minute: '2-digit', hour12: true
+                                })}
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="flex gap-3 md:gap-5 mb-8">
+                        {(() => {
+                            const t = Math.max(0, timeLeft);
+                            const days = Math.floor(t / 86400);
+                            const hours = Math.floor((t % 86400) / 3600);
+                            const mins = Math.floor((t % 3600) / 60);
+                            const secs = t % 60;
+                            const boxes = [
+                                { val: days, label: 'Days', from: 'from-indigo-600/80', to: 'to-purple-600/80', border: 'border-indigo-400/30', text: 'text-indigo-200' },
+                                { val: hours, label: 'Hours', from: 'from-purple-600/80', to: 'to-pink-600/80', border: 'border-purple-400/30', text: 'text-purple-200' },
+                                { val: mins, label: 'Min', from: 'from-pink-600/80', to: 'to-red-600/80', border: 'border-pink-400/30', text: 'text-pink-200' },
+                                { val: secs, label: 'Sec', from: 'from-red-600/80', to: 'to-orange-600/80', border: 'border-red-400/30', text: 'text-red-200' },
+                            ];
+                            return boxes.map(b => (
+                                <div key={b.label} className={`bg-gradient-to-br ${b.from} ${b.to} backdrop-blur-md rounded-2xl p-4 md:p-6 min-w-[70px] md:min-w-[100px] border ${b.border} shadow-lg text-center`}>
+                                    <div className="text-3xl md:text-5xl font-black text-white mb-1">{b.val}</div>
+                                    <div className={`text-[10px] md:text-xs font-bold ${b.text} uppercase tracking-wider`}>{b.label}</div>
+                                </div>
+                            ));
+                        })()}
+                    </div>
+
+                </div>
+            )}
 
             {mainTab === 'players' && (
                 <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0 overflow-hidden">
