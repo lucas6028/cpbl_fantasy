@@ -770,11 +770,11 @@ export default function LeaguePage() {
 
   if (showMatchups) {
     return (
-      <div className="p-4 md:p-8 min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col lg:flex-row gap-8">
-        <div className="w-full lg:w-[70%] space-y-8">
+      <div className="p-3 sm:p-4 md:p-8 min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col lg:flex-row gap-4 sm:gap-8">
+        <div className="w-full lg:w-[70%] space-y-4 sm:space-y-8">
           {/* Header with League Name */}
-          <div className="bg-gradient-to-br from-purple-900/50 to-blue-900/50 backdrop-blur-md p-6 rounded-3xl border border-white/10 shadow-2xl">
-            <h1 className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">
+          <div className="bg-gradient-to-br from-purple-900/50 to-blue-900/50 backdrop-blur-md p-3 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/10 shadow-2xl">
+            <h1 className="text-xl sm:text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">
               {leagueSettings?.league_name}
             </h1>
             <div className="flex items-center gap-2 mt-2">
@@ -798,10 +798,10 @@ export default function LeaguePage() {
           </div>
 
           {/* MATCHUPS Section Header with Week Selector */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
-              <h2 className="text-xl font-black text-white uppercase tracking-wider flex items-center gap-2">
-                <span className="w-2 h-6 bg-purple-500 rounded-full"></span>
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <h2 className="text-base sm:text-xl font-black text-white uppercase tracking-wider flex items-center gap-2">
+                <span className="w-1.5 sm:w-2 h-5 sm:h-6 bg-purple-500 rounded-full"></span>
                 Matchups
               </h2>
 
@@ -825,10 +825,10 @@ export default function LeaguePage() {
 
               <button
                 onClick={() => setWeekDropdownOpen(!weekDropdownOpen)}
-                className="flex flex-col items-center min-w-[200px] px-4 hover:bg-white/5 rounded-2xl py-1 transition-all group"
+                className="flex flex-col items-center min-w-[100px] sm:min-w-[200px] px-2 sm:px-4 hover:bg-white/5 rounded-2xl py-1 transition-all group"
               >
-                <div className="flex items-center gap-2">
-                  <span className="text-lg font-black text-white tracking-wide group-hover:text-cyan-300 transition-colors">
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <span className="text-sm sm:text-lg font-black text-white tracking-wide group-hover:text-cyan-300 transition-colors">
                     WEEK {currentWeek}
                   </span>
                   <svg className={`w-4 h-4 text-white/50 transition-transform duration-300 ${weekDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -934,19 +934,19 @@ export default function LeaguePage() {
                   return (
                     <div key={matchup.id} className="group relative bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-sm border border-white/10 hover:border-purple-500/40 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-[0_0_40px_rgba(168,85,247,0.15)]">
                       {/* Main Content */}
-                      <div className="p-6">
+                      <div className="p-3 sm:p-6">
                         <div className="flex items-center justify-between gap-6">
                           {/* Team A */}
                           <div className="flex-1">
                             <div className="flex items-center justify-between gap-3">
                               <div className="flex items-center gap-4 flex-1">
                                 {/* Team Rank A */}
-                                <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-black bg-slate-800 text-slate-300 border border-white/10 shadow-lg">
+                                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-black bg-slate-800 text-slate-300 border border-white/10 shadow-lg">
                                   {rankA || '?'}
                                 </div>
                                 {/* Team Info A */}
-                                <div className="flex-1">
-                                  <div className="text-lg font-black text-white group-hover:text-purple-300 transition-colors leading-tight">
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-sm sm:text-lg font-black text-white group-hover:text-purple-300 transition-colors leading-tight truncate">
                                     {managerA?.nickname || 'Unknown'}
                                   </div>
                                   <div className="text-xs font-bold text-yellow-400 uppercase tracking-wider mt-1">
@@ -957,7 +957,7 @@ export default function LeaguePage() {
 
                               {/* Score A */}
                               <div className="text-right">
-                                <div className={`text-4xl font-black tabular-nums ${isFinal
+                                <div className={`text-2xl sm:text-4xl font-black tabular-nums ${isFinal
                                   ? (scoreA > scoreB ? 'text-green-400' : scoreA < scoreB ? 'text-slate-500' : 'text-cyan-300')
                                   : 'text-cyan-300'
                                   }`}>
@@ -968,10 +968,10 @@ export default function LeaguePage() {
                           </div>
 
                           {/* VS Divider */}
-                          <div className="flex flex-col items-center px-4">
+                          <div className="flex flex-col items-center px-1 sm:px-4">
                             <div className="w-px h-16 bg-gradient-to-b from-transparent via-purple-500/50 to-transparent"></div>
                             <div className="absolute">
-                              <div className="w-10 h-10 rounded-full bg-slate-900 border-2 border-purple-500/30 flex items-center justify-center">
+                              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-900 border-2 border-purple-500/30 flex items-center justify-center">
                                 <span className="text-xs font-black text-purple-400 uppercase tracking-wider">VS</span>
                               </div>
                             </div>
@@ -982,12 +982,12 @@ export default function LeaguePage() {
                             <div className="flex items-center justify-between gap-3 flex-row-reverse">
                               <div className="flex items-center gap-4 flex-1 flex-row-reverse">
                                 {/* Team Rank B */}
-                                <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-black bg-slate-800 text-slate-300 border border-white/10 shadow-lg">
+                                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-black bg-slate-800 text-slate-300 border border-white/10 shadow-lg">
                                   {rankB || '?'}
                                 </div>
                                 {/* Team Info B */}
-                                <div className="flex-1 text-right">
-                                  <div className="text-lg font-black text-white group-hover:text-cyan-300 transition-colors leading-tight">
+                                <div className="flex-1 text-right min-w-0">
+                                  <div className="text-sm sm:text-lg font-black text-white group-hover:text-cyan-300 transition-colors leading-tight truncate">
                                     {managerB?.nickname || 'Unknown'}
                                   </div>
                                   <div className="text-xs font-bold text-yellow-400 uppercase tracking-wider mt-1">
@@ -998,7 +998,7 @@ export default function LeaguePage() {
 
                               {/* Score B */}
                               <div className="text-left">
-                                <div className={`text-4xl font-black tabular-nums ${isFinal
+                                <div className={`text-2xl sm:text-4xl font-black tabular-nums ${isFinal
                                   ? (scoreB > scoreA ? 'text-green-400' : scoreB < scoreA ? 'text-slate-500' : 'text-cyan-300')
                                   : 'text-cyan-300'
                                   }`}>
@@ -1031,10 +1031,10 @@ export default function LeaguePage() {
           }
 
           {/* STANDINGS Section */}
-          <div className="mt-12">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-black text-white uppercase tracking-wider flex items-center gap-2">
-                <span className="w-2 h-6 bg-cyan-500 rounded-full"></span>
+          <div className="mt-6 sm:mt-12">
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <h2 className="text-base sm:text-xl font-black text-white uppercase tracking-wider flex items-center gap-2">
+                <span className="w-1.5 sm:w-2 h-5 sm:h-6 bg-cyan-500 rounded-full"></span>
                 Standings
               </h2>
               <button
@@ -1229,21 +1229,21 @@ export default function LeaguePage() {
           </div>
 
           {/* Transactions & Waivers Tabbed Section */}
-          <div className="mt-12">
-            <div className="flex items-center gap-8 mb-6 border-b border-white/5 pb-2">
+          <div className="mt-6 sm:mt-12">
+            <div className="flex items-center gap-4 sm:gap-8 mb-4 sm:mb-6 border-b border-white/5 pb-2 overflow-x-auto">
               <button
                 onClick={() => { setActiveTab('transactions'); setViewAll(false); }}
-                className={`text-xl font-black uppercase tracking-wider flex items-center gap-2 transition-all ${activeTab === 'transactions' ? 'text-white opacity-100' : 'text-white/40 hover:text-white/70'}`}
+                className={`text-sm sm:text-xl font-black uppercase tracking-wider flex items-center gap-2 transition-all whitespace-nowrap ${activeTab === 'transactions' ? 'text-white opacity-100' : 'text-white/40 hover:text-white/70'}`}
               >
-                <span className={`w-2 h-6 rounded-full transition-all ${activeTab === 'transactions' ? 'bg-blue-500' : 'bg-transparent'}`}></span>
-                Recent Transactions
+                <span className={`w-1.5 sm:w-2 h-5 sm:h-6 rounded-full transition-all ${activeTab === 'transactions' ? 'bg-blue-500' : 'bg-transparent'}`}></span>
+                Transactions
               </button>
               <button
                 onClick={() => { setActiveTab('waivers'); setViewAll(false); }}
-                className={`text-xl font-black uppercase tracking-wider flex items-center gap-2 transition-all ${activeTab === 'waivers' ? 'text-white opacity-100' : 'text-white/40 hover:text-white/70'}`}
+                className={`text-sm sm:text-xl font-black uppercase tracking-wider flex items-center gap-2 transition-all whitespace-nowrap ${activeTab === 'waivers' ? 'text-white opacity-100' : 'text-white/40 hover:text-white/70'}`}
               >
-                <span className={`w-2 h-6 rounded-full transition-all ${activeTab === 'waivers' ? 'bg-orange-500' : 'bg-transparent'}`}></span>
-                Waiver Results
+                <span className={`w-1.5 sm:w-2 h-5 sm:h-6 rounded-full transition-all ${activeTab === 'waivers' ? 'bg-orange-500' : 'bg-transparent'}`}></span>
+                Waivers
               </button>
             </div>
 
@@ -1260,7 +1260,7 @@ export default function LeaguePage() {
                     ) : (
                       <div className="divide-y divide-white/5">
                         {(viewAll ? groupedTransactions : groupedTransactions.slice(0, 5)).map((group) => (
-                          <div key={group.id} className="px-6 py-4 flex items-center justify-between hover:bg-white/5 transition-all duration-300">
+                          <div key={group.id} className="px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between hover:bg-white/5 transition-all duration-300">
                             {/* Left: Icons and Players */}
                             <div className="flex flex-col gap-4">
                               {group.items.map((item) => {
@@ -1310,8 +1310,8 @@ export default function LeaguePage() {
                             </div>
 
                             {/* Right: Manager and Time */}
-                            <div className="text-right flex-shrink-0 ml-8">
-                              <div className="text-base font-black text-blue-400 hover:text-blue-300 cursor-pointer transition-colors mb-0.5">
+                            <div className="text-right flex-shrink-0 ml-3 sm:ml-8">
+                              <div className="text-sm sm:text-base font-black text-blue-400 hover:text-blue-300 cursor-pointer transition-colors mb-0.5">
                                 {(() => {
                                   const nicknames = [...new Set(group.items.map(i => i.manager?.nickname).filter(Boolean))];
                                   if (nicknames.length > 1) {
@@ -1437,10 +1437,11 @@ export default function LeaguePage() {
         </div>
 
         {/* Right Sidebar: CPBL Schedule */}
-        <div className="hidden lg:block w-[30%] space-y-8 sticky top-8 h-fit">
-          <div className="bg-gradient-to-br from-slate-900/50 to-purple-900/20 backdrop-blur-md rounded-3xl border border-white/5 p-6 shadow-xl">
-            <h3 className="text-xl font-black text-white mb-6 uppercase tracking-wider flex items-center gap-2">
-              <span className="w-2 h-6 bg-purple-500 rounded-full"></span>
+        {/* Right Sidebar: CPBL Schedule */}
+        <div className="w-full lg:w-[30%] space-y-4 sm:space-y-8 lg:sticky lg:top-8 lg:h-fit">
+          <div className="bg-gradient-to-br from-slate-900/50 to-purple-900/20 backdrop-blur-md rounded-2xl sm:rounded-3xl border border-white/5 p-4 sm:p-6 shadow-xl">
+            <h3 className="text-base sm:text-xl font-black text-white mb-4 sm:mb-6 uppercase tracking-wider flex items-center gap-2">
+              <span className="w-1.5 sm:w-2 h-5 sm:h-6 bg-purple-500 rounded-full"></span>
               CPBL Schedule
             </h3>
             <CpblScheduleWidget />
@@ -1472,14 +1473,14 @@ export default function LeaguePage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-3 sm:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
-        <div className="mb-8 bg-gradient-to-r from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl p-8 shadow-2xl">
-          <h1 className="text-5xl font-black bg-gradient-to-r from-purple-300 via-pink-300 to-blue-300 bg-clip-text text-transparent mb-4">
+        <div className="mb-4 sm:mb-8 bg-gradient-to-r from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl p-4 sm:p-8 shadow-2xl">
+          <h1 className="text-2xl sm:text-5xl font-black bg-gradient-to-r from-purple-300 via-pink-300 to-blue-300 bg-clip-text text-transparent mb-2 sm:mb-4">
             {leagueSettings.league_name}
           </h1>
-          <div className="flex items-center gap-4 mt-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2 sm:mt-3">
             <div className="flex items-center gap-2">
               <span className="text-sm text-purple-300 font-medium">Status:</span>
               <span className={`px-4 py-1.5 rounded-full text-sm font-bold shadow-lg ${leagueStatus === 'pre-draft' ? 'bg-yellow-500/80 text-yellow-100 shadow-yellow-500/50' :
@@ -1515,9 +1516,9 @@ export default function LeaguePage() {
 
         {/* Draft Time Section */}
         {leagueSettings?.live_draft_time && leagueSettings?.draft_type === 'Live Draft' && (
-          <div className="mb-8 bg-gradient-to-r from-indigo-600/20 to-purple-600/20 backdrop-blur-lg border border-indigo-500/30 rounded-2xl p-8 shadow-2xl">
+          <div className="mb-4 sm:mb-8 bg-gradient-to-r from-indigo-600/20 to-purple-600/20 backdrop-blur-lg border border-indigo-500/30 rounded-2xl p-4 sm:p-8 shadow-2xl">
             <div className="text-center">
-              <h2 className="text-3xl font-black bg-gradient-to-r from-indigo-300 via-purple-300 to-pink-300 bg-clip-text text-transparent mb-4">
+              <h2 className="text-xl sm:text-3xl font-black bg-gradient-to-r from-indigo-300 via-purple-300 to-pink-300 bg-clip-text text-transparent mb-2 sm:mb-4">
                 Draft Time
               </h2>
               <div className="text-sm text-yellow-300/90 font-bold mb-3 flex items-center justify-center gap-2">
@@ -1551,22 +1552,22 @@ export default function LeaguePage() {
                   <span className="text-2xl font-black text-white">Time&apos;s Up!</span>
                 </div>
               ) : draftTimeStatus === 'upcoming' && countdown ? (
-                <div className="flex justify-center gap-4 flex-wrap">
-                  <div className="bg-gradient-to-br from-indigo-600/80 to-purple-600/80 backdrop-blur-md rounded-2xl p-6 min-w-[120px] border border-indigo-400/30 shadow-lg shadow-indigo-500/30">
-                    <div className="text-5xl font-black text-white mb-2">{countdown.days}</div>
-                    <div className="text-sm font-bold text-indigo-200 uppercase tracking-wider">Days</div>
+                <div className="flex justify-center gap-2 sm:gap-4 flex-wrap">
+                  <div className="bg-gradient-to-br from-indigo-600/80 to-purple-600/80 backdrop-blur-md rounded-xl sm:rounded-2xl p-3 sm:p-6 min-w-[70px] sm:min-w-[120px] border border-indigo-400/30 shadow-lg shadow-indigo-500/30">
+                    <div className="text-2xl sm:text-5xl font-black text-white mb-1 sm:mb-2">{countdown.days}</div>
+                    <div className="text-[10px] sm:text-sm font-bold text-indigo-200 uppercase tracking-wider">Days</div>
                   </div>
-                  <div className="bg-gradient-to-br from-purple-600/80 to-pink-600/80 backdrop-blur-md rounded-2xl p-6 min-w-[120px] border border-purple-400/30 shadow-lg shadow-purple-500/30">
-                    <div className="text-5xl font-black text-white mb-2">{countdown.hours}</div>
-                    <div className="text-sm font-bold text-purple-200 uppercase tracking-wider">Hours</div>
+                  <div className="bg-gradient-to-br from-purple-600/80 to-pink-600/80 backdrop-blur-md rounded-xl sm:rounded-2xl p-3 sm:p-6 min-w-[70px] sm:min-w-[120px] border border-purple-400/30 shadow-lg shadow-purple-500/30">
+                    <div className="text-2xl sm:text-5xl font-black text-white mb-1 sm:mb-2">{countdown.hours}</div>
+                    <div className="text-[10px] sm:text-sm font-bold text-purple-200 uppercase tracking-wider">Hours</div>
                   </div>
-                  <div className="bg-gradient-to-br from-pink-600/80 to-red-600/80 backdrop-blur-md rounded-2xl p-6 min-w-[120px] border border-pink-400/30 shadow-lg shadow-pink-500/30">
-                    <div className="text-5xl font-black text-white mb-2">{countdown.minutes}</div>
-                    <div className="text-sm font-bold text-pink-200 uppercase tracking-wider">Minutes</div>
+                  <div className="bg-gradient-to-br from-pink-600/80 to-red-600/80 backdrop-blur-md rounded-xl sm:rounded-2xl p-3 sm:p-6 min-w-[70px] sm:min-w-[120px] border border-pink-400/30 shadow-lg shadow-pink-500/30">
+                    <div className="text-2xl sm:text-5xl font-black text-white mb-1 sm:mb-2">{countdown.minutes}</div>
+                    <div className="text-[10px] sm:text-sm font-bold text-pink-200 uppercase tracking-wider">Min</div>
                   </div>
-                  <div className="bg-gradient-to-br from-red-600/80 to-orange-600/80 backdrop-blur-md rounded-2xl p-6 min-w-[120px] border border-red-400/30 shadow-lg shadow-red-500/30">
-                    <div className="text-5xl font-black text-white mb-2">{countdown.seconds}</div>
-                    <div className="text-sm font-bold text-red-200 uppercase tracking-wider">Seconds</div>
+                  <div className="bg-gradient-to-br from-red-600/80 to-orange-600/80 backdrop-blur-md rounded-xl sm:rounded-2xl p-3 sm:p-6 min-w-[70px] sm:min-w-[120px] border border-red-400/30 shadow-lg shadow-red-500/30">
+                    <div className="text-2xl sm:text-5xl font-black text-white mb-1 sm:mb-2">{countdown.seconds}</div>
+                    <div className="text-[10px] sm:text-sm font-bold text-red-200 uppercase tracking-wider">Sec</div>
                   </div>
                 </div>
               ) : null}
@@ -1575,10 +1576,10 @@ export default function LeaguePage() {
         )}
 
         {/* League Members Section */}
-        <div className="mb-8 bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl shadow-2xl overflow-hidden">
-          <div className="bg-gradient-to-r from-green-600/80 to-emerald-600/80 backdrop-blur-sm p-6 border-b border-green-400/30">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <h2 className="text-3xl font-black text-white">League Members</h2>
+        <div className="mb-4 sm:mb-8 bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl shadow-2xl overflow-hidden">
+          <div className="bg-gradient-to-r from-green-600/80 to-emerald-600/80 backdrop-blur-sm p-3 sm:p-6 border-b border-green-400/30">
+            <div className="flex items-center justify-between flex-wrap gap-2 sm:gap-4">
+              <h2 className="text-xl sm:text-3xl font-black text-white">League Members</h2>
               <div className="flex items-center gap-3">
                 {canShowInviteLink() && (
                   <button
@@ -1602,20 +1603,20 @@ export default function LeaguePage() {
               </div>
             </div>
           </div>
-          <div className="p-6">
+          <div className="p-3 sm:p-6">
             {members.length === 0 ? (
-              <div className="text-center py-12 text-purple-300/70 text-lg">
+              <div className="text-center py-8 sm:py-12 text-purple-300/70 text-base sm:text-lg">
                 No members in this league yet
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-5">
                 {members.map((member) => (
                   <div
                     key={member.manager_id}
-                    className="group bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm border border-purple-500/30 rounded-xl p-5 hover:border-purple-400/60 hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300 hover:-translate-y-1"
+                    className="group bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm border border-purple-500/30 rounded-xl p-3 sm:p-5 hover:border-purple-400/60 hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300 hover:-translate-y-1"
                   >
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-purple-500/50">
+                    <div className="flex items-center justify-between mb-2 sm:mb-3">
+                      <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-sm sm:text-xl shadow-lg shadow-purple-500/50">
                         {member.nickname.charAt(0).toUpperCase()}
                       </div>
                       {member.role && (
@@ -1627,7 +1628,7 @@ export default function LeaguePage() {
                         </span>
                       )}
                     </div>
-                    <div className="text-xl font-bold text-white group-hover:text-purple-300 transition-colors">
+                    <div className="text-sm sm:text-xl font-bold text-white group-hover:text-purple-300 transition-colors truncate">
                       {member.nickname}
                     </div>
                     <div className="text-sm text-purple-300/70 mt-1.5">
@@ -1641,10 +1642,10 @@ export default function LeaguePage() {
         </div>
 
         <div className="bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl shadow-2xl overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-600/80 to-cyan-600/80 backdrop-blur-sm p-6 border-b border-blue-400/30">
-            <h2 className="text-3xl font-black text-white">League Schedule</h2>
+          <div className="bg-gradient-to-r from-blue-600/80 to-cyan-600/80 backdrop-blur-sm p-3 sm:p-6 border-b border-blue-400/30">
+            <h2 className="text-xl sm:text-3xl font-black text-white">League Schedule</h2>
           </div>
-          <div className="p-6">
+          <div className="p-3 sm:p-6">
             {scheduleData.length === 0 ? (
               <div className="text-center py-12 text-purple-300/70 text-lg">
                 No schedule data available for this league
@@ -1654,20 +1655,20 @@ export default function LeaguePage() {
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="bg-gradient-to-r from-slate-800/80 to-slate-700/80 border-b-2 border-purple-500/50">
-                      <th className="px-6 py-4 text-left font-bold text-purple-200 text-sm uppercase tracking-wider">
-                        Week #
+                      <th className="px-2 sm:px-6 py-2 sm:py-4 text-left font-bold text-purple-200 text-xs uppercase tracking-wider">
+                        Wk
                       </th>
-                      <th className="px-6 py-4 text-left font-bold text-purple-200 text-sm uppercase tracking-wider">
+                      <th className="px-2 sm:px-6 py-2 sm:py-4 text-left font-bold text-purple-200 text-xs uppercase tracking-wider hidden sm:table-cell">
                         Label
                       </th>
-                      <th className="px-6 py-4 text-left font-bold text-purple-200 text-sm uppercase tracking-wider">
+                      <th className="px-2 sm:px-6 py-2 sm:py-4 text-left font-bold text-purple-200 text-xs uppercase tracking-wider hidden sm:table-cell">
                         Type
                       </th>
-                      <th className="px-6 py-4 text-left font-bold text-purple-200 text-sm uppercase tracking-wider">
-                        Start Date
+                      <th className="px-2 sm:px-6 py-2 sm:py-4 text-left font-bold text-purple-200 text-xs uppercase tracking-wider">
+                        Start
                       </th>
-                      <th className="px-6 py-4 text-left font-bold text-purple-200 text-sm uppercase tracking-wider">
-                        End Date
+                      <th className="px-2 sm:px-6 py-2 sm:py-4 text-left font-bold text-purple-200 text-xs uppercase tracking-wider">
+                        End
                       </th>
                     </tr>
                   </thead>
@@ -1678,13 +1679,13 @@ export default function LeaguePage() {
                         className={`${index % 2 === 0 ? 'bg-slate-900/40' : 'bg-slate-800/40'
                           } border-b border-purple-500/20 hover:bg-purple-500/20 transition-colors`}
                       >
-                        <td className="px-6 py-4 font-bold text-white text-lg">
-                          Week {week.week_number}
+                        <td className="px-2 sm:px-6 py-2 sm:py-4 font-bold text-white text-sm sm:text-lg">
+                          {week.week_number}
                         </td>
-                        <td className="px-6 py-4 text-purple-200 font-medium">
+                        <td className="px-2 sm:px-6 py-2 sm:py-4 text-purple-200 font-medium text-sm hidden sm:table-cell">
                           {week.week_label || '-'}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-2 sm:px-6 py-2 sm:py-4 hidden sm:table-cell">
                           <span
                             className={`px-3 py-1.5 rounded-full text-xs font-bold shadow-lg ${getWeekTypeColor(
                               week.week_type
@@ -1693,16 +1694,14 @@ export default function LeaguePage() {
                             {getWeekTypeLabel(week.week_type)}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-purple-300 font-medium">
+                        <td className="px-2 sm:px-6 py-2 sm:py-4 text-purple-300 font-medium text-xs sm:text-base">
                           {new Date(week.week_start).toLocaleDateString('en-US', {
-                            year: 'numeric',
                             month: 'short',
                             day: 'numeric',
                           })}
                         </td>
-                        <td className="px-6 py-4 text-purple-300 font-medium">
+                        <td className="px-2 sm:px-6 py-2 sm:py-4 text-purple-300 font-medium text-xs sm:text-base">
                           {new Date(week.week_end).toLocaleDateString('en-US', {
-                            year: 'numeric',
                             month: 'short',
                             day: 'numeric',
                           })}
@@ -1717,7 +1716,7 @@ export default function LeaguePage() {
         </div>
 
         {/* League Chat */}
-        <div className="mt-8 bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl shadow-2xl overflow-hidden">
+        <div className="mt-4 sm:mt-8 bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl shadow-2xl overflow-hidden">
           <LeagueChat
             leagueId={leagueId}
             managerId={myManagerId}
