@@ -1550,8 +1550,8 @@ export default function LeaguePage() {
     <div className="p-3 sm:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
-        <div className="mb-4 sm:mb-8 bg-gradient-to-r from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl p-4 sm:p-8 shadow-2xl">
-          <h1 className="text-2xl sm:text-5xl font-black bg-gradient-to-r from-purple-300 via-pink-300 to-blue-300 bg-clip-text text-transparent mb-2 sm:mb-4">
+        <div className="mb-3 sm:mb-8 bg-gradient-to-r from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-xl sm:rounded-2xl p-3 sm:p-8 shadow-2xl">
+          <h1 className="text-xl sm:text-5xl font-black bg-gradient-to-r from-purple-300 via-pink-300 to-blue-300 bg-clip-text text-transparent mb-2 sm:mb-4">
             {leagueSettings.league_name}
           </h1>
           <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2 sm:mt-3">
@@ -1590,7 +1590,7 @@ export default function LeaguePage() {
 
         {/* Draft Time Section */}
         {leagueSettings?.live_draft_time && leagueSettings?.draft_type === 'Live Draft' && (
-          <div className="mb-4 sm:mb-8 bg-gradient-to-r from-indigo-600/20 to-purple-600/20 backdrop-blur-lg border border-indigo-500/30 rounded-2xl p-4 sm:p-8 shadow-2xl">
+          <div className="mb-3 sm:mb-8 bg-gradient-to-r from-indigo-600/20 to-purple-600/20 backdrop-blur-lg border border-indigo-500/30 rounded-xl sm:rounded-2xl p-3 sm:p-8 shadow-2xl">
             <div className="text-center">
               <h2 className="text-xl sm:text-3xl font-black bg-gradient-to-r from-indigo-300 via-purple-300 to-pink-300 bg-clip-text text-transparent mb-2 sm:mb-4">
                 Draft Time
@@ -1644,22 +1644,22 @@ export default function LeaguePage() {
                   <span className="text-2xl font-black text-white">Time&apos;s Up!</span>
                 </div>
               ) : draftTimeStatus === 'upcoming' && countdown ? (
-                <div className="flex justify-center gap-2 sm:gap-4 flex-wrap">
-                  <div className="bg-gradient-to-br from-indigo-600/80 to-purple-600/80 backdrop-blur-md rounded-xl sm:rounded-2xl p-3 sm:p-6 min-w-[70px] sm:min-w-[120px] border border-indigo-400/30 shadow-lg shadow-indigo-500/30">
-                    <div className="text-2xl sm:text-5xl font-black text-white mb-1 sm:mb-2">{countdown.days}</div>
-                    <div className="text-[10px] sm:text-sm font-bold text-indigo-200 uppercase tracking-wider">Days</div>
+                <div className="flex justify-center gap-1.5 sm:gap-4 flex-wrap">
+                  <div className="bg-gradient-to-br from-indigo-600/80 to-purple-600/80 backdrop-blur-md rounded-lg sm:rounded-2xl p-2 sm:p-6 min-w-[60px] sm:min-w-[120px] border border-indigo-400/30 shadow-lg shadow-indigo-500/30">
+                    <div className="text-xl sm:text-5xl font-black text-white mb-0.5 sm:mb-2">{countdown.days}</div>
+                    <div className="text-[9px] sm:text-sm font-bold text-indigo-200 uppercase tracking-wider">Days</div>
                   </div>
-                  <div className="bg-gradient-to-br from-purple-600/80 to-pink-600/80 backdrop-blur-md rounded-xl sm:rounded-2xl p-3 sm:p-6 min-w-[70px] sm:min-w-[120px] border border-purple-400/30 shadow-lg shadow-purple-500/30">
-                    <div className="text-2xl sm:text-5xl font-black text-white mb-1 sm:mb-2">{countdown.hours}</div>
-                    <div className="text-[10px] sm:text-sm font-bold text-purple-200 uppercase tracking-wider">Hours</div>
+                  <div className="bg-gradient-to-br from-purple-600/80 to-pink-600/80 backdrop-blur-md rounded-lg sm:rounded-2xl p-2 sm:p-6 min-w-[60px] sm:min-w-[120px] border border-purple-400/30 shadow-lg shadow-purple-500/30">
+                    <div className="text-xl sm:text-5xl font-black text-white mb-0.5 sm:mb-2">{countdown.hours}</div>
+                    <div className="text-[9px] sm:text-sm font-bold text-purple-200 uppercase tracking-wider">Hours</div>
                   </div>
-                  <div className="bg-gradient-to-br from-pink-600/80 to-red-600/80 backdrop-blur-md rounded-xl sm:rounded-2xl p-3 sm:p-6 min-w-[70px] sm:min-w-[120px] border border-pink-400/30 shadow-lg shadow-pink-500/30">
-                    <div className="text-2xl sm:text-5xl font-black text-white mb-1 sm:mb-2">{countdown.minutes}</div>
-                    <div className="text-[10px] sm:text-sm font-bold text-pink-200 uppercase tracking-wider">Min</div>
+                  <div className="bg-gradient-to-br from-pink-600/80 to-red-600/80 backdrop-blur-md rounded-lg sm:rounded-2xl p-2 sm:p-6 min-w-[60px] sm:min-w-[120px] border border-pink-400/30 shadow-lg shadow-pink-500/30">
+                    <div className="text-xl sm:text-5xl font-black text-white mb-0.5 sm:mb-2">{countdown.minutes}</div>
+                    <div className="text-[9px] sm:text-sm font-bold text-pink-200 uppercase tracking-wider">Min</div>
                   </div>
-                  <div className="bg-gradient-to-br from-red-600/80 to-orange-600/80 backdrop-blur-md rounded-xl sm:rounded-2xl p-3 sm:p-6 min-w-[70px] sm:min-w-[120px] border border-red-400/30 shadow-lg shadow-red-500/30">
-                    <div className="text-2xl sm:text-5xl font-black text-white mb-1 sm:mb-2">{countdown.seconds}</div>
-                    <div className="text-[10px] sm:text-sm font-bold text-red-200 uppercase tracking-wider">Sec</div>
+                  <div className="bg-gradient-to-br from-red-600/80 to-orange-600/80 backdrop-blur-md rounded-lg sm:rounded-2xl p-2 sm:p-6 min-w-[60px] sm:min-w-[120px] border border-red-400/30 shadow-lg shadow-red-500/30">
+                    <div className="text-xl sm:text-5xl font-black text-white mb-0.5 sm:mb-2">{countdown.seconds}</div>
+                    <div className="text-[9px] sm:text-sm font-bold text-red-200 uppercase tracking-wider">Sec</div>
                   </div>
                 </div>
               ) : null}
@@ -1796,14 +1796,14 @@ export default function LeaguePage() {
                 {members.map((member) => (
                   <div
                     key={member.manager_id}
-                    className="group bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm border border-purple-500/30 rounded-xl p-3 sm:p-5 hover:border-purple-400/60 hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300 hover:-translate-y-1"
+                    className="group bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm border border-purple-500/30 rounded-lg sm:rounded-xl p-2 sm:p-5 hover:border-purple-400/60 hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300 hover:-translate-y-1 flex flex-col justify-center"
                   >
-                    <div className="flex items-center justify-between mb-2 sm:mb-3">
-                      <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-sm sm:text-xl shadow-lg shadow-purple-500/50">
+                    <div className="flex items-center justify-between mb-1.5 sm:mb-3">
+                      <div className="w-6 h-6 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-xs sm:text-xl shadow-lg shadow-purple-500/50">
                         {member.nickname.charAt(0).toUpperCase()}
                       </div>
                       {member.role && (
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${member.role === 'Commissioner' ? 'bg-red-500/30 text-red-300 border border-red-500/50' :
+                        <span className={`px-1.5 py-0.5 sm:px-2 rounded-full text-[9px] sm:text-xs font-bold leading-tight ${member.role === 'Commissioner' ? 'bg-red-500/30 text-red-300 border border-red-500/50' :
                           member.role === 'Co-Commissioner' ? 'bg-orange-500/30 text-orange-300 border border-orange-500/50' :
                             'bg-blue-500/30 text-blue-300 border border-blue-500/50'
                           }`}>
@@ -1811,10 +1811,10 @@ export default function LeaguePage() {
                         </span>
                       )}
                     </div>
-                    <div className="text-sm sm:text-xl font-bold text-white group-hover:text-purple-300 transition-colors truncate">
+                    <div className="text-xs sm:text-xl font-bold text-white group-hover:text-purple-300 transition-colors truncate">
                       {member.nickname}
                     </div>
-                    <div className="text-sm text-purple-300/70 mt-1.5">
+                    <div className="text-[10px] sm:text-sm text-purple-300/70 mt-1">
                       {member.managers?.name || 'Unknown'}
                     </div>
                   </div>
@@ -1841,16 +1841,16 @@ export default function LeaguePage() {
                       <th className="px-2 sm:px-6 py-2 sm:py-4 text-left font-bold text-purple-200 text-xs uppercase tracking-wider">
                         Wk
                       </th>
-                      <th className="px-2 sm:px-6 py-2 sm:py-4 text-left font-bold text-purple-200 text-xs uppercase tracking-wider hidden sm:table-cell">
+                      <th className="px-1 sm:px-6 py-2 sm:py-4 text-left font-bold text-purple-200 text-[10px] sm:text-xs uppercase tracking-wider hidden sm:table-cell">
                         Label
                       </th>
-                      <th className="px-2 sm:px-6 py-2 sm:py-4 text-left font-bold text-purple-200 text-xs uppercase tracking-wider hidden sm:table-cell">
+                      <th className="px-1 sm:px-6 py-2 sm:py-4 text-left font-bold text-purple-200 text-[10px] sm:text-xs uppercase tracking-wider">
                         Type
                       </th>
-                      <th className="px-2 sm:px-6 py-2 sm:py-4 text-left font-bold text-purple-200 text-xs uppercase tracking-wider">
+                      <th className="px-1 sm:px-6 py-2 sm:py-4 text-left font-bold text-purple-200 text-[10px] sm:text-xs uppercase tracking-wider">
                         Start
                       </th>
-                      <th className="px-2 sm:px-6 py-2 sm:py-4 text-left font-bold text-purple-200 text-xs uppercase tracking-wider">
+                      <th className="px-1 sm:px-6 py-2 sm:py-4 text-left font-bold text-purple-200 text-[10px] sm:text-xs uppercase tracking-wider">
                         End
                       </th>
                     </tr>
@@ -1862,28 +1862,28 @@ export default function LeaguePage() {
                         className={`${index % 2 === 0 ? 'bg-slate-900/40' : 'bg-slate-800/40'
                           } border-b border-purple-500/20 hover:bg-purple-500/20 transition-colors`}
                       >
-                        <td className="px-2 sm:px-6 py-2 sm:py-4 font-bold text-white text-sm sm:text-lg">
+                        <td className="px-1 sm:px-6 py-2 sm:py-4 font-bold text-white text-xs sm:text-lg">
                           {week.week_number}
                         </td>
-                        <td className="px-2 sm:px-6 py-2 sm:py-4 text-purple-200 font-medium text-sm hidden sm:table-cell">
+                        <td className="px-1 sm:px-6 py-2 sm:py-4 text-purple-200 font-medium text-[10px] sm:text-sm hidden sm:table-cell">
                           {week.week_label || '-'}
                         </td>
-                        <td className="px-2 sm:px-6 py-2 sm:py-4 hidden sm:table-cell">
+                        <td className="px-1 sm:px-6 py-2 sm:py-4">
                           <span
-                            className={`px-3 py-1.5 rounded-full text-xs font-bold shadow-lg ${getWeekTypeColor(
+                            className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-[9px] sm:text-xs font-bold shadow-lg leading-tight block w-max ${getWeekTypeColor(
                               week.week_type
                             )}`}
                           >
                             {getWeekTypeLabel(week.week_type)}
                           </span>
                         </td>
-                        <td className="px-2 sm:px-6 py-2 sm:py-4 text-purple-300 font-medium text-xs sm:text-base">
+                        <td className="px-1 sm:px-6 py-2 sm:py-4 text-purple-300 font-medium text-[10px] sm:text-base whitespace-nowrap">
                           {new Date(week.week_start).toLocaleDateString('en-US', {
                             month: 'short',
                             day: 'numeric',
                           })}
                         </td>
-                        <td className="px-2 sm:px-6 py-2 sm:py-4 text-purple-300 font-medium text-xs sm:text-base">
+                        <td className="px-1 sm:px-6 py-2 sm:py-4 text-purple-300 font-medium text-[10px] sm:text-base whitespace-nowrap">
                           {new Date(week.week_end).toLocaleDateString('en-US', {
                             month: 'short',
                             day: 'numeric',
