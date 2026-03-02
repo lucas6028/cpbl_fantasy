@@ -8,6 +8,7 @@ import CpblScheduleWidget from '@/components/CpblScheduleWidget';
 import LeagueDailyRoster from './LeagueDailyRoster';
 import PlayerDetailModal from '@/components/PlayerDetailModal';
 import LeagueChat from '@/components/LeagueChat';
+import AmericanDatePicker from '@/components/AmericanDatePicker';
 
 // Playoff Tree Diagram Component
 const PlayoffTreeDiagram = ({ playoffType, playoffReseeding, currentWeekLabel, participantCount, realMatchups, members }) => {
@@ -1702,14 +1703,27 @@ export default function LeaguePage() {
                     <label className="block text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">
                       New Draft Date & Time
                     </label>
-                    <input
-                      type="datetime-local"
+                    <AmericanDatePicker
                       value={newDraftTime}
-                      onChange={(e) => {
-                        setNewDraftTime(e.target.value);
+                      onChange={(val) => {
+                        setNewDraftTime(val);
                         setDraftResetError('');
                       }}
-                      className="w-full px-4 py-3 bg-slate-800/80 border border-white/10 rounded-xl text-white font-medium focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all"
+                      minDate={(() => {
+                        const tomorrow = new Date();
+                        tomorrow.setDate(tomorrow.getDate() + 1);
+                        tomorrow.setHours(0, 0, 0, 0);
+                        return tomorrow;
+                      })()}
+                      maxDate={(() => {
+                        if (!leagueSettings?.start_scoring_on) return undefined;
+                        const parts = leagueSettings.start_scoring_on.split('.');
+                        if (parts.length !== 3) return undefined;
+                        const scoringDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                        scoringDate.setDate(scoringDate.getDate() - 2);
+                        scoringDate.setHours(23, 59, 59, 999);
+                        return scoringDate;
+                      })()}
                     />
                   </div>
 

@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Calendar as CalendarIcon, Clock, ChevronLeft, ChevronRight, X } from 'lucide-react';
 
-export default function AmericanDatePicker({ value, onChange, minDate, disabled, className }) {
+export default function AmericanDatePicker({ value, onChange, minDate, maxDate, disabled, className }) {
     const [show, setShow] = useState(false);
     const [viewDate, setViewDate] = useState(new Date()); // Calendar view month
     const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 });
@@ -221,7 +221,8 @@ export default function AmericanDatePicker({ value, onChange, minDate, disabled,
                                 dateValue.getFullYear() === viewDate.getFullYear();
 
                             const isToday = new Date().toDateString() === currentDayDate.toDateString();
-                            const isDisabled = minDate && new Date(currentDayDate.setHours(23, 59, 59, 999)) < new Date(minDate);
+                            const isDisabled = (minDate && new Date(currentDayDate.setHours(23, 59, 59, 999)) < new Date(minDate)) ||
+                                (maxDate && new Date(viewDate.getFullYear(), viewDate.getMonth(), day, 0, 0, 0) > new Date(maxDate));
 
                             return (
                                 <button
