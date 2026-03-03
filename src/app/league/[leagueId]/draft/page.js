@@ -1477,8 +1477,42 @@ export default function DraftPage() {
                                         return (
                                             <React.Fragment key={player.player_id}>
                                                 <tr className="group hover:bg-slate-700/40 transition-colors border-b border-slate-800/50">
-                                                    {/* Action - rowSpan=2 for mobile */}
-                                                    <td className="p-2 align-middle text-center" rowSpan={2}>
+                                                    {/* Desktop Action - no rowSpan */}
+                                                    <td className="p-2 align-middle text-center hidden sm:table-cell">
+                                                        <div className="flex flex-col items-center gap-1">
+                                                            <button
+                                                                onClick={() => isQueued(player.player_id) ? handleRemoveFromQueue(queue.find(q => q.player_id === player.player_id)?.queue_id) : handleAddToQueue(player)}
+                                                                disabled={queuingIds.has(player.player_id)}
+                                                                className={`w-7 h-7 sm:w-8 sm:h-8 rounded flex items-center justify-center transition-colors text-xs ${isQueued(player.player_id) ? 'bg-purple-600 text-white' : 'bg-slate-700/50 text-slate-400 hover:bg-slate-600 hover:text-white'}`}
+                                                            >
+                                                                {queuingIds.has(player.player_id) ? (
+                                                                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                                                                ) : (
+                                                                    isQueued(player.player_id) ? '★' : '☆'
+                                                                )}
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handlePick(player.player_id)}
+                                                                disabled={!!pickingId || draftState?.status !== 'active' || draftState?.currentPick?.manager_id !== myManagerId || takenIds.has(String(player.player_id)) || (isForeigner && foreignerLimit !== null && foreignerCount >= foreignerLimit)}
+                                                                className={`px-2 sm:px-4 py-1 sm:py-1.5 rounded-[4px] text-[10px] sm:text-xs font-bold shadow-md transition-all flex items-center gap-1
+                                                            ${draftState?.status === 'active' && draftState?.currentPick?.manager_id === myManagerId && !pickingId && !(isForeigner && foreignerLimit !== null && foreignerCount >= foreignerLimit)
+                                                                        ? 'bg-green-600 hover:bg-green-500 text-white hover:scale-105 active:scale-95'
+                                                                        : 'bg-slate-700/50 text-slate-600 cursor-not-allowed'
+                                                                    }`}
+                                                            >
+                                                                {pickingId === player.player_id && (
+                                                                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                                                                )}
+                                                                {pickingId === player.player_id ? '...'
+                                                                    : (isForeigner && foreignerLimit !== null && foreignerCount >= foreignerLimit)
+                                                                        ? 'LIMIT'
+                                                                        : 'DRAFT'
+                                                                }
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                    {/* Mobile Action - rowSpan=2 */}
+                                                    <td className="p-2 align-middle text-center sm:hidden" rowSpan={2}>
                                                         <div className="flex flex-col items-center gap-1">
                                                             <button
                                                                 onClick={() => isQueued(player.player_id) ? handleRemoveFromQueue(queue.find(q => q.player_id === player.player_id)?.queue_id) : handleAddToQueue(player)}
@@ -1566,7 +1600,7 @@ export default function DraftPage() {
                                                                     {playerRankings[player.player_id] && (
                                                                         <span className="text-[10px] font-bold text-cyan-400">#{playerRankings[player.player_id]}</span>
                                                                     )}
-                                                                    <span className="font-bold text-slate-200 text-sm whitespace-nowrap">{player.name}</span>
+                                                                    <span className="font-bold text-slate-200 text-sm flex-wrap">{player.name}</span>
                                                                     <span className="text-slate-400 text-xs">- {filterPositions(player)}</span>
                                                                     <span className={`px-1 py-0.5 rounded-[3px] text-[9px] font-bold border leading-none ${getTeamColor(player.team)}`}>
                                                                         {getTeamAbbr(player.team)}

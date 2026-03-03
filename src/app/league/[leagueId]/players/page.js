@@ -2012,8 +2012,12 @@ export default function PlayersPage() {
                   filteredPlayers.map((player, index) => (
                     <React.Fragment key={player.player_id}>
                       <tr className="hover:bg-purple-500/5 transition-colors group">
-                        {/* Action button (rowSpan=2, 置中) */}
-                        <td className="px-2 py-2 sm:py-4 align-middle text-center" rowSpan={2}>
+                        {/* 桌面版：Action button (無 rowSpan) */}
+                        <td className="px-4 py-4 align-middle text-center hidden sm:table-cell">
+                          {getPlayerActionButton(player)}
+                        </td>
+                        {/* 手機版：Action button (rowSpan=2, 置中) */}
+                        <td className="px-2 py-2 sm:py-4 align-middle text-center sm:hidden" rowSpan={2}>
                           {getPlayerActionButton(player)}
                         </td>
                         {/* 桌面版：Player info (單欄) */}
@@ -2040,7 +2044,7 @@ export default function PlayersPage() {
                                   <span className="text-xs font-bold text-cyan-400">#{playerRankings[player.player_id]}</span>
                                 )}
                                 <span
-                                  className="text-white font-semibold text-base group-hover:text-purple-300 transition-colors cursor-pointer whitespace-nowrap"
+                                  className="text-white font-semibold text-base group-hover:text-purple-300 transition-colors cursor-pointer flex-wrap"
                                   onClick={() => setSelectedPlayerModal(player)}
                                 >
                                   {player.name || 'Unknown'}

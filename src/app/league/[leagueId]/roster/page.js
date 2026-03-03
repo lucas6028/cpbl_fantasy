@@ -1076,7 +1076,22 @@ export default function RosterPage() {
                                 ) : batterRoster.map(player => (
                                     <React.Fragment key={player.id}>
                                         <tr className="hover:bg-purple-500/5 transition">
-                                            <td className="px-3 sm:px-6 py-2 sm:py-4 align-middle text-center" rowSpan={player.isEmpty ? 1 : 2}>
+                                            {/* 桌面版：Slot (無 rowSpan) */}
+                                            <td className="px-6 py-4 align-middle text-center hidden sm:table-cell">
+                                                <button
+                                                    onClick={() => handleSlotClick(player)}
+                                                    disabled={player.isEmpty || !isMoveAllowed(player)}
+                                                    className={`inline-block px-2 py-1 rounded text-xs font-bold w-12 text-center transition-transform active:scale-95 ${player.isEmpty ? 'bg-slate-800 text-slate-500 cursor-default' :
+                                                        !isMoveAllowed(player) ? 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-60' :
+                                                            ['BN', 'IL', 'NA'].includes(player.position)
+                                                                ? 'bg-slate-700 text-slate-300 hover:bg-slate-600 cursor-pointer shadow-sm'
+                                                                : 'bg-purple-600 text-white hover:bg-purple-500 cursor-pointer shadow-sm'
+                                                        }`}>
+                                                    {player.position}
+                                                </button>
+                                            </td>
+                                            {/* 手機版：Slot (有 rowSpan) */}
+                                            <td className="px-3 py-2 align-middle text-center sm:hidden" rowSpan={player.isEmpty ? 1 : 2}>
                                                 <button
                                                     onClick={() => handleSlotClick(player)}
                                                     disabled={player.isEmpty || !isMoveAllowed(player)}
@@ -1099,7 +1114,7 @@ export default function RosterPage() {
                                                             {getPlayerPhoto(player) && <img src={getPlayerPhoto(player)} alt={player.name} className="w-full h-full object-cover" onError={handleImageError} />}
                                                         </div>
                                                         <div>
-                                                            <div className="font-bold text-white text-lg flex items-center whitespace-nowrap">
+                                                            <div className="font-bold text-white text-lg flex items-center flex-wrap gap-x-2">
                                                                 <button
                                                                     onClick={() => setSelectedPlayerModal(player)}
                                                                     className="hover:text-purple-300 transition-colors cursor-pointer"
@@ -1281,7 +1296,22 @@ export default function RosterPage() {
                                 ) : pitcherRoster.map(player => (
                                     <React.Fragment key={player.id}>
                                         <tr className="hover:bg-purple-500/5 transition">
-                                            <td className="px-3 sm:px-6 py-2 sm:py-4 align-middle text-center" rowSpan={player.isEmpty ? 1 : 2}>
+                                            {/* 桌面版：Slot (無 rowSpan) */}
+                                            <td className="px-6 py-4 align-middle text-center hidden sm:table-cell">
+                                                <button
+                                                    onClick={() => handleSlotClick(player)}
+                                                    disabled={player.isEmpty || !isMoveAllowed(player)}
+                                                    className={`inline-block px-2 py-1 rounded text-xs font-bold w-12 text-center transition-transform active:scale-95 ${player.isEmpty ? 'bg-slate-800 text-slate-500 cursor-default' :
+                                                        !isMoveAllowed(player) ? 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-60' :
+                                                            ['BN', 'IL', 'NA'].includes(player.position)
+                                                                ? 'bg-slate-700 text-slate-300 hover:bg-slate-600 cursor-pointer shadow-sm'
+                                                                : 'bg-purple-600 text-white hover:bg-purple-500 cursor-pointer shadow-sm'
+                                                        }`}>
+                                                    {player.position}
+                                                </button>
+                                            </td>
+                                            {/* 手機版：Slot (有 rowSpan) */}
+                                            <td className="px-3 py-2 align-middle text-center sm:hidden" rowSpan={player.isEmpty ? 1 : 2}>
                                                 <button
                                                     onClick={() => handleSlotClick(player)}
                                                     disabled={player.isEmpty || !isMoveAllowed(player)}
@@ -1304,7 +1334,7 @@ export default function RosterPage() {
                                                             {getPlayerPhoto(player) && <img src={getPlayerPhoto(player)} alt={player.name} className="w-full h-full object-cover" onError={handleImageError} />}
                                                         </div>
                                                         <div>
-                                                            <div className="font-bold text-white text-lg flex items-center whitespace-nowrap">
+                                                            <div className="font-bold text-white text-lg flex items-center flex-wrap gap-x-2">
                                                                 <button
                                                                     onClick={() => setSelectedPlayerModal(player)}
                                                                     className="hover:text-purple-300 transition-colors cursor-pointer"
