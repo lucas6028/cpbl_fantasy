@@ -783,7 +783,7 @@ export default function RosterPage() {
             {notification && (
                 <div className="fixed inset-0 z-[100020] flex items-center justify-center pointer-events-none">
                     <div className="pointer-events-auto animate-fade-in-down">
-                        <div className={`px-6 sm:px-8 py-4 sm:py-6 rounded-2xl shadow-2xl border-2 backdrop-blur-md flex flex-col gap-2 items-center min-w-0 sm:min-w-[400px] max-w-[90vw]
+                        <div className={`px-8 py-6 rounded-2xl shadow-2xl border-2 backdrop-blur-md flex flex-col gap-2 items-center min-w-[400px] max-w-[90vw] sm:max-w-none
                             ${notification.type === 'success'
                                 ? 'bg-green-900/90 border-green-500/70 text-white'
                                 : 'bg-red-900/90 border-red-500/70 text-white'}
@@ -798,7 +798,7 @@ export default function RosterPage() {
                                         <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
                                     </div>
                                 )}
-                                <span className="font-bold text-lg sm:text-2xl tracking-wide">{notification.message}</span>
+                                <span className="font-bold text-2xl tracking-wide">{notification.message}</span>
                             </div>
                             {notification.details && notification.details.length > 0 && (
                                 <div className="mt-3 space-y-2 w-full border-t border-white/20 pt-3">
@@ -1059,7 +1059,7 @@ export default function RosterPage() {
                             <thead className="bg-purple-900/40 border-b border-purple-500/30">
                                 <tr>
                                     <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-purple-200 w-16 sm:w-24">Slot</th>
-                                    <th className="px-3 sm:px-6 py-3 sm:py-4 min-w-[180px] sm:min-w-0 hidden sm:table-cell"></th>
+                                    <th className="px-6 py-4 text-left text-sm font-bold text-purple-200 hidden sm:table-cell">Player</th>
                                     {displayBatterCats.map(stat => {
                                         const isForced = !batterStatCategories.includes(stat);
                                         return (
@@ -1090,7 +1090,7 @@ export default function RosterPage() {
                                                 </button>
                                             </td>
                                             {/* 桌面版：Player info (單欄) */}
-                                            <td className="px-3 sm:px-6 py-2 sm:py-4 hidden sm:table-cell">
+                                            <td className="px-6 py-4 hidden sm:table-cell">
                                                 {player.isEmpty ? (
                                                     <div className="flex items-center gap-4 text-slate-500 font-bold italic">Empty</div>
                                                 ) : (
@@ -1222,7 +1222,7 @@ export default function RosterPage() {
                                             {displayBatterCats.map(stat => {
                                                 const isForced = !batterStatCategories.includes(stat);
                                                 return (
-                                                    <td key={stat} className={`px-2 sm:px-4 py-2 sm:py-4 text-center font-mono text-xs sm:text-sm hidden sm:table-cell ${isForced ? 'text-slate-500' : 'text-purple-100'}`}>
+                                                    <td key={stat} className={`px-4 py-4 text-center font-mono hidden sm:table-cell ${isForced ? 'text-slate-500' : 'text-purple-100'}`}>
                                                         {formatStat(getPlayerStat(player.player_id, stat))}
                                                     </td>
                                                 );
@@ -1264,7 +1264,7 @@ export default function RosterPage() {
                             <thead className="bg-purple-900/40 border-b border-purple-500/30">
                                 <tr>
                                     <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-purple-200 w-16 sm:w-24">Slot</th>
-                                    <th className="px-3 sm:px-6 py-3 sm:py-4 min-w-[180px] sm:min-w-0 hidden sm:table-cell"></th>
+                                    <th className="px-6 py-4 text-left text-sm font-bold text-purple-200 hidden sm:table-cell">Player</th>
                                     {displayPitcherCats.map(stat => {
                                         const isForced = !pitcherStatCategories.includes(stat);
                                         return (
@@ -1295,7 +1295,7 @@ export default function RosterPage() {
                                                 </button>
                                             </td>
                                             {/* 桌面版：Player info (單欄) */}
-                                            <td className="px-3 sm:px-6 py-2 sm:py-4 hidden sm:table-cell">
+                                            <td className="px-6 py-4 hidden sm:table-cell">
                                                 {player.isEmpty ? (
                                                     <div className="flex items-center gap-4 text-slate-500 font-bold italic">Empty</div>
                                                 ) : (
@@ -1427,7 +1427,7 @@ export default function RosterPage() {
                                             {displayPitcherCats.map(stat => {
                                                 const isForced = !pitcherStatCategories.includes(stat);
                                                 return (
-                                                    <td key={stat} className={`px-2 sm:px-4 py-2 sm:py-4 text-center font-mono text-xs sm:text-sm hidden sm:table-cell ${isForced ? 'text-slate-500' : 'text-purple-100'}`}>
+                                                    <td key={stat} className={`px-4 py-4 text-center font-mono hidden sm:table-cell ${isForced ? 'text-slate-500' : 'text-purple-100'}`}>
                                                         {formatStat(getPlayerStat(player.player_id, stat))}
                                                     </td>
                                                 );

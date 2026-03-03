@@ -1924,7 +1924,7 @@ export default function PlayersPage() {
               <thead className="bg-slate-900/60 border-b border-purple-500/20">
                 <tr>
                   <th className="px-2 py-4 w-12"></th>
-                  <th className="px-6 py-4 min-w-[180px] sm:min-w-0 hidden sm:table-cell"></th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-purple-300 hidden sm:table-cell">Name</th>
                   <th
                     className="px-2 sm:px-4 py-3 sm:py-4 text-center text-xs sm:text-sm font-bold text-purple-300 cursor-pointer hover:text-white transition-colors group select-none"
                     onClick={() => handleSort('rank')}
@@ -2017,7 +2017,7 @@ export default function PlayersPage() {
                           {getPlayerActionButton(player)}
                         </td>
                         {/* 桌面版：Player info (單欄) */}
-                        <td className="px-3 sm:px-6 py-2 sm:py-4 hidden sm:table-cell">
+                        <td className="px-6 py-4 hidden sm:table-cell">
                           <div className="flex items-center gap-3">
                             <img
                               src={getPlayerPhoto(player)}
@@ -2206,10 +2206,10 @@ export default function PlayersPage() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-2 sm:px-4 py-2 sm:py-4 text-center font-mono text-xs sm:text-sm text-cyan-300 hidden sm:table-cell">
+                        <td className="px-4 py-4 text-center font-mono text-cyan-300 hidden sm:table-cell">
                           {playerRankings[player.player_id] || '-'}
                         </td>
-                        <td className="px-2 sm:px-4 py-2 sm:py-4 text-center font-mono text-xs sm:text-sm text-cyan-300 hidden sm:table-cell">
+                        <td className="px-4 py-4 text-center font-mono text-cyan-300 hidden sm:table-cell">
                           {player.roster_percentage ?? 0}%
                         </td>
                         {/* 桌面版：統計欄位 */}
@@ -2218,7 +2218,7 @@ export default function PlayersPage() {
                           const statAbbr = getStatAbbr(stat).toLowerCase();
                           const rank = !isForced && cpblStatRankings[String(player.player_id)]?.[statAbbr];
                           return (
-                            <td key={stat} className={`px-2 sm:px-4 py-2 sm:py-4 text-center font-mono text-xs sm:text-sm relative hidden sm:table-cell ${isForced ? 'text-slate-500' : 'text-purple-100'}`}>
+                            <td key={stat} className={`px-4 py-4 text-center font-mono relative hidden sm:table-cell ${isForced ? 'text-slate-500' : 'text-purple-100'}`}>
                               <div className="w-full text-center">{getPlayerStat(player.player_id, stat)}</div>
                               {rank && rank <= 15 && (
                                 <div className="absolute left-0 right-0 bottom-1.5 text-[11px] font-black text-amber-500 font-sans tracking-wide leading-none">{getOrdinal(rank)}</div>
@@ -2231,7 +2231,7 @@ export default function PlayersPage() {
                           const statAbbr = getStatAbbr(stat).toLowerCase();
                           const rank = !isForced && cpblStatRankings[String(player.player_id)]?.[statAbbr];
                           return (
-                            <td key={stat} className={`px-2 sm:px-4 py-2 sm:py-4 text-center font-mono text-xs sm:text-sm relative hidden sm:table-cell ${isForced ? 'text-slate-500' : 'text-purple-100'}`}>
+                            <td key={stat} className={`px-4 py-4 text-center font-mono relative hidden sm:table-cell ${isForced ? 'text-slate-500' : 'text-purple-100'}`}>
                               <div className="w-full text-center">{getPlayerStat(player.player_id, stat)}</div>
                               {rank && rank <= 15 && (
                                 <div className="absolute left-0 right-0 bottom-1.5 text-[11px] font-black text-amber-500 font-sans tracking-wide leading-none">{getOrdinal(rank)}</div>
