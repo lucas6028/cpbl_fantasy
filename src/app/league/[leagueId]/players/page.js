@@ -1787,120 +1787,87 @@ export default function PlayersPage() {
           </div>
 
           {/* Filters */}
-          <div className="bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl shadow-lg p-3 sm:p-6">
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2 sm:gap-4">
-              {/* Search */}
-              <div>
-                <label className="block text-xs sm:text-sm font-medium text-white mb-1 sm:mb-2">
-                  Search
-                </label>
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search player name or alias"
-                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 bg-slate-800/60 border border-purple-500/30 rounded-md text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                />
-              </div>
+          <div className="bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl shadow-lg p-3 sm:p-6 space-y-3">
+            {/* Search - full width on top */}
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="🔍 Search player name or alias"
+              className="w-full px-3 py-2 bg-slate-800/60 border border-purple-500/30 rounded-md text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            />
+
+            {/* Filters - horizontal scrollable row */}
+            <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
 
 
 
-              {/* Identity */}
-              <div>
-                <label className="block text-xs sm:text-sm font-medium text-white mb-1 sm:mb-2">
-                  Identity
-                </label>
-                <select
-                  value={filterIdentity}
-                  onChange={(e) => setFilterIdentity(e.target.value)}
-                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 bg-slate-800/60 border border-purple-500/30 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                >
-                  <option value="all">All</option>
-                  <option value="local">Local</option>
-                  <option value="foreigner">Foreigner</option>
-                </select>
-              </div>
+              <select
+                value={filterIdentity}
+                onChange={(e) => setFilterIdentity(e.target.value)}
+                className="flex-shrink-0 px-2 py-1.5 bg-slate-800/60 border border-purple-500/30 rounded-md text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+                <option value="all">All</option>
+                <option value="local">Local</option>
+                <option value="foreigner">Foreigner</option>
+              </select>
 
-              {/* Team Filter */}
-              <div>
-                <label className="block text-xs sm:text-sm font-medium text-white mb-1 sm:mb-2">
-                  Team
-                </label>
-                <select
-                  value={filterTeam}
-                  onChange={(e) => setFilterTeam(e.target.value)}
-                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 bg-slate-800/60 border border-purple-500/30 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                >
-                  <option value="all">All Teams</option>
-                  <option value="統一獅">統一獅</option>
-                  <option value="富邦悍將">富邦悍將</option>
-                  <option value="樂天桃猿">樂天桃猿</option>
-                  <option value="中信兄弟">中信兄弟</option>
-                  <option value="味全龍">味全龍</option>
-                  <option value="台鋼雄鷹">台鋼雄鷹</option>
-                </select>
-              </div>
+              <select
+                value={filterTeam}
+                onChange={(e) => setFilterTeam(e.target.value)}
+                className="flex-shrink-0 px-2 py-1.5 bg-slate-800/60 border border-purple-500/30 rounded-md text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+                <option value="all">All Teams</option>
+                <option value="統一獅">統一獅</option>
+                <option value="富邦悍將">富邦悍將</option>
+                <option value="樂天桃猿">樂天桃猿</option>
+                <option value="中信兄弟">中信兄弟</option>
+                <option value="味全龍">味全龍</option>
+                <option value="台鋼雄鷹">台鋼雄鷹</option>
+              </select>
 
-              {/* Position Filter */}
-              <div>
-                <label className="block text-xs sm:text-sm font-medium text-white mb-1 sm:mb-2">
-                  Position
-                </label>
-                <select
-                  value={filterPosition}
-                  onChange={(e) => setFilterPosition(e.target.value)}
-                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 bg-slate-800/60 border border-purple-500/30 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                >
-                  <option value="all">All Positions</option>
-                  {(filterType === 'batter' ? batterPositionOrder : pitcherPositionOrder)
-                    .filter(pos => rosterPositions[pos] && rosterPositions[pos] > 0 && !['BN', 'NA'].includes(pos))
-                    .map(pos => (
-                      <option key={pos} value={pos}>{pos}</option>
-                    ))
-                  }
-                </select>
-              </div>
+              <select
+                value={filterPosition}
+                onChange={(e) => setFilterPosition(e.target.value)}
+                className="flex-shrink-0 px-2 py-1.5 bg-slate-800/60 border border-purple-500/30 rounded-md text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+                <option value="all">All Positions</option>
+                {(filterType === 'batter' ? batterPositionOrder : pitcherPositionOrder)
+                  .filter(pos => rosterPositions[pos] && rosterPositions[pos] > 0 && !['BN', 'NA'].includes(pos))
+                  .map(pos => (
+                    <option key={pos} value={pos}>{pos}</option>
+                  ))
+                }
+              </select>
 
-              {/* Ownership Filter */}
-              <div>
-                <label className="block text-xs sm:text-sm font-medium text-white mb-1 sm:mb-2">
-                  Status
-                </label>
-                <select
-                  value={filterOwnership}
-                  onChange={(e) => setFilterOwnership(e.target.value)}
-                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 bg-slate-800/60 border border-purple-500/30 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                >
-                  <option value="all">All Players</option>
-                  <option value="market">Market</option>
-                  <option value="available">Free Agents</option>
-                  <option value="myteam">My Team</option>
-                  <option value="watched">★ Watched</option>
-                </select>
-              </div>
+              <select
+                value={filterOwnership}
+                onChange={(e) => setFilterOwnership(e.target.value)}
+                className="flex-shrink-0 px-2 py-1.5 bg-slate-800/60 border border-purple-500/30 rounded-md text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+                <option value="all">All Players</option>
+                <option value="market">Market</option>
+                <option value="available">Free Agents</option>
+                <option value="myteam">My Team</option>
+                <option value="watched">★ Watched</option>
+              </select>
 
-              {/* Time Window */}
-              <div>
-                <label className="block text-xs sm:text-sm font-medium text-white mb-1 sm:mb-2">
-                  Stats Period
-                </label>
-                <select
-                  value={timeWindow || ''}
-                  onChange={(e) => setTimeWindow(e.target.value)}
-                  disabled={!timeWindow}
-                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 bg-slate-800/60 border border-purple-500/30 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50"
-                >
-                  {!timeWindow && <option value="">Loading...</option>}
-                  <option value="Today">Today</option>
-                  <option value="Yesterday">Yesterday</option>
-                  <option value="Last 7 Days">Last 7 Days</option>
-                  <option value="Last 14 Days">Last 14 Days</option>
-                  <option value="Last 30 Days">Last 30 Days</option>
-                  <option value="2026 Season">2026 Season</option>
-                  <option value="2026 Spring Training">2026 Spring Training</option>
-                  <option value="2025 Season">2025 Season</option>
-                </select>
-              </div>
+              <select
+                value={timeWindow || ''}
+                onChange={(e) => setTimeWindow(e.target.value)}
+                disabled={!timeWindow}
+                className="flex-shrink-0 px-2 py-1.5 bg-slate-800/60 border border-purple-500/30 rounded-md text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50"
+              >
+                {!timeWindow && <option value="">Loading...</option>}
+                <option value="Today">Today</option>
+                <option value="Yesterday">Yesterday</option>
+                <option value="Last 7 Days">Last 7 Days</option>
+                <option value="Last 14 Days">Last 14 Days</option>
+                <option value="Last 30 Days">Last 30 Days</option>
+                <option value="2026 Season">2026 Season</option>
+                <option value="2026 Spring Training">2026 Spring Training</option>
+                <option value="2025 Season">2025 Season</option>
+              </select>
             </div>
           </div>
         </div>
