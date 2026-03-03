@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import LegendModal from '../../../../components/LegendModal';
 import LeagueChat from '../../../../components/LeagueChat';
@@ -1278,9 +1278,32 @@ export default function DraftPage() {
                 </div>
             </div>
 
-            {/* Main Tab Selector */}
+            {/* Main Tab Selector - MOBILE: 6 tabs, scrollable */}
             <div className="flex justify-between items-end mb-3 border-b-2 border-slate-700">
-                <div className="flex gap-2">
+                {/* Mobile tabs */}
+                <div className="flex gap-1 overflow-x-auto scrollbar-hide lg:hidden" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                    {[
+                        { key: 'players', label: 'Players' },
+                        { key: 'roster', label: 'My Roster' },
+                        { key: 'queue', label: 'Queue' },
+                        { key: 'league_rosters', label: 'L.Rosters' },
+                        { key: 'picks', label: 'Picks' },
+                        { key: 'chat', label: 'Chat' },
+                    ].map(tab => (
+                        <button
+                            key={tab.key}
+                            onClick={() => setMainTab(tab.key)}
+                            className={`px-3 py-2 text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap flex-shrink-0 ${mainTab === tab.key
+                                ? 'text-white border-b-2 border-purple-500 bg-slate-800/60'
+                                : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/30'
+                                } rounded-t-md`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+                {/* Desktop tabs */}
+                <div className="hidden lg:flex gap-2">
                     <button
                         onClick={() => setMainTab('players')}
                         className={`px-4 py-2 text-xs md:text-sm font-bold uppercase tracking-widest transition-all ${mainTab === 'players'
@@ -1420,14 +1443,15 @@ export default function DraftPage() {
                             <table className="w-full text-left border-collapse">
                                 <thead className="bg-slate-900/95 sticky top-0 z-10 text-[10px] text-slate-400 uppercase tracking-wider font-semibold shadow-md">
                                     <tr>
-                                        <th className="p-2 border-b border-slate-700 min-w-[50px] text-center cursor-pointer hover:text-white transition-colors" onClick={() => handleSort('rank')}>
+                                        <th className="p-2 border-b border-slate-700 w-12"></th>
+                                        <th className="p-2 border-b border-slate-700 min-w-[50px] text-center cursor-pointer hover:text-white transition-colors hidden sm:table-cell" onClick={() => handleSort('rank')}>
                                             <div className="flex items-center justify-center gap-1">
                                                 Rank
                                                 {sortConfig.key === 'rank' && (<span>{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>)}
                                             </div>
                                         </th>
-                                        <th className="p-2 border-b border-slate-700 min-w-[250px]">Player</th>
-                                        <th className="p-2 border-b border-slate-700 min-w-[60px] text-center cursor-pointer hover:text-white transition-colors" onClick={() => handleSort('roster_percentage')}>
+                                        <th className="p-2 border-b border-slate-700 min-w-[250px] hidden sm:table-cell">Player</th>
+                                        <th className="p-2 border-b border-slate-700 min-w-[60px] text-center cursor-pointer hover:text-white transition-colors hidden sm:table-cell" onClick={() => handleSort('roster_percentage')}>
                                             <div className="flex items-center justify-center gap-1">
                                                 Roster%
                                                 {sortConfig.key === 'roster_percentage' && (<span>{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>)}
@@ -1443,7 +1467,6 @@ export default function DraftPage() {
                                                 </div>
                                             </th>
                                         ))}
-                                        <th className="p-2 border-b border-slate-700 text-right sticky right-0 bg-slate-900 shadow-l">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1452,102 +1475,155 @@ export default function DraftPage() {
                                         const showOriginalName = player.original_name && player.original_name !== player.name;
 
                                         return (
-                                            <tr key={player.player_id} className="group hover:bg-slate-700/40 transition-colors border-b border-slate-800/50">
-                                                {/* Rank Column */}
-                                                <td className="p-2 text-center text-sm font-bold text-slate-400">
-                                                    {playerRankings[player.player_id] || '-'}
-                                                </td>
-
-                                                {/* Player Info Combined */}
-                                                <td className="p-2">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden border border-slate-600 shadow-sm relative shrink-0">
-                                                            <img
-                                                                src={getPlayerPhoto(player)}
-                                                                onError={(e) => handleImageError(e, player)}
-                                                                alt={player.name}
-                                                                className="w-full h-full object-cover"
-                                                            />
-                                                        </div>
-                                                        <div className="flex flex-col">
-                                                            <div className="flex items-baseline gap-2">
-                                                                <span className="font-bold text-slate-200 text-base">{player.name}</span>
-                                                                <span className="text-slate-400 text-sm">- {filterPositions(player)}</span>
-                                                                <span className={`px-1.5 py-0.5 rounded-[4px] text-[10px] font-bold border leading-none ${getTeamColor(player.team)}`}>
-                                                                    {getTeamAbbr(player.team)}
-                                                                </span>
-                                                            </div>
-                                                            <div className="flex items-center gap-2 mt-0.5">
-                                                                {showOriginalName && (
-                                                                    <span className="text-[10px] text-slate-500">{player.original_name}</span>
+                                            <React.Fragment key={player.player_id}>
+                                                <tr className="group hover:bg-slate-700/40 transition-colors border-b border-slate-800/50">
+                                                    {/* Action - rowSpan=2 for mobile */}
+                                                    <td className="p-2 align-middle text-center" rowSpan={2}>
+                                                        <div className="flex flex-col items-center gap-1">
+                                                            <button
+                                                                onClick={() => isQueued(player.player_id) ? handleRemoveFromQueue(queue.find(q => q.player_id === player.player_id)?.queue_id) : handleAddToQueue(player)}
+                                                                disabled={queuingIds.has(player.player_id)}
+                                                                className={`w-7 h-7 sm:w-8 sm:h-8 rounded flex items-center justify-center transition-colors text-xs ${isQueued(player.player_id) ? 'bg-purple-600 text-white' : 'bg-slate-700/50 text-slate-400 hover:bg-slate-600 hover:text-white'}`}
+                                                            >
+                                                                {queuingIds.has(player.player_id) ? (
+                                                                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                                                                ) : (
+                                                                    isQueued(player.player_id) ? '★' : '☆'
                                                                 )}
-                                                                <div className="flex gap-1">
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handlePick(player.player_id)}
+                                                                disabled={!!pickingId || draftState?.status !== 'active' || draftState?.currentPick?.manager_id !== myManagerId || takenIds.has(String(player.player_id)) || (isForeigner && foreignerLimit !== null && foreignerCount >= foreignerLimit)}
+                                                                className={`px-2 sm:px-4 py-1 sm:py-1.5 rounded-[4px] text-[10px] sm:text-xs font-bold shadow-md transition-all flex items-center gap-1
+                                                            ${draftState?.status === 'active' && draftState?.currentPick?.manager_id === myManagerId && !pickingId && !(isForeigner && foreignerLimit !== null && foreignerCount >= foreignerLimit)
+                                                                        ? 'bg-green-600 hover:bg-green-500 text-white hover:scale-105 active:scale-95'
+                                                                        : 'bg-slate-700/50 text-slate-600 cursor-not-allowed'
+                                                                    }`}
+                                                            >
+                                                                {pickingId === player.player_id && (
+                                                                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                                                                )}
+                                                                {pickingId === player.player_id ? '...'
+                                                                    : (isForeigner && foreignerLimit !== null && foreignerCount >= foreignerLimit)
+                                                                        ? 'LIMIT'
+                                                                        : 'DRAFT'
+                                                                }
+                                                            </button>
+                                                        </div>
+                                                    </td>
+
+                                                    {/* Desktop: Rank */}
+                                                    <td className="p-2 text-center text-sm font-bold text-slate-400 hidden sm:table-cell">
+                                                        {playerRankings[player.player_id] || '-'}
+                                                    </td>
+
+                                                    {/* Desktop: Player Info */}
+                                                    <td className="p-2 hidden sm:table-cell">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden border border-slate-600 shadow-sm relative shrink-0">
+                                                                <img
+                                                                    src={getPlayerPhoto(player)}
+                                                                    onError={(e) => handleImageError(e, player)}
+                                                                    alt={player.name}
+                                                                    className="w-full h-full object-cover"
+                                                                />
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <div className="flex items-baseline gap-2">
+                                                                    <span className="font-bold text-slate-200 text-base">{player.name}</span>
+                                                                    <span className="text-slate-400 text-sm">- {filterPositions(player)}</span>
+                                                                    <span className={`px-1.5 py-0.5 rounded-[4px] text-[10px] font-bold border leading-none ${getTeamColor(player.team)}`}>
+                                                                        {getTeamAbbr(player.team)}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex items-center gap-2 mt-0.5">
+                                                                    {showOriginalName && (
+                                                                        <span className="text-[10px] text-slate-500">{player.original_name}</span>
+                                                                    )}
+                                                                    <div className="flex gap-1">
+                                                                        {isForeigner && (
+                                                                            <span className="text-[9px] font-bold bg-purple-900/50 text-purple-300 px-1 rounded border border-purple-500/30">F</span>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+
+                                                    {/* Mobile: Player Info spanning all stat columns */}
+                                                    <td className="px-3 py-2 sm:hidden" colSpan={currentStatCats.length}>
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-8 h-8 rounded-full bg-slate-700 overflow-hidden border border-slate-600 shadow-sm relative shrink-0">
+                                                                <img
+                                                                    src={getPlayerPhoto(player)}
+                                                                    onError={(e) => handleImageError(e, player)}
+                                                                    alt={player.name}
+                                                                    className="w-full h-full object-cover"
+                                                                />
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <div className="flex items-center gap-1 flex-wrap">
+                                                                    {playerRankings[player.player_id] && (
+                                                                        <span className="text-[10px] font-bold text-cyan-400">#{playerRankings[player.player_id]}</span>
+                                                                    )}
+                                                                    <span className="font-bold text-slate-200 text-sm whitespace-nowrap">{player.name}</span>
+                                                                    <span className="text-slate-400 text-xs">- {filterPositions(player)}</span>
+                                                                    <span className={`px-1 py-0.5 rounded-[3px] text-[9px] font-bold border leading-none ${getTeamColor(player.team)}`}>
+                                                                        {getTeamAbbr(player.team)}
+                                                                    </span>
                                                                     {isForeigner && (
                                                                         <span className="text-[9px] font-bold bg-purple-900/50 text-purple-300 px-1 rounded border border-purple-500/30">F</span>
                                                                     )}
                                                                 </div>
+                                                                {showOriginalName && (
+                                                                    <span className="text-[10px] text-slate-500">{player.original_name}</span>
+                                                                )}
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                </td>
+                                                    </td>
 
-                                                {/* Rostered % */}
-                                                <td className="p-2 text-center text-sm font-bold text-slate-400">
-                                                    {player.roster_percentage ?? 0}%
-                                                </td>
+                                                    {/* Desktop: Rostered % */}
+                                                    <td className="p-2 text-center text-sm font-bold text-slate-400 hidden sm:table-cell">
+                                                        {player.roster_percentage ?? 0}%
+                                                    </td>
 
-                                                {/* Stats */}
-                                                {currentStatCats.map(cat => {
-                                                    const val = getPlayerStat(player.player_id, cat);
-                                                    const isForced = !baseStatCats.includes(cat);
-                                                    const statAbbr = getStatAbbr(cat).toLowerCase();
-                                                    const rank = !isForced && cpblStatRankings[String(player.player_id)]?.[statAbbr];
+                                                    {/* Desktop: Stats */}
+                                                    {currentStatCats.map(cat => {
+                                                        const val = getPlayerStat(player.player_id, cat);
+                                                        const isForced = !baseStatCats.includes(cat);
+                                                        const statAbbr = getStatAbbr(cat).toLowerCase();
+                                                        const rank = !isForced && cpblStatRankings[String(player.player_id)]?.[statAbbr];
 
-                                                    return (
-                                                        <td key={cat} className={`p-2 relative text-center text-xs font-mono py-2 ${isForced ? 'text-slate-500' : 'text-slate-300'}`}>
-                                                            <div className="w-full text-center">{formatStat(val)}</div>
-                                                            {rank && rank <= 15 && (
-                                                                <div className="absolute left-0 right-0 bottom-0.5 text-[10px] sm:text-[11px] font-black text-amber-500 font-sans tracking-wide leading-none">{getOrdinal(rank)}</div>
-                                                            )}
-                                                        </td>
-                                                    );
-                                                })}
+                                                        return (
+                                                            <td key={cat} className={`p-2 relative text-center text-xs font-mono py-2 hidden sm:table-cell ${isForced ? 'text-slate-500' : 'text-slate-300'}`}>
+                                                                <div className="w-full text-center">{formatStat(val)}</div>
+                                                                {rank && rank <= 15 && (
+                                                                    <div className="absolute left-0 right-0 bottom-0.5 text-[11px] font-black text-amber-500 font-sans tracking-wide leading-none">{getOrdinal(rank)}</div>
+                                                                )}
+                                                            </td>
+                                                        );
+                                                    })}
+                                                </tr>
+                                                {/* Mobile: Stats Row */}
+                                                <tr className="sm:hidden border-b border-slate-700/50">
+                                                    {currentStatCats.map(cat => {
+                                                        const val = getPlayerStat(player.player_id, cat);
+                                                        const isForced = !baseStatCats.includes(cat);
+                                                        const statAbbr = getStatAbbr(cat).toLowerCase();
+                                                        const rank = !isForced && cpblStatRankings[String(player.player_id)]?.[statAbbr];
 
-                                                {/* Action */}
-                                                <td className="p-2 text-right sticky right-0 bg-slate-900/0 group-hover:bg-slate-800/0">
-                                                    <div className="flex items-center justify-end gap-1">
-                                                        <button
-                                                            onClick={() => isQueued(player.player_id) ? handleRemoveFromQueue(queue.find(q => q.player_id === player.player_id)?.queue_id) : handleAddToQueue(player)}
-                                                            disabled={queuingIds.has(player.player_id)}
-                                                            className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${isQueued(player.player_id) ? 'bg-purple-600 text-white' : 'bg-slate-700/50 text-slate-400 hover:bg-slate-600 hover:text-white'}`}
-                                                        >
-                                                            {queuingIds.has(player.player_id) ? (
-                                                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
-                                                            ) : (
-                                                                isQueued(player.player_id) ? '★' : '☆'
-                                                            )}
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handlePick(player.player_id)}
-                                                            disabled={!!pickingId || draftState?.status !== 'active' || draftState?.currentPick?.manager_id !== myManagerId || takenIds.has(String(player.player_id)) || (isForeigner && foreignerLimit !== null && foreignerCount >= foreignerLimit)}
-                                                            className={`px-4 py-1.5 rounded-[4px] text-xs font-bold shadow-md transition-all flex items-center gap-2
-                                                            ${draftState?.status === 'active' && draftState?.currentPick?.manager_id === myManagerId && !pickingId && !(isForeigner && foreignerLimit !== null && foreignerCount >= foreignerLimit)
-                                                                    ? 'bg-green-600 hover:bg-green-500 text-white hover:scale-105 active:scale-95'
-                                                                    : 'bg-slate-700/50 text-slate-600 cursor-not-allowed'
-                                                                }`}
-                                                        >
-                                                            {pickingId === player.player_id && (
-                                                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
-                                                            )}
-                                                            {pickingId === player.player_id ? 'DRAFTING...'
-                                                                : (isForeigner && foreignerLimit !== null && foreignerCount >= foreignerLimit)
-                                                                    ? 'LIMIT'
-                                                                    : 'DRAFT'
-                                                            }
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
+                                                        return (
+                                                            <td key={cat} className={`px-1 py-1 relative text-center text-[10px] font-mono ${isForced ? 'text-slate-500' : 'text-slate-300'}`}>
+                                                                <div className="text-[8px] text-slate-600 leading-none mb-0.5">{getStatAbbr(cat)}</div>
+                                                                <div>{formatStat(val)}</div>
+                                                                {rank && rank <= 15 && (
+                                                                    <div className="text-[9px] font-black text-amber-500 font-sans leading-none">{getOrdinal(rank)}</div>
+                                                                )}
+                                                            </td>
+                                                        );
+                                                    })}
+                                                </tr>
+                                            </React.Fragment>
                                         );
                                     })}
                                 </tbody>
@@ -1555,8 +1631,8 @@ export default function DraftPage() {
                         </div>
                     </div>
 
-                    {/* Right: Info Panels */}
-                    <div className="flex-1 flex flex-col gap-4 min-w-[300px] lg:max-w-[350px]">
+                    {/* Right: Info Panels (desktop only) */}
+                    <div className="hidden lg:flex flex-1 flex-col gap-4 min-w-[300px] lg:max-w-[350px]">
                         {/* Draft History / Future Sidebar */}
                         <div className={`bg-slate-800/40 rounded-xl border border-slate-700 flex flex-col backdrop-blur-sm shadow-xl transition-all duration-300 overflow-hidden ${isSidebarHistoryOpen ? (isSidebarTeamOpen ? 'h-1/2' : 'flex-1') : 'h-[42px] shrink-0 flex-none'
                             }`}>
@@ -2522,6 +2598,104 @@ export default function DraftPage() {
                     </div>
                 )
             }
+
+            {/* Mobile-only: Picks tab */}
+            {mainTab === 'picks' && (
+                <div className="lg:hidden flex-1 overflow-auto bg-slate-800/40 rounded-xl border border-slate-700 p-4 backdrop-blur-sm shadow-xl">
+                    <div className="flex gap-4 mb-3 border-b border-slate-700 pb-2">
+                        <button onClick={() => setSidebarTab('history')} className={`text-sm font-bold uppercase tracking-widest pb-1 border-b-2 transition-colors ${sidebarTab === 'history' ? 'text-white border-purple-500' : 'text-slate-500 border-transparent hover:text-slate-300'}`}>
+                            Recent
+                        </button>
+                        <button onClick={() => setSidebarTab('future')} className={`text-sm font-bold uppercase tracking-widest pb-1 border-b-2 transition-colors ${sidebarTab === 'future' ? 'text-white border-purple-500' : 'text-slate-500 border-transparent hover:text-slate-300'}`}>
+                            Upcoming
+                        </button>
+                    </div>
+                    <div className="space-y-1">
+                        {sidebarTab === 'history' ? (
+                            <>
+                                {recentPicks.length === 0 && <div className="text-slate-500 text-sm text-center py-4">No picks yet</div>}
+                                {recentPicks.map(pick => (
+                                    <div key={pick.pick_id} className="bg-slate-900/80 p-2 rounded-lg border border-slate-700 flex items-center gap-2">
+                                        <div className="flex flex-col items-center min-w-[30px]">
+                                            <div className="text-xs font-mono text-purple-400 font-bold bg-purple-900/20 px-1.5 py-0.5 rounded">
+                                                #{pick.pick_number}
+                                            </div>
+                                            <div className="text-[9px] text-slate-500 mt-0.5 max-w-[60px] truncate" title={getMemberNickname(pick.manager_id)}>
+                                                {getMemberNickname(pick.manager_id)}
+                                            </div>
+                                        </div>
+                                        <div className="w-8 h-8 rounded-full bg-slate-800 overflow-hidden border border-slate-600 shrink-0">
+                                            <img
+                                                src={getPlayerPhoto({ ...pick.player, player_id: pick.player_id })}
+                                                onError={(e) => handleImageError(e, { ...pick.player, player_id: pick.player_id })}
+                                                alt={pick.player?.name || 'Player'}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="text-sm font-bold text-slate-200 truncate flex items-center gap-1">
+                                                {playerRankings[pick.player_id] && (
+                                                    <span className="text-[10px] font-bold text-cyan-400 mr-1">#{playerRankings[pick.player_id]}</span>
+                                                )}
+                                                {pick.player?.name}
+                                                {(pick.player?.identity || pick.identity)?.toLowerCase() === 'foreigner' && (
+                                                    <span className="text-[9px] font-bold bg-purple-900/50 text-purple-300 px-1 rounded border border-purple-500/30">F</span>
+                                                )}
+                                            </div>
+                                            <div className="text-[10px] text-slate-500">{filterPositions(pick.player || {})}</div>
+                                        </div>
+                                        <span className={`text-[10px] px-1.5 py-0.5 rounded border ${getTeamColor(pick.player?.team)} shrink-0`}>
+                                            {getTeamAbbr(pick.player?.team)}
+                                        </span>
+                                    </div>
+                                ))}
+                            </>
+                        ) : (
+                            <>
+                                {upcomingPicks.length === 0 && <div className="text-slate-500 text-sm text-center py-4">No remaining picks</div>}
+                                {upcomingPicks.map(pick => (
+                                    <div key={pick.pick_id} className="bg-slate-800/50 p-2 rounded border border-slate-700/50 flex justify-between items-center">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-mono text-slate-400">Pick {pick.pick_number}</span>
+                                            {pick.manager_id === myManagerId ? (
+                                                <span className="text-sm font-bold text-green-400">You</span>
+                                            ) : (
+                                                <span className="text-sm font-bold text-slate-300">{getMemberNickname(pick.manager_id)}</span>
+                                            )}
+                                        </div>
+                                        <div className="text-[10px] text-slate-500">Rd {pick.round_number}</div>
+                                    </div>
+                                ))}
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Mobile-only: Queue tab */}
+            {mainTab === 'queue' && (
+                <div className="lg:hidden flex-1 overflow-auto bg-slate-800/40 rounded-xl border border-slate-700 p-4 backdrop-blur-sm shadow-xl">
+                    <h3 className="text-lg font-bold text-purple-300 mb-3">Draft Queue</h3>
+                    {queue.length === 0 && <div className="text-slate-500 text-sm text-center py-4 text-xs italic">
+                        Players in queue will be auto-drafted if time expires.<br />
+                        Drag & drop or use arrows to reorder.
+                    </div>}
+                    {queue.map((item, i) => renderQueueItem(item, i))}
+                </div>
+            )}
+
+            {/* Mobile-only: Chat tab */}
+            {mainTab === 'chat' && (
+                <div className="lg:hidden flex-1 overflow-hidden">
+                    <LeagueChat
+                        leagueId={leagueId}
+                        managerId={myManagerId}
+                        isCompact={true}
+                        pollInterval={5000}
+                        enablePolling={draftState?.status !== 'complete'}
+                    />
+                </div>
+            )}
 
             <style jsx global>{`
                 .custom-scrollbar::-webkit-scrollbar {
