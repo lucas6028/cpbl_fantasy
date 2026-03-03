@@ -2013,7 +2013,8 @@ export default function DraftPage() {
                             return (
                                 <div className="mb-6" key={title}>
                                     <h3 className="text-md font-bold text-purple-300 mb-2 border-l-4 border-purple-500 pl-2">{title}</h3>
-                                    <div className="bg-slate-900/40 rounded-lg border border-slate-700/50 overflow-hidden">
+                                    <div className="bg-slate-900/40 rounded-lg border border-slate-700/50 overflow-x-auto">
+                                        <div className="min-w-[600px]">
                                         {/* Header Row */}
                                         <div className="flex bg-slate-800/60 p-2 text-xs font-bold text-slate-400 border-b border-slate-700">
                                             <div className="w-12 text-center">Slot</div>
@@ -2131,6 +2132,7 @@ export default function DraftPage() {
                                                 </div>
                                             );
                                         })}
+                                        </div>
                                     </div>
                                 </div>
                             );
@@ -2141,7 +2143,8 @@ export default function DraftPage() {
                             return (
                                 <div className="mb-6" key="Bench">
                                     <h3 className="text-md font-bold text-slate-400 mb-2 border-l-4 border-slate-500 pl-2">Bench</h3>
-                                    <div className="bg-slate-900/40 rounded-lg border border-slate-700/50 overflow-hidden">
+                                    <div className="bg-slate-900/40 rounded-lg border border-slate-700/50 overflow-x-auto">
+                                        <div className="min-w-[600px]">
                                         {slots.map((slotKey) => {
                                             const slotLabel = slotKey.replace(/\d+$/, '');
                                             const isLeagueView = mainTab === 'league_rosters';
@@ -2239,6 +2242,7 @@ export default function DraftPage() {
                                                 </div>
                                             );
                                         })}
+                                        </div>
                                     </div>
                                 </div>
                             );
@@ -2388,7 +2392,8 @@ export default function DraftPage() {
                                         return (
                                             <div className="mb-6" key={title}>
                                                 <h3 className="text-md font-bold text-purple-300 mb-2 border-l-4 border-purple-500 pl-2">{title}</h3>
-                                                <div className="bg-slate-900/40 rounded-lg border border-slate-700/50 overflow-hidden">
+                                                <div className="bg-slate-900/40 rounded-lg border border-slate-700/50 overflow-x-auto">
+                                                    <div className="min-w-[600px]">
                                                     {/* Header Row */}
                                                     <div className="flex bg-slate-800/60 p-2 text-xs font-bold text-slate-400 border-b border-slate-700">
                                                         <div className="w-12 text-center">Slot</div>
@@ -2495,6 +2500,7 @@ export default function DraftPage() {
                                                             </div>
                                                         );
                                                     })}
+                                                    </div>
                                                 </div>
                                             </div>
                                         );
@@ -2505,7 +2511,8 @@ export default function DraftPage() {
                                         return (
                                             <div className="mb-6" key="Bench">
                                                 <h3 className="text-md font-bold text-slate-400 mb-2 border-l-4 border-slate-500 pl-2">Bench</h3>
-                                                <div className="bg-slate-900/40 rounded-lg border border-slate-700/50 overflow-hidden">
+                                                <div className="bg-slate-900/40 rounded-lg border border-slate-700/50 overflow-x-auto">
+                                                    <div className="min-w-[600px]">
                                                     {slots.map((slotKey) => {
                                                         const slotLabel = slotKey.replace(/\d+$/, '');
                                                         const isLeagueView = mainTab === 'league_rosters';
@@ -2594,6 +2601,7 @@ export default function DraftPage() {
                                                             </div>
                                                         );
                                                     })}
+                                                    </div>
                                                 </div>
                                             </div>
                                         );
