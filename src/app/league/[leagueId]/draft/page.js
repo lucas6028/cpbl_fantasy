@@ -1481,17 +1481,6 @@ export default function DraftPage() {
                                                     <td className="p-2 align-middle text-center hidden sm:table-cell">
                                                         <div className="flex flex-col items-center gap-1">
                                                             <button
-                                                                onClick={() => isQueued(player.player_id) ? handleRemoveFromQueue(queue.find(q => q.player_id === player.player_id)?.queue_id) : handleAddToQueue(player)}
-                                                                disabled={queuingIds.has(player.player_id)}
-                                                                className={`w-7 h-7 sm:w-8 sm:h-8 rounded flex items-center justify-center transition-colors text-xs ${isQueued(player.player_id) ? 'bg-purple-600 text-white' : 'bg-slate-700/50 text-slate-400 hover:bg-slate-600 hover:text-white'}`}
-                                                            >
-                                                                {queuingIds.has(player.player_id) ? (
-                                                                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
-                                                                ) : (
-                                                                    isQueued(player.player_id) ? '★' : '☆'
-                                                                )}
-                                                            </button>
-                                                            <button
                                                                 onClick={() => handlePick(player.player_id)}
                                                                 disabled={!!pickingId || draftState?.status !== 'active' || draftState?.currentPick?.manager_id !== myManagerId || takenIds.has(String(player.player_id)) || (isForeigner && foreignerLimit !== null && foreignerCount >= foreignerLimit)}
                                                                 className={`px-2 sm:px-4 py-1 sm:py-1.5 rounded-[4px] text-[10px] sm:text-xs font-bold shadow-md transition-all flex items-center gap-1
@@ -1514,17 +1503,6 @@ export default function DraftPage() {
                                                     {/* Mobile Action - rowSpan=2 */}
                                                     <td className="p-2 align-middle text-center sm:hidden" rowSpan={2}>
                                                         <div className="flex flex-col items-center gap-1">
-                                                            <button
-                                                                onClick={() => isQueued(player.player_id) ? handleRemoveFromQueue(queue.find(q => q.player_id === player.player_id)?.queue_id) : handleAddToQueue(player)}
-                                                                disabled={queuingIds.has(player.player_id)}
-                                                                className={`w-7 h-7 sm:w-8 sm:h-8 rounded flex items-center justify-center transition-colors text-xs ${isQueued(player.player_id) ? 'bg-purple-600 text-white' : 'bg-slate-700/50 text-slate-400 hover:bg-slate-600 hover:text-white'}`}
-                                                            >
-                                                                {queuingIds.has(player.player_id) ? (
-                                                                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
-                                                                ) : (
-                                                                    isQueued(player.player_id) ? '★' : '☆'
-                                                                )}
-                                                            </button>
                                                             <button
                                                                 onClick={() => handlePick(player.player_id)}
                                                                 disabled={!!pickingId || draftState?.status !== 'active' || draftState?.currentPick?.manager_id !== myManagerId || takenIds.has(String(player.player_id)) || (isForeigner && foreignerLimit !== null && foreignerCount >= foreignerLimit)}
@@ -1569,6 +1547,18 @@ export default function DraftPage() {
                                                                     <span className={`px-1.5 py-0.5 rounded-[4px] text-[10px] font-bold border leading-none ${getTeamColor(player.team)}`}>
                                                                         {getTeamAbbr(player.team)}
                                                                     </span>
+                                                                    <button
+                                                                        onClick={() => isQueued(player.player_id) ? handleRemoveFromQueue(queue.find(q => q.player_id === player.player_id)?.queue_id) : handleAddToQueue(player)}
+                                                                        disabled={queuingIds.has(player.player_id)}
+                                                                        className={`ml-1 w-6 h-6 rounded-full flex items-center justify-center transition-colors text-xs shrink-0 ${isQueued(player.player_id) ? 'bg-purple-600 text-white' : 'bg-slate-700/50 text-slate-400 hover:bg-slate-600 hover:text-amber-400'}`}
+                                                                        title={isQueued(player.player_id) ? "Remove from Queue" : "Add to Queue"}
+                                                                    >
+                                                                        {queuingIds.has(player.player_id) ? (
+                                                                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                                                                        ) : (
+                                                                            isQueued(player.player_id) ? '★' : '☆'
+                                                                        )}
+                                                                    </button>
                                                                 </div>
                                                                 <div className="flex items-center gap-2 mt-0.5">
                                                                     {showOriginalName && (
@@ -1608,6 +1598,17 @@ export default function DraftPage() {
                                                                     {isForeigner && (
                                                                         <span className="text-[9px] font-bold bg-purple-900/50 text-purple-300 px-1 rounded border border-purple-500/30">F</span>
                                                                     )}
+                                                                    <button
+                                                                        onClick={() => isQueued(player.player_id) ? handleRemoveFromQueue(queue.find(q => q.player_id === player.player_id)?.queue_id) : handleAddToQueue(player)}
+                                                                        disabled={queuingIds.has(player.player_id)}
+                                                                        className={`w-5 h-5 rounded-full flex items-center justify-center transition-colors text-[10px] shrink-0 ${isQueued(player.player_id) ? 'bg-purple-600 text-white' : 'bg-slate-700/50 text-slate-400 hover:bg-slate-600 hover:text-amber-400'}`}
+                                                                    >
+                                                                        {queuingIds.has(player.player_id) ? (
+                                                                            <div className="animate-spin rounded-full h-2 w-2 border-b-2 border-white"></div>
+                                                                        ) : (
+                                                                            isQueued(player.player_id) ? '★' : '☆'
+                                                                        )}
+                                                                    </button>
                                                                 </div>
                                                                 {showOriginalName && (
                                                                     <span className="text-[10px] text-slate-500">{player.original_name}</span>
