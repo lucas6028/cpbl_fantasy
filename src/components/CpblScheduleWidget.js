@@ -12,6 +12,7 @@ export default function CpblScheduleWidget() {
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [viewDate, setViewDate] = useState(new Date());
     const datePickerRef = useRef(null);
+    const datePickerPopupRef = useRef(null);
 
     const teamColors = {
         '統一獅': 'text-orange-400',
@@ -52,7 +53,12 @@ export default function CpblScheduleWidget() {
     // Close date picker when clicking outside (supports both mouse and touch)
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (datePickerRef.current && !datePickerRef.current.contains(event.target)) {
+            // Check if click is outside both the trigger button area and the popup
+            const isOutsideTrigger = datePickerRef.current && !datePickerRef.current.contains(event.target);
+            const isOutsidePopup = datePickerPopupRef.current && !datePickerPopupRef.current.contains(event.target);
+            
+            // Only close if click is outside both areas
+            if (isOutsideTrigger && (isOutsidePopup || !datePickerPopupRef.current)) {
                 setShowDatePicker(false);
             }
         };
@@ -144,13 +150,18 @@ export default function CpblScheduleWidget() {
                             className="fixed inset-0 z-[890] flex items-start justify-center pt-[20vh]" 
                             onClick={() => setShowDatePicker(false)}
                             onTouchEnd={(e) => {
-                                e.preventDefault();
-                                setShowDatePicker(false);
+                                // Only close if tapping the backdrop, not the popup content
+                                if (e.target === e.currentTarget) {
+                                    e.preventDefault();
+                                    setShowDatePicker(false);
+                                }
                             }}
                         >
                             <div 
-                                className="bg-slate-900 border border-purple-500/50 rounded-xl shadow-2xl p-4 w-[260px] max-w-[90vw] z-[900]" 
+                                ref={datePickerPopupRef}
+                                className="bg-slate-900 border border-purple-500/50 rounded-xl shadow-2xl p-4 w-[280px] max-w-[90vw] z-[900]" 
                                 onClick={(e) => e.stopPropagation()}
+                                onTouchStart={(e) => e.stopPropagation()}
                                 onTouchEnd={(e) => e.stopPropagation()}
                             >
                                 {/* Month Nav */}
