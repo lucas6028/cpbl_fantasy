@@ -43,6 +43,11 @@ export default function GuardLayout({ children }) {
       return;
     }
 
+    // Skip verification check for public pages to avoid issues with old/invalid cookies
+    if (isPublicPage) {
+      return;
+    }
+
     const checkVerificationStatus = () => {
       const cookie = document.cookie.split('; ').find(row => row.startsWith('user_id='));
       const uid = cookie?.split('=')[1];
