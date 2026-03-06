@@ -859,7 +859,7 @@ export default function LeaguePage() {
 
   if (showMatchups) {
     return (
-      <div className="p-3 sm:p-4 md:p-8 min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col lg:flex-row gap-4 sm:gap-8">
+      <div className="p-3 sm:p-4 md:p-8 min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col lg:flex-row lg:items-start gap-4 sm:gap-8">
         <div className="w-full lg:w-[70%] space-y-4 sm:space-y-8">
           {/* Header with League Name */}
           <div className="bg-gradient-to-br from-purple-900/50 to-blue-900/50 backdrop-blur-md p-3 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/10 shadow-2xl">

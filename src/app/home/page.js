@@ -49,7 +49,7 @@ export default function HomePage() {
       <div className="max-w-[1600px] mx-auto">
 
 
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col lg:flex-row lg:items-start gap-8">
           {/* Left Column: League List */}
           <div className="flex-1">
             {/* Header Row */}
