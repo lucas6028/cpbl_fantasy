@@ -62,8 +62,6 @@ export async function GET(request) {
 
         if (dateParam) {
             query = query.eq('date', dateParam);
-        } else {
-            query = query.limit(50);
         }
 
         const { data, error } = await query;
