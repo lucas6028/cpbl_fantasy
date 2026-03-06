@@ -165,10 +165,13 @@ export default function CpblScheduleAdmin() {
         let timeStr = game.time;
         if (game.time && game.time.includes('T')) {
             const dateObj = new Date(game.time);
-            // Format to HH:mm (24-hour)
-            const hours = String(dateObj.getHours()).padStart(2, '0');
-            const minutes = String(dateObj.getMinutes()).padStart(2, '0');
-            timeStr = `${hours}:${minutes}`;
+            // Format to HH:mm (24-hour) in Taiwan Time
+            timeStr = dateObj.toLocaleTimeString('zh-TW', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
+                timeZone: 'Asia/Taipei'
+            });
         }
 
         setEditForm({
@@ -666,7 +669,7 @@ export default function CpblScheduleAdmin() {
                                         <div className="flex justify-between text-xs text-slate-400 mb-1">
                                             <span>#{game.game_no}</span>
                                             <div className="flex gap-2">
-                                                <span>{game.date} {game.time ? new Date(game.time).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false }) : ''}</span>
+                                                <span>{game.date} {game.time ? new Date(game.time).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Taipei' }) : ''}</span>
                                                 {/* Edit Button (Visible on Hover) */}
                                                 <button
                                                     onClick={() => startEditing(game)}
