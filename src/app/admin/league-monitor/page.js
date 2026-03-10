@@ -248,15 +248,17 @@ export default function LeagueMonitorPage() {
                                         { key: 'live_draft_time', label: 'Draft Time', align: 'center' },
                                         { key: 'start_scoring_on', label: 'Start Date', align: 'center' },
                                         { key: 'current_week', label: 'Week', align: 'center' },
-                                        { key: 'is_finalized', label: 'Final', align: 'center' },
+                                        { key: 'is_finalized', label: 'Finalized', align: 'center' },
                                         { key: 'created_at', label: 'Created', align: 'center' },
+                                        { key: 'actions', label: 'Actions', align: 'center' },
                                     ].map(col => (
                                         <th
                                             key={col.key}
-                                            onClick={() => handleSort(col.key)}
-                                            className={`px-3 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-900 transition-colors select-none whitespace-nowrap ${col.align === 'center' ? 'text-center' : 'text-left'}`}
+                                            onClick={() => col.key !== 'actions' && handleSort(col.key)}
+                                            className={`px-3 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider transition-colors select-none whitespace-nowrap ${col.key !== 'actions' ? 'cursor-pointer hover:text-gray-900' : ''} ${col.align === 'center' ? 'text-center' : 'text-left'}`}
                                         >
-                                            {col.label}<SortIcon field={col.key} />
+                                            {col.label}
+                                            {col.key !== 'actions' && <SortIcon field={col.key} />}
                                         </th>
                                     ))}
                                 </tr>
@@ -264,7 +266,7 @@ export default function LeagueMonitorPage() {
                             <tbody className="divide-y divide-gray-100">
                                 {sortedLeagues.length === 0 ? (
                                     <tr>
-                                        <td colSpan={11} className="px-6 py-12 text-center text-gray-400">
+                                        <td colSpan={12} className="px-6 py-12 text-center text-gray-400">
                                             No leagues found matching your filters.
                                         </td>
                                     </tr>
@@ -359,6 +361,17 @@ export default function LeagueMonitorPage() {
                                                     {new Date(league.created_at).toLocaleDateString('en-US', {
                                                         month: 'short', day: 'numeric'
                                                     })}
+                                                </td>
+
+                                                {/* Actions */}
+                                                <td className="px-3 py-3 text-center whitespace-nowrap">
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        <a href={`/league/${league.league_id}/matchups`} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline">賽程</a>
+                                                        <span className="text-gray-300">|</span>
+                                                        <a href={`/league/${league.league_id}/roster`} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline">陣容</a>
+                                                        <span className="text-gray-300">|</span>
+                                                        <a href={`/league/${league.league_id}`} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline" title="Go to Overview for transactions">異動</a>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         );
