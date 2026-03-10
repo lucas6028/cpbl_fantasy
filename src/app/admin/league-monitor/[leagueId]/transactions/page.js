@@ -264,9 +264,8 @@ export default function AdminTransactionsPage() {
                                                 {waiver.manager?.nickname}
                                             </div>
                                             <div className="flex items-center gap-3">
-                                                <div className="flex items-center gap-1.5 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-md">
-                                                    <span className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse"></span>
-                                                    <span className="text-[10px] font-bold text-orange-600 uppercase tracking-widest">Pending</span>
+                                                <div className="flex items-center gap-1.5 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-md">
+                                                    <span className="text-[10px] font-bold text-purple-600 uppercase tracking-widest">Priority: {waiver.waiver_priority}</span>
                                                 </div>
                                                 <div className="text-xs font-bold text-gray-500 uppercase tracking-tighter text-right">
                                                     Processes: {waiver.off_waiver}

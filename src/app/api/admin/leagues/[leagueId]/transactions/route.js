@@ -26,7 +26,7 @@ export async function GET(request, { params }) {
         }
 
         // 2. Fetch transactions and waiver claims (Mimicking Overview)
-        const [transRes, waiverRes, membersRes] = await Promise.all([
+        const [transRes, waiverRes, membersRes, priorityRes] = await Promise.all([
             supabase
                 .from('transactions_2026')
                 .select('*')
@@ -36,12 +36,15 @@ export async function GET(request, { params }) {
                 .from('waiver_claims')
                 .select('*')
                 .eq('league_id', leagueId)
-                .not('status', 'in', '("pending","canceled")')
-                .lte('off_waiver', new Date(new Date().getTime() + 8 * 60 * 60 * 1000).toISOString().split('T')[0])
-                .order('updated_at', { ascending: false }),
+                .eq('status', 'pending')
+                .order('created_at', { ascending: false }),
             supabase
                 .from('league_members')
                 .select('manager_id, nickname')
+                .eq('league_id', leagueId),
+            supabase
+                .from('waiver_priority')
+                .select('manager_id, rank')
                 .eq('league_id', leagueId)
         ]);
 
@@ -95,11 +98,17 @@ export async function GET(request, { params }) {
             manager: { nickname: memberMap[t.manager_id] || 'Unknown' }
         }));
 
+        const priorityMap = {};
+        if (priorityRes && priorityRes.data) {
+            priorityRes.data.forEach(p => priorityMap[p.manager_id] = p.rank);
+        }
+
         const enrichedWaivers = waiverRes.data.map(w => ({
             ...w,
             player: playerMap[w.player_id] || { name: 'Unknown' },
             drop_player: w.drop_player_id ? (playerMap[w.drop_player_id] || { name: 'Unknown' }) : null,
-            manager: { nickname: memberMap[w.manager_id] || 'Unknown' }
+            manager: { nickname: memberMap[w.manager_id] || 'Unknown' },
+            waiver_priority: priorityMap[w.manager_id] || '-'
         }));
 
         return NextResponse.json({
