@@ -1,87 +1,155 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import supabase from '../../../../../../lib/supabase';
 import { cookies } from 'next/headers';
-
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
 
 export async function GET(request, { params }) {
     try {
-        const { leagueId } = params;
+        const { leagueId } = params; // Changed from `await params` as params is an object, not a Promise
+        const { searchParams } = new URL(request.url);
 
-        // 1. Admin check
-        const cookieStore = await cookies();
-        const userId = cookieStore.get('user_id')?.value;
+        // Use provided manager_id or fetch all
+        const requestedManagerId = searchParams.get('manager_id');
+        const gameDateStr = searchParams.get('game_date');
 
-        if (!userId) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        // 1. Admin Check Setup (MUST happen first)
+        const cookieStore = cookies(); // No await needed for cookies()
+        const userIdCookie = cookieStore.get('user_id');
+
+        if (!userIdCookie || !userIdCookie.value) {
+            return NextResponse.json({ success: false, error: 'Unauthorized: No user cookie' }, { status: 401 });
         }
+        const loggedInManagerId = userIdCookie.value;
 
-        const { data: adminRecord, error: adminError } = await supabase
+        // Query the 'admin' table specifically
+        const { data: adminData, error: adminError } = await supabase
             .from('admin')
-            .select('manager_id')
-            .eq('manager_id', userId)
+            .select('*')
+            .eq('manager_id', loggedInManagerId)
             .single();
 
-        if (adminError || !adminRecord) {
-            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        if (adminError || !adminData) {
+            return NextResponse.json({ success: false, error: 'Unauthorized: Admin access required.' }, { status: 403 });
         }
 
-        // 2. Fetch league members
-        const { data: members, error: membersError } = await supabase
+
+        // 2. Build the query based on whether a specific manager or all managers are requested
+        let query = supabase
+            .from('ownership')
+            .select(`
+                manager_id,
+                player_id,
+                position,
+                status,
+                player:playerslist(
+                    name, 
+                    team, 
+                    position_list, 
+                    batter_or_pitcher, 
+                    identity, 
+                    real_life_status
+                )
+            `)
+            .eq('league_id', leagueId)
+            .eq('status', 'On Team'); // Only active roster players
+
+        if (requestedManagerId) {
+            query = query.eq('manager_id', requestedManagerId);
+        }
+
+        const { data: ownerships, error: ownershipsError } = await query;
+
+        if (ownershipsError) throw ownershipsError;
+
+        // 3. Process game dates to check for game info
+        let gameDate = new Date();
+        if (gameDateStr) {
+            gameDate = new Date(gameDateStr);
+        }
+
+        // Ensure we handle the timezone correctly (Taiwan time)
+        const taiwanTime = new Date(gameDate.toLocaleString('en-US', { timeZone: 'Asia/Taipei' }));
+        const searchDateStr = taiwanTime.toISOString().split('T')[0];
+
+        // Fetch schedule for this date
+        const { data: scheduleData, error: scheduleError } = await supabase
+            .from('cpbl_schedule')
+            .select('*')
+            .eq('date', searchDateStr);
+
+        if (scheduleError) {
+            console.error("Error fetching schedule data:", scheduleError);
+        }
+
+        // Map teams to their games
+        const gamesByTeam = {};
+        if (scheduleData) {
+            scheduleData.forEach(game => {
+                gamesByTeam[game.home_team] = { ...game, is_home: true, opponent: game.away_team };
+                gamesByTeam[game.away_team] = { ...game, is_home: false, opponent: game.home_team };
+            });
+        }
+
+        // 4. Format roster data
+        const formattedRoster = ownerships.map(o => {
+            const playerInfo = o.player || {};
+            const team = playerInfo.team;
+            const gameInfo = team ? gamesByTeam[team] : null;
+
+            return {
+                id: `${o.manager_id}-${o.player_id}`, // Unique ID for frontend rendering
+                player_id: o.player_id,
+                manager_id: o.manager_id, // include manager_id, so the frontend knows whose player this is
+                name: playerInfo.name,
+                team: playerInfo.team,
+                position: o.position, // Important: Fantasy position
+                position_list: playerInfo.position_list,
+                batter_or_pitcher: playerInfo.batter_or_pitcher,
+                identity: playerInfo.identity,
+                real_life_status: playerInfo.real_life_status,
+                game_info: gameInfo
+            };
+        });
+
+        // 5. Fetch members to get nicknames (to map managers)
+        const { data: membersData, error: membersError } = await supabase
             .from('league_members')
             .select('manager_id, nickname')
             .eq('league_id', leagueId);
 
-        if (membersError) {
-            return NextResponse.json({ error: 'Failed to fetch members' }, { status: 500 });
+        if (membersError) throw membersError;
+
+        const memberMap = {};
+        membersData.forEach(m => memberMap[m.manager_id] = m.nickname);
+
+        // Group by manager if no specific manager was requested
+        if (!requestedManagerId) {
+            const rosterByManager = {};
+            formattedRoster.forEach(player => {
+                const managerNick = memberMap[player.manager_id] || player.manager_id;
+                if (!rosterByManager[managerNick]) {
+                    rosterByManager[managerNick] = [];
+                }
+                rosterByManager[managerNick].push(player);
+            });
+
+            return NextResponse.json({
+                success: true,
+                rosters: rosterByManager,
+                members: membersData,
+                date: searchDateStr
+            });
         }
 
-        // 3. Fetch all rosters in the league
-        const managerIds = members.map(m => m.manager_id);
-
-        let rostersData = [];
-        let positionsData = [];
-
-        if (managerIds.length > 0) {
-            const [rostersRes, positionsRes] = await Promise.all([
-                supabase.from('rosters').select('*').in('manager_id', managerIds).eq('league_id', leagueId),
-                supabase.from('roster_positions').select('*').in('manager_id', managerIds).eq('league_id', leagueId)
-            ]);
-
-            rostersData = rostersRes.data || [];
-            positionsData = positionsRes.data || [];
-        }
-
-        // 4. Fetch player data
-        const playerIds = [
-            ...new Set([
-                ...rostersData.map(r => r.player_id),
-                ...positionsData.map(p => p.player_id)
-            ])
-        ];
-
-        let playersData = [];
-        if (playerIds.length > 0) {
-            const { data } = await supabase
-                .from('players')
-                .select('player_id, name, team, primary_position, secondary_positions, photo_url')
-                .in('player_id', playerIds);
-            playersData = data || [];
-        }
-
+        // If specific manager requested, return flat array matching the main app behavior
         return NextResponse.json({
             success: true,
-            members: members || [],
-            rosters: rostersData,
-            positions: positionsData,
-            players: playersData
+            roster: formattedRoster,
+            date: searchDateStr
         });
 
     } catch (error) {
-        console.error('Admin rosters error:', error);
-        return NextResponse.json({ error: 'Server error', details: error.message }, { status: 500 });
+        console.error('Error fetching admin rosters:', error);
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
