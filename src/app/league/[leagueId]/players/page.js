@@ -1789,7 +1789,7 @@ export default function PlayersPage() {
         </div>
 
         {/* Filters */}
-        <div className="sticky top-[49px] sm:top-[73px] z-40 py-2 -my-2 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <div className="sticky top-[45px] sm:top-[68px] z-40 py-2 -my-2 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
           <div className="bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.5)] p-2 sm:p-6 space-y-2 sm:space-y-3 border border-purple-500/30">
             {/* Search - full width on top */}
             <input
@@ -1893,7 +1893,7 @@ export default function PlayersPage() {
                     i
                   </button>
                   {showRankInfo && (
-                    <div className="absolute top-full left-0 sm:left-auto mt-2 w-56 sm:w-64 p-3 bg-slate-800/95 border border-purple-500/50 rounded-xl shadow-2xl z-50 animate-in fade-in zoom-in duration-200 backdrop-blur-md">
+                    <div className="absolute top-full left-0 sm:left-auto mt-2 w-56 sm:w-64 p-3 bg-slate-800/95 border border-purple-500/50 rounded-xl shadow-2xl z-[60] animate-in fade-in zoom-in duration-200 backdrop-blur-md">
                       <div className="flex justify-between items-start mb-1">
                         <span className="text-xs font-bold text-purple-300">Ranking Info</span>
                         <button onClick={() => setShowRankInfo(false)} className="text-white/50 hover:text-white/90">
@@ -2281,9 +2281,11 @@ export default function PlayersPage() {
                           const statAbbr = getStatAbbr(stat).toLowerCase();
                           const rank = !isForced && cpblStatRankings[String(player.player_id)]?.[statAbbr];
                           return (
-                            <td key={stat} className="px-2 py-2 text-center text-[11px] font-mono whitespace-nowrap">
-                              <span className={`font-bold ${isForced ? 'text-slate-500' : 'text-purple-100'}`}>{getPlayerStat(player.player_id, stat)}</span>
-                              {rank && rank <= 15 && <span className="text-amber-500 font-black ml-0.5 text-[10px]">({getOrdinal(rank)})</span>}
+                            <td key={stat} className="px-2 py-1 text-center text-[11px] font-mono whitespace-nowrap relative">
+                              <div className={`font-bold ${isForced ? 'text-slate-500' : 'text-purple-100'}`}>{getPlayerStat(player.player_id, stat)}</div>
+                              {rank && rank <= 15 && (
+                                <div className="text-[9px] font-black text-amber-500 leading-none mt-0.5">{getOrdinal(rank)}</div>
+                              )}
                             </td>
                           );
                         })}
@@ -2293,9 +2295,11 @@ export default function PlayersPage() {
                           const statAbbr = getStatAbbr(stat).toLowerCase();
                           const rank = !isForced && cpblStatRankings[String(player.player_id)]?.[statAbbr];
                           return (
-                            <td key={stat} className="px-2 py-2 text-center text-[11px] font-mono whitespace-nowrap">
-                              <span className={`font-bold ${isForced ? 'text-slate-500' : 'text-purple-100'}`}>{getPlayerStat(player.player_id, stat)}</span>
-                              {rank && rank <= 15 && <span className="text-amber-500 font-black ml-0.5 text-[10px]">({getOrdinal(rank)})</span>}
+                            <td key={stat} className="px-2 py-1 text-center text-[11px] font-mono whitespace-nowrap relative">
+                              <div className={`font-bold ${isForced ? 'text-slate-500' : 'text-purple-100'}`}>{getPlayerStat(player.player_id, stat)}</div>
+                              {rank && rank <= 15 && (
+                                <div className="text-[9px] font-black text-amber-500 leading-none mt-0.5">{getOrdinal(rank)}</div>
+                              )}
                             </td>
                           );
                         })}
