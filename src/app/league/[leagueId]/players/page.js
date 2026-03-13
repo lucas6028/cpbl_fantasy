@@ -1785,9 +1785,11 @@ export default function PlayersPage() {
               </div>
             )}
           </div>
+        </div>
 
-          {/* Filters */}
-          <div className="bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl shadow-lg p-3 sm:p-6 space-y-3">
+        {/* Filters */}
+        <div className="sticky top-0 z-40 py-2 -my-2 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+          <div className="bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.5)] p-3 sm:p-6 space-y-3 border border-purple-500/30">
             {/* Search - full width on top */}
             <input
               type="text"
@@ -1916,12 +1918,12 @@ export default function PlayersPage() {
             </div>
           </div>
 
-          <div className="overflow-x-auto relative min-h-[400px]">
+          <div className="overflow-x-auto overflow-y-auto max-h-[70vh] relative min-h-[400px]">
 
 
 
-            <table className="w-full">
-              <thead className="bg-slate-900/60 border-b border-purple-500/20">
+            <table className="w-full relative">
+              <thead className="bg-slate-900/95 sticky top-0 z-30 shadow-md backdrop-blur-md outline outline-1 outline-purple-500/20">
                 <tr>
                   <th className="px-2 py-4 w-12"></th>
                   <th className="px-6 py-4 text-left text-sm font-bold text-purple-300 hidden sm:table-cell">Name</th>
