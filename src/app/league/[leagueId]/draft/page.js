@@ -952,17 +952,17 @@ export default function DraftPage() {
                                 <button onClick={() => handleReorderQueue(index, 'down')} className="text-slate-500 hover:text-white px-1 leading-none text-xs">▼</button>
                             </div>
                         </div>
-                        <div>
-                            <div className="flex items-baseline gap-2">
+                        <div className="min-w-0 pr-1">
+                            <div className="flex items-baseline gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap">
                                 {playerRankings[player.player_id] && (
                                     <span className="text-[10px] font-bold text-cyan-400">#{playerRankings[player.player_id]}</span>
                                 )}
-                                <span className="text-slate-200 font-bold group-hover:text-white text-base">{player.name}</span>
-                                <span className="text-xs text-slate-400 font-mono">{filterPositions(player)}</span>
+                                <span className="text-slate-200 font-bold group-hover:text-white text-sm sm:text-base truncate max-w-[120px] sm:max-w-none">{player.name}</span>
+                                <span className="text-[10px] sm:text-xs text-slate-400 font-mono shrink-0">{filterPositions(player)}</span>
                                 {player.identity?.toLowerCase() === 'foreigner' && (
-                                    <span className="text-[9px] font-bold bg-purple-900/50 text-purple-300 px-1 rounded border border-purple-500/30">F</span>
+                                    <span className="text-[8px] sm:text-[9px] font-bold bg-purple-900/50 text-purple-300 px-1 rounded border border-purple-500/30 shrink-0">F</span>
                                 )}
-                                <span className={`px-1.5 py-0.5 rounded-[4px] text-[9px] font-bold border leading-none ${getTeamColor(player.team)}`}>
+                                <span className={`px-1 py-0.5 sm:px-1.5 sm:py-0.5 rounded-[4px] text-[8px] sm:text-[9px] font-bold border leading-none shrink-0 ${getTeamColor(player.team)}`}>
                                     {getTeamAbbr(player.team)}
                                 </span>
                             </div>
@@ -1224,16 +1224,16 @@ export default function DraftPage() {
                 </div>
 
                 {/* Draft Order Ticker */}
-                <div className="flex flex-1 gap-2 overflow-hidden bg-slate-900/80 border border-slate-700 rounded-xl p-2 shadow-inner min-w-0">
+                <div className="flex flex-1 gap-1.5 sm:gap-2 overflow-hidden bg-slate-900/80 border border-slate-700 rounded-xl p-1.5 sm:p-2 shadow-inner min-w-0">
                     {/* Previous Pick */}
-                    <div className="flex items-center gap-2 border-r border-slate-700 pr-2 min-w-0 shrink-0">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase shrink-0">Prev:</span>
+                    <div className="flex items-center gap-1.5 sm:gap-2 border-r border-slate-700 pr-1.5 sm:pr-2 min-w-0 shrink-0">
+                        <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase shrink-0">Prev:</span>
                         {recentPicks.length > 0 ? (
                             (() => {
                                 const lastPick = recentPicks[0];
                                 return (
-                                    <div className="flex items-center gap-2 min-w-0 animate-fade-in pr-2">
-                                        <div className="w-8 h-8 rounded-full bg-slate-800 overflow-hidden border border-slate-600 shrink-0">
+                                    <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 animate-fade-in pr-1 sm:pr-2">
+                                        <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-slate-800 overflow-hidden border border-slate-600 shrink-0">
                                             {/* eslint-disable-next-line @next/next/no-img-element */}
                                             <img
                                                 src={getPlayerPhoto({ ...lastPick.player, player_id: lastPick.player_id })}
@@ -1243,37 +1243,37 @@ export default function DraftPage() {
                                             />
                                         </div>
                                         <div className="flex flex-col min-w-0">
-                                            <div className="flex items-baseline gap-1.5">
-                                                <span className="text-sm font-bold text-slate-200 truncate">{lastPick.player?.name}</span>
-                                                <span className={`px-1 py-[1px] rounded-[3px] text-[8px] font-bold border leading-none ${getTeamColor(lastPick.player?.team)}`}>
+                                            <div className="flex items-baseline gap-1 sm:gap-1.5">
+                                                <span className="text-xs sm:text-sm font-bold text-slate-200 truncate leading-none">{lastPick.player?.name}</span>
+                                                <span className={`px-1 py-[1px] rounded-[3px] text-[7px] sm:text-[8px] font-bold border leading-none ${getTeamColor(lastPick.player?.team)}`}>
                                                     {getTeamAbbr(lastPick.player?.team)}
                                                 </span>
                                             </div>
-                                            <div className="text-[9px] text-slate-500 truncate mt-0.5">
-                                                {getMemberNickname(lastPick.manager_id)} (#{lastPick.pick_number})
+                                            <div className="text-[8px] sm:text-[9px] text-slate-500 truncate sm:mt-0.5 leading-tight">
+                                                {getMemberNickname(lastPick.manager_id)} <span className="hidden sm:inline">(#{lastPick.pick_number})</span>
                                             </div>
                                         </div>
                                     </div>
                                 );
                             })()
                         ) : (
-                            <span className="text-xs text-slate-600 italic px-2">None</span>
+                            <span className="text-[10px] sm:text-xs text-slate-600 italic px-1 sm:px-2">None</span>
                         )}
                     </div>
 
                     {/* Up Next */}
-                    <div className="flex-1 flex items-center gap-2 overflow-x-auto scrollbar-hide min-w-0 pl-1">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase shrink-0 mr-1">Next:</span>
+                    <div className="flex-1 flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-hide min-w-0 pl-0.5 sm:pl-1">
+                        <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase shrink-0 mr-0.5 sm:mr-1">Next:</span>
                         {draftState?.currentPick && (
-                            <div className="flex items-center gap-1.5 animate-pulse bg-purple-900/40 px-2.5 py-1 rounded border border-purple-500/50 shrink-0">
-                                <span className="text-[10px] font-mono text-purple-300">#{draftState.currentPick.pick_number}</span>
-                                <span className="text-[11px] font-bold text-white">{getMemberNickname(draftState.currentPick.manager_id)}</span>
+                            <div className="flex items-center gap-1 sm:gap-1.5 animate-pulse bg-purple-900/40 px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded border border-purple-500/50 shrink-0">
+                                <span className="text-[9px] sm:text-[10px] font-mono text-purple-300">#{draftState.currentPick.pick_number}</span>
+                                <span className="text-[10px] sm:text-[11px] font-bold text-white">{getMemberNickname(draftState.currentPick.manager_id)}</span>
                             </div>
                         )}
                         {upcomingPicks.slice(0, 8).map((pick, i) => (
-                            <div key={pick.pick_id} className={`flex items-center gap-1.5 px-2.5 py-1 rounded border shrink-0 transition-colors ${pick.manager_id === myManagerId ? 'bg-green-900/30 border-green-500/50' : 'bg-slate-800/50 border-slate-700/50 hover:bg-slate-800'}`}>
-                                <span className="text-[10px] font-mono text-slate-400">#{pick.pick_number}</span>
-                                <span className={`text-[11px] font-bold ${pick.manager_id === myManagerId ? 'text-green-400' : 'text-slate-300'}`}>{getMemberNickname(pick.manager_id)}</span>
+                            <div key={pick.pick_id} className={`flex items-center gap-1 sm:gap-1.5 px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded border shrink-0 transition-colors ${pick.manager_id === myManagerId ? 'bg-green-900/30 border-green-500/50' : 'bg-slate-800/50 border-slate-700/50 hover:bg-slate-800'}`}>
+                                <span className="text-[9px] sm:text-[10px] font-mono text-slate-400">#{pick.pick_number}</span>
+                                <span className={`text-[10px] sm:text-[11px] font-bold ${pick.manager_id === myManagerId ? 'text-green-400' : 'text-slate-300'}`}>{getMemberNickname(pick.manager_id)}</span>
                             </div>
                         ))}
                     </div>
@@ -1356,8 +1356,8 @@ export default function DraftPage() {
                     {/* Center: Player Pool */}
                     <div className="flex-[3] bg-slate-800/40 rounded-xl p-4 border border-slate-700 flex flex-col backdrop-blur-sm shadow-xl overflow-hidden">
                         {/* Filter Bar */}
-                        <div className="bg-slate-900 p-2 rounded-lg border border-slate-700 mb-3 flex flex-wrap gap-2 items-center justify-between shrink-0">
-                            <div className="flex items-center gap-2 w-full md:w-auto overflow-hidden">
+                        <div className="bg-slate-900 p-2 rounded-lg border border-slate-700 mb-3 flex flex-nowrap sm:flex-wrap gap-2 items-center justify-between overflow-x-auto custom-scrollbar shrink-0">
+                            <div className="flex items-center gap-2 shrink-0">
                                 <div className="flex items-center gap-2">
                                     <span className="text-white font-bold text-sm">Players</span>
                                     <span className="text-[9px] text-slate-500 font-mono bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 hidden sm:inline">2025 Stats</span>
@@ -1382,19 +1382,26 @@ export default function DraftPage() {
                                         }}
                                     >Pitcher</button>
                                 </div>
-                            </div>
-
-                            <div className="flex flex-wrap gap-1.5 items-center">
-                                {/* Legend Button moved here */}
+                                {/* Legend Button positioned right after batter/pitcher switch on mobile */}
                                 <button
                                     onClick={() => setShowLegend(true)}
-                                    className="bg-slate-800 border border-slate-600 text-purple-400 hover:text-white hover:bg-purple-600/50 hover:border-purple-500 px-2 py-1 rounded text-[10px] transition-all font-bold"
+                                    className="bg-slate-800 border border-slate-600 text-purple-400 hover:text-white hover:bg-purple-600/50 hover:border-purple-500 px-2 py-1.5 sm:py-1 rounded text-[10px] transition-all font-bold shrink-0 sm:hidden"
+                                >
+                                    Legend
+                                </button>
+                            </div>
+
+                            <div className="flex flex-nowrap sm:flex-wrap gap-1.5 items-center shrink-0">
+                                {/* Legend Button for desktop (hidden on mobile) */}
+                                <button
+                                    onClick={() => setShowLegend(true)}
+                                    className="bg-slate-800 border border-slate-600 text-purple-400 hover:text-white hover:bg-purple-600/50 hover:border-purple-500 px-2 py-1 rounded text-[10px] transition-all font-bold hidden sm:block"
                                 >
                                     Legend
                                 </button>
 
                                 <select
-                                    className="bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-xs text-slate-200 outline-none focus:border-purple-500"
+                                    className="bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-xs text-slate-200 outline-none focus:border-purple-500 w-28 sm:w-auto shrink-0"
                                     value={filterTeam}
                                     onChange={e => setFilterTeam(e.target.value)}
                                 >
@@ -1408,7 +1415,7 @@ export default function DraftPage() {
                                 </select>
 
                                 <select
-                                    className="bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-xs text-slate-200 outline-none focus:border-purple-500"
+                                    className="bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-xs text-slate-200 outline-none focus:border-purple-500 w-[100px] sm:w-auto shrink-0"
                                     value={filterPos}
                                     onChange={e => setFilterPos(e.target.value)}
                                 >
@@ -1417,7 +1424,7 @@ export default function DraftPage() {
                                 </select>
 
                                 <select
-                                    className="bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-xs text-slate-200 outline-none focus:border-purple-500"
+                                    className="bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-xs text-slate-200 outline-none focus:border-purple-500 w-[70px] sm:w-auto shrink-0"
                                     value={filterIdentity}
                                     onChange={e => setFilterIdentity(e.target.value)}
                                 >
@@ -1427,8 +1434,8 @@ export default function DraftPage() {
                                 </select>
 
                                 <input
-                                    className="bg-slate-800 border border-slate-600 rounded px-3 py-1.5 text-xs text-slate-200 w-32 focus:w-48 transition-all outline-none focus:border-purple-500"
-                                    placeholder="Search Name..."
+                                    className="bg-slate-800 border border-slate-600 rounded px-3 py-1.5 text-xs text-slate-200 w-24 sm:w-32 sm:focus:w-48 transition-all outline-none focus:border-purple-500 shrink-0"
+                                    placeholder="Search..."
                                     value={searchTerm}
                                     onChange={e => setSearchTerm(e.target.value)}
                                 />
