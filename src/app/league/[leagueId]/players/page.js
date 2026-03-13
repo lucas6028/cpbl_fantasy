@@ -1945,8 +1945,8 @@ export default function PlayersPage() {
             <table className="w-full relative">
               <thead className="bg-slate-900/95 sticky top-0 z-30 shadow-md backdrop-blur-md outline outline-1 outline-purple-500/20">
                 <tr>
-                  <th className="px-2 py-4 w-12 sticky left-0 z-20 bg-slate-900"></th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-purple-300 hidden sm:table-cell sticky left-[48px] z-20 bg-slate-900">Name</th>
+                  <th className="px-2 py-4 w-12 sticky left-0 z-20"></th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-purple-300 hidden sm:table-cell sticky left-[48px] z-20">Name</th>
                   <th
                     className="px-2 sm:px-4 py-3 sm:py-4 text-center text-xs sm:text-sm font-bold text-purple-300 cursor-pointer hover:text-white transition-colors group select-none"
                     onClick={() => handleSort('rank')}
@@ -2035,15 +2035,15 @@ export default function PlayersPage() {
                     <React.Fragment key={player.player_id}>
                       <tr className="hover:bg-purple-500/5 transition-colors group">
                         {/* 桌面版：Action button (無 rowSpan) */}
-                        <td className="px-4 py-4 align-middle text-center hidden sm:table-cell sticky left-0 z-10 bg-slate-900">
+                        <td className="px-4 py-4 align-middle text-center hidden sm:table-cell sticky left-0 z-10">
                           {getPlayerActionButton(player)}
                         </td>
                         {/* 手機版：Action button (rowSpan=2, 置中) */}
-                        <td className="px-2 py-2 sm:py-4 align-middle text-center sm:hidden sticky left-0 z-10 bg-slate-900" rowSpan={2}>
+                        <td className="px-2 py-2 sm:py-4 align-middle text-center sm:hidden" rowSpan={2}>
                           {getPlayerActionButton(player)}
                         </td>
                         {/* 桌面版：Player info (單欄) */}
-                        <td className="px-6 py-4 hidden sm:table-cell sticky left-[48px] z-10 bg-slate-900">
+                        <td className="px-6 py-4 hidden sm:table-cell sticky left-[48px] z-10">
                           <div className="flex items-center gap-3">
                             <img
                               src={getPlayerPhoto(player)}
@@ -2137,8 +2137,8 @@ export default function PlayersPage() {
                             </div>
                           </div>
                         </td>
-                        {/* 手機版：Player info (colSpan 跨所有欄位) */}
-                        <td className="px-3 py-2 sm:hidden" colSpan={2 + (filterType === 'batter' ? displayBatterCats.length : displayPitcherCats.length)}>
+                        {/* 手機版：Player info (sticky left) */}
+                        <td className="px-3 py-2 sm:hidden sticky left-[40px] z-10">
                           <div className="flex items-center gap-2">
                             <img
                               src={getPlayerPhoto(player)}

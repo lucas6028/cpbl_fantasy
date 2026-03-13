@@ -96,20 +96,26 @@ export async function GET(req) {
       });
     }
 
-    // 獲取球員持有率資料
-    const { data: rosterPercentageData, error: rosterError } = await supabase
-      .from('roster_percentage')
-      .select('player_id, roster_percentage');
+    // 計算球員持有率（排除 test_league）
+    const [rosterRes, leagueRes, testLeagueRes] = await Promise.all([
+      supabase.from('rosters').select('player_id, league_id'),
+      supabase.from('league_settings').select('league_id'),
+      supabase.from('test_league').select('league_id'),
+    ]);
 
-    if (rosterError) {
-      console.error('Error fetching roster percentage:', rosterError);
-    }
+    const testLeagueIds = new Set((testLeagueRes.data || []).map(t => t.league_id));
+    const totalLeagues = (leagueRes.data || []).filter(l => !testLeagueIds.has(l.league_id)).length;
 
-    // 建立持有率對照表
     const rosterPercentageMap = {};
-    if (rosterPercentageData) {
-      rosterPercentageData.forEach(rp => {
-        rosterPercentageMap[rp.player_id] = rp.roster_percentage;
+    if (rosterRes.data && totalLeagues > 0) {
+      const playerLeagueMap = {};
+      rosterRes.data.forEach(r => {
+        if (testLeagueIds.has(r.league_id)) return; // 排除測試聯盟
+        if (!playerLeagueMap[r.player_id]) playerLeagueMap[r.player_id] = new Set();
+        playerLeagueMap[r.player_id].add(r.league_id);
+      });
+      Object.entries(playerLeagueMap).forEach(([playerId, leagues]) => {
+        rosterPercentageMap[playerId] = Math.round((leagues.size / totalLeagues) * 100);
       });
     }
 
