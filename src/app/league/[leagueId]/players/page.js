@@ -2138,7 +2138,8 @@ export default function PlayersPage() {
                           </div>
                         </td>
                         {/* 手機版：Player info (inner sticky div + colSpan for layout) */}
-                        <td className="py-2 sm:hidden" colSpan={2 + (filterType === 'batter' ? displayBatterCats.length : displayPitcherCats.length)}>
+                        {/* 這裡改成 colSpan={100} 來確保這格橫跨表格所有存在的寬度，讓內部的 sticky div 不會在往右滑到底時跑版 */}
+                        <td className="py-2 sm:hidden relative z-[5]" colSpan={100}>
                           <div className="sticky left-0 w-[calc(100vw-2rem)] px-3">
                             <div className="flex items-center gap-2">
                               <img

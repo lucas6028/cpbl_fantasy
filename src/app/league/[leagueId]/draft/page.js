@@ -1178,28 +1178,28 @@ export default function DraftPage() {
             {/* Header Area */}
             <div className="flex flex-col md:flex-row gap-3 mb-3 items-stretch">
                 {/* Timer & On The Clock */}
-                <div className="bg-gradient-to-r from-slate-800 to-slate-900 border border-purple-500/30 rounded-xl shadow-lg p-3 flex items-center shrink-0 min-w-[250px] gap-4">
-                    <div className="flex flex-col items-center justify-center min-w-[80px]">
-                        <div className={`text-3xl font-mono font-black tracking-tighter tabular-nums drop-shadow-[0_0_10px_rgba(0,0,0,0.5)] ${timeLeft < 10 && draftState?.status !== 'pre-draft' && draftState?.status !== 'complete' && draftState?.status !== 'completed' ? 'text-red-500 animate-pulse' : 'text-green-400'}`}>
+                <div className="bg-gradient-to-r from-slate-800 to-slate-900 border border-purple-500/30 rounded-xl shadow-lg p-2 sm:p-3 flex items-center shrink-0 min-w-0 sm:min-w-[250px] gap-2 sm:gap-4">
+                    <div className="flex flex-col items-center justify-center min-w-[60px] sm:min-w-[80px]">
+                        <div className={`text-xl sm:text-3xl font-mono font-black tracking-tighter tabular-nums drop-shadow-[0_0_10px_rgba(0,0,0,0.5)] ${timeLeft < 10 && draftState?.status !== 'pre-draft' && draftState?.status !== 'complete' && draftState?.status !== 'completed' ? 'text-red-500 animate-pulse' : 'text-green-400'}`}>
                             {draftState?.status === 'complete' || draftState?.status === 'completed' ? (
-                                <span className="text-xl text-green-400 whitespace-nowrap">Finished</span>
+                                <span className="text-base sm:text-xl text-green-400 whitespace-nowrap">Finished</span>
                             ) : timeLeft < 0 && draftState?.status !== 'pre-draft' ? (
-                                <span className="text-xl text-red-500 animate-pulse whitespace-nowrap">Auto...</span>
+                                <span className="text-base sm:text-xl text-red-500 animate-pulse whitespace-nowrap">Auto...</span>
                             ) : (
                                 formatTime(timeLeft < 0 ? 0 : timeLeft)
                             )}
                         </div>
-                        <div className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold mt-0.5">
+                        <div className="text-[9px] sm:text-[10px] uppercase tracking-widest text-slate-500 font-semibold mt-0.5">
                             {draftState?.status === 'pre-draft' ? 'Starts In' : (draftState?.status === 'complete' || draftState?.status === 'completed') ? '' : 'Time Left'}
                         </div>
                     </div>
 
-                    <div className="flex-1 flex flex-col justify-center border-l border-slate-700/50 pl-4 h-full">
+                    <div className="flex-1 flex flex-col justify-center border-l border-slate-700/50 pl-2 sm:pl-4 h-full min-w-0">
                         {!draftState?.currentPick ? (
                             <>
-                                <div className="text-sm font-bold text-slate-300">Live Draft Room</div>
+                                <div className="text-xs sm:text-sm font-bold text-slate-300 truncate">Draft Room</div>
                                 {draftState?.status === 'pre-draft' && draftState.startTime && (
-                                    <div className="text-xs text-slate-400 mt-1">
+                                    <div className="text-[10px] sm:text-xs text-slate-400 mt-0.5 sm:mt-1 truncate">
                                         {new Date(draftState.startTime).toLocaleString('en-US', {
                                             month: 'short', day: 'numeric',
                                             hour: 'numeric', minute: '2-digit', hour12: true
@@ -1208,15 +1208,17 @@ export default function DraftPage() {
                                 )}
                             </>
                         ) : (
-                            <>
-                                <div className="text-[10px] text-slate-400 uppercase tracking-wide mb-0.5">On The Clock</div>
-                                <div className={`text-sm font-bold truncate ${draftState.currentPick.manager_id === myManagerId ? 'text-yellow-300' : 'text-slate-200'}`}>
-                                    {draftState.currentPick.manager_id === myManagerId ? '🟢 YOU' : getMemberNickname(draftState.currentPick.manager_id)}
+                            <div className="flex flex-col justify-center h-full gap-0.5">
+                                <div className="flex items-baseline gap-1.5 flex-wrap">
+                                    <span className="text-[9px] sm:text-[10px] text-slate-400 uppercase tracking-wide">On The Clock:</span>
+                                    <span className={`text-xs sm:text-sm font-bold truncate ${draftState.currentPick.manager_id === myManagerId ? 'text-yellow-300' : 'text-slate-200'}`}>
+                                        {draftState.currentPick.manager_id === myManagerId ? '🟢 YOU' : getMemberNickname(draftState.currentPick.manager_id)}
+                                    </span>
                                 </div>
-                                <div className="text-xs text-slate-400 mt-0.5">
-                                    Rd {draftState.currentPick.round_number} Pick {draftState.currentPick.pick_number}
+                                <div className="text-[10px] sm:text-xs text-slate-400">
+                                    <span className="font-semibold text-purple-300">Rd {draftState.currentPick.round_number}</span> <span className="text-slate-500 mx-0.5">|</span> Pick {draftState.currentPick.pick_number}
                                 </div>
-                            </>
+                            </div>
                         )}
                     </div>
                 </div>
