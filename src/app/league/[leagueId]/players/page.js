@@ -1877,7 +1877,7 @@ export default function PlayersPage() {
 
         {/* Players Table */}
         <div className="bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl shadow-2xl overflow-hidden">
-          <div className="bg-gradient-to-r from-purple-600/80 to-blue-600/80 backdrop-blur-sm p-2 sm:p-6 border-b border-purple-400/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-2 sm:gap-4">
+          <div className="bg-gradient-to-r from-purple-600/80 to-blue-600/80 backdrop-blur-sm p-2 sm:p-6 border-b border-purple-400/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-2 sm:gap-4 relative z-[35]">
             <div className="flex flex-col gap-1">
               <h2 className="text-base sm:text-2xl font-black text-white flex items-center gap-1.5 sm:gap-3">
                 <svg className="w-5 h-5 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
