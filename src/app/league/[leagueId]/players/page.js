@@ -1947,6 +1947,7 @@ export default function PlayersPage() {
                 <tr>
                   <th className="px-2 py-4 w-12 sticky left-0 z-20"></th>
                   <th className="px-6 py-4 text-left text-sm font-bold text-purple-300 hidden sm:table-cell sticky left-[48px] z-20">Name</th>
+                  <th className="px-2 py-2 text-left text-[10px] font-bold text-purple-300 sm:hidden sticky left-[40px] z-20 min-w-[150px]">Player</th>
                   <th
                     className="px-2 sm:px-4 py-3 sm:py-4 text-center text-xs sm:text-sm font-bold text-purple-300 cursor-pointer hover:text-white transition-colors group select-none"
                     onClick={() => handleSort('rank')}
@@ -2038,8 +2039,8 @@ export default function PlayersPage() {
                         <td className="px-4 py-4 align-middle text-center hidden sm:table-cell sticky left-0 z-10">
                           {getPlayerActionButton(player)}
                         </td>
-                        {/* 手機版：Action button (rowSpan=2, 置中) */}
-                        <td className="px-2 py-2 sm:py-4 align-middle text-center sm:hidden" rowSpan={2}>
+                        {/* 手機版：Action button */}
+                        <td className="px-2 py-2 align-middle text-center sm:hidden sticky left-0 z-10">
                           {getPlayerActionButton(player)}
                         </td>
                         {/* 桌面版：Player info (單欄) */}
@@ -2137,117 +2138,44 @@ export default function PlayersPage() {
                             </div>
                           </div>
                         </td>
-                        {/* 手機版：Player info (sticky left + colSpan) */}
-                        <td className="px-3 py-2 sm:hidden sticky left-0 z-10" colSpan={2 + (filterType === 'batter' ? displayBatterCats.length : displayPitcherCats.length)}>
-                          <div className="flex items-center gap-2">
-                            <img
-                              src={getPlayerPhoto(player)}
-                              alt={`${player.name} Avatar`}
-                              className="w-8 h-8 rounded-full object-cover"
-                            />
-                            <div className="flex flex-col">
-                              <div className="flex items-center gap-2 flex-nowrap whitespace-nowrap">
+                        {/* 手機版：Player info (sticky left, compact) */}
+                        <td className="px-2 py-1 sm:hidden sticky left-[40px] z-10 min-w-[150px]">
+                          <div className="flex items-center gap-1.5">
+                            <img src={getPlayerPhoto(player)} alt={player.name} className="w-7 h-7 rounded-full object-cover shrink-0" />
+                            <div className="flex flex-col min-w-0">
+                              <div className="flex items-center gap-1 flex-nowrap whitespace-nowrap">
                                 <button
                                   onClick={(e) => { e.stopPropagation(); handleToggleWatch(player, watchedPlayerIds.has(player.player_id)); }}
-                                  className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold transition-all ${watchedPlayerIds.has(player.player_id)
-                                    ? 'bg-amber-500 text-white hover:bg-amber-400'
-                                    : 'bg-slate-700 text-slate-400 hover:bg-slate-600 hover:text-amber-400'
-                                    }`}
-                                  title={watchedPlayerIds.has(player.player_id) ? 'Remove from Watchlist' : 'Add to Watchlist'}
-                                >
-                                  {watchedPlayerIds.has(player.player_id) ? '★' : '☆'}
-                                </button>
-                                {playerRankings[player.player_id] && (
-                                  <span className="text-xs font-bold text-cyan-400">#{playerRankings[player.player_id]}</span>
-                                )}
-                                <span
-                                  className="text-white font-semibold text-sm group-hover:text-purple-300 transition-colors cursor-pointer whitespace-nowrap"
-                                  onClick={() => setSelectedPlayerModal(player)}
-                                >
-                                  {player.name || 'Unknown'}
-                                  <span className="text-purple-300/70 font-normal ml-2">
-                                    - {filterPositions(player)}
-                                  </span>
-                                  <span className={`text-sm font-bold ml-2 ${getTeamColor(player.team)}`}>
-                                    {player.team ? `${getTeamAbbr(player.team)}` : ''}
-                                  </span>
-                                </span>
+                                  className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${watchedPlayerIds.has(player.player_id) ? 'bg-amber-500 text-white' : 'bg-slate-700 text-slate-400'}`}
+                                >{watchedPlayerIds.has(player.player_id) ? '★' : '☆'}</button>
+                                {playerRankings[player.player_id] && <span className="text-[10px] font-bold text-cyan-400">#{playerRankings[player.player_id]}</span>}
+                                <span className="text-white font-semibold text-xs cursor-pointer" onClick={() => setSelectedPlayerModal(player)}>{player.name || 'Unknown'}</span>
                                 {renderStatusTag(player)}
                               </div>
-                              <div className="flex items-center gap-2 mt-1 flex-nowrap whitespace-nowrap">
-                                {player.original_name && player.original_name !== player.name && (
-                                  <span className="text-purple-300/70 text-[11px] font-sans border-r border-slate-600 pr-2 mr-1">
-                                    {player.original_name}
-                                  </span>
-                                )}
-                                <span className="text-xs text-slate-400 font-mono flex items-center gap-1">
-                                  {player.game_info ? (
-                                    player.game_info.is_postponed ? (
-                                      <span className="text-red-400">PPD</span>
-                                    ) : player.game_info.away_team_score != null && player.game_info.home_team_score != null ? (
-                                      (() => {
-                                        const myScore = player.game_info.is_home ? player.game_info.home_team_score : player.game_info.away_team_score;
-                                        const oppScore = player.game_info.is_home ? player.game_info.away_team_score : player.game_info.home_team_score;
-                                        const result = myScore > oppScore ? 'W' : myScore < oppScore ? 'L' : 'T';
-                                        const resultColor = result === 'W' ? 'text-green-400' : result === 'L' ? 'text-red-400' : 'text-cyan-300';
-                                        return (
-                                          <>
-                                            <span className={`font-bold ${resultColor}`}>{myScore}:{oppScore} {result}</span>
-                                            {' '}
-                                            {player.game_info.is_home ? 'vs' : '@'}
-                                            {' '}
-                                            {player.game_info.opponent}
-                                          </>
-                                        );
-                                      })()
-                                    ) : (
-                                      <>
-                                        {new Date(player.game_info.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
-                                        {' '}
-                                        {player.game_info.is_home ? 'vs' : '@'}
-                                        {' '}
-                                        {player.game_info.opponent}
-                                      </>
-                                    )
-                                  ) : (
-                                    'No game'
-                                  )}
-                                </span>
-                                {player.real_life_status && player.real_life_status !== 'MAJOR' && (
-                                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${player.real_life_status === 'MINOR'
-                                    ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30'
-                                    : player.real_life_status === 'DEREGISTERED'
-                                      ? 'bg-red-500/20 text-red-300 border-red-500/30'
-                                      : 'bg-slate-500/20 text-slate-300 border-slate-500/30'
-                                    }`} title={player.real_life_status}>
-                                    {player.real_life_status === 'MINOR' ? 'NA' : player.real_life_status === 'DEREGISTERED' ? 'DR' : 'NR'}
-                                  </span>
-                                )}
-                                {player.identity !== 'local' && (
-                                  <span className="w-5 h-5 flex items-center justify-center rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-xs font-bold" title="Foreign Player">
-                                    F
-                                  </span>
-                                )}
+                              <div className="flex items-center gap-1 whitespace-nowrap">
+                                <span className={`text-[10px] font-bold ${getTeamColor(player.team)}`}>{getTeamAbbr(player.team)}</span>
+                                <span className="text-purple-300/60 text-[10px]">{filterPositions(player)}</span>
+                                {player.identity !== 'local' && <span className="text-[9px] text-cyan-300 font-bold">F</span>}
                               </div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-4 text-center font-mono text-cyan-300 hidden sm:table-cell">
+                        <td className="px-2 sm:px-4 py-2 sm:py-4 text-center font-mono text-cyan-300 text-[11px] sm:text-sm">
                           {playerRankings[player.player_id] || '-'}
                         </td>
-                        <td className="px-4 py-4 text-center font-mono text-cyan-300 hidden sm:table-cell">
+                        <td className="px-2 sm:px-4 py-2 sm:py-4 text-center font-mono text-cyan-300 text-[11px] sm:text-sm">
                           {player.roster_percentage ?? 0}%
                         </td>
-                        {/* 桌面版：統計欄位 */}
+                        {/* 統計欄位 (mobile + desktop shared) */}
                         {filterType === 'batter' && displayBatterCats.map((stat) => {
                           const isForced = !batterStatCategories.includes(stat);
                           const statAbbr = getStatAbbr(stat).toLowerCase();
                           const rank = !isForced && cpblStatRankings[String(player.player_id)]?.[statAbbr];
                           return (
-                            <td key={stat} className={`px-4 py-4 text-center font-mono relative hidden sm:table-cell ${isForced ? 'text-slate-500' : 'text-purple-100'}`}>
+                            <td key={stat} className={`px-2 sm:px-4 py-1 sm:py-4 text-center font-mono relative ${isForced ? 'text-slate-500' : 'text-purple-100'} text-[11px] sm:text-sm`}>
                               <div className="w-full text-center">{getPlayerStat(player.player_id, stat)}</div>
                               {rank && rank <= 15 && (
-                                <div className="absolute left-0 right-0 bottom-1.5 text-[11px] font-black text-amber-500 font-sans tracking-wide leading-none">{getOrdinal(rank)}</div>
+                                <div className="text-[9px] sm:text-[11px] font-black text-amber-500 font-sans leading-none mt-0.5 sm:absolute sm:left-0 sm:right-0 sm:bottom-1.5 sm:mt-0">{getOrdinal(rank)}</div>
                               )}
                             </td>
                           );
@@ -2257,53 +2185,16 @@ export default function PlayersPage() {
                           const statAbbr = getStatAbbr(stat).toLowerCase();
                           const rank = !isForced && cpblStatRankings[String(player.player_id)]?.[statAbbr];
                           return (
-                            <td key={stat} className={`px-4 py-4 text-center font-mono relative hidden sm:table-cell ${isForced ? 'text-slate-500' : 'text-purple-100'}`}>
+                            <td key={stat} className={`px-2 sm:px-4 py-1 sm:py-4 text-center font-mono relative ${isForced ? 'text-slate-500' : 'text-purple-100'} text-[11px] sm:text-sm`}>
                               <div className="w-full text-center">{getPlayerStat(player.player_id, stat)}</div>
                               {rank && rank <= 15 && (
-                                <div className="absolute left-0 right-0 bottom-1.5 text-[11px] font-black text-amber-500 font-sans tracking-wide leading-none">{getOrdinal(rank)}</div>
+                                <div className="text-[9px] sm:text-[11px] font-black text-amber-500 font-sans leading-none mt-0.5 sm:absolute sm:left-0 sm:right-0 sm:bottom-1.5 sm:mt-0">{getOrdinal(rank)}</div>
                               )}
                             </td>
                           );
                         })}
                       </tr>
-                      {/* 手機版：stats 第二行 (Player info 已 rowSpan，不需留白) */}
-                      <tr className="sm:hidden border-b border-purple-500/10 bg-slate-800/20">
 
-                        <td className="px-2 py-2 text-center text-[11px] text-cyan-300 font-mono font-bold">
-                          {playerRankings[player.player_id] || '-'}
-                        </td>
-                        <td className="px-2 py-2 text-center text-[11px] text-cyan-300 font-mono font-bold">
-                          {player.roster_percentage ?? 0}%
-                        </td>
-
-                        {filterType === 'batter' && displayBatterCats.map((stat) => {
-                          const isForced = !batterStatCategories.includes(stat);
-                          const statAbbr = getStatAbbr(stat).toLowerCase();
-                          const rank = !isForced && cpblStatRankings[String(player.player_id)]?.[statAbbr];
-                          return (
-                            <td key={stat} className="px-2 py-1 text-center text-[11px] font-mono whitespace-nowrap relative">
-                              <div className={`font-bold ${isForced ? 'text-slate-500' : 'text-purple-100'}`}>{getPlayerStat(player.player_id, stat)}</div>
-                              {rank && rank <= 15 && (
-                                <div className="text-[9px] font-black text-amber-500 leading-none mt-0.5">{getOrdinal(rank)}</div>
-                              )}
-                            </td>
-                          );
-                        })}
-
-                        {filterType === 'pitcher' && displayPitcherCats.map((stat) => {
-                          const isForced = !pitcherStatCategories.includes(stat);
-                          const statAbbr = getStatAbbr(stat).toLowerCase();
-                          const rank = !isForced && cpblStatRankings[String(player.player_id)]?.[statAbbr];
-                          return (
-                            <td key={stat} className="px-2 py-1 text-center text-[11px] font-mono whitespace-nowrap relative">
-                              <div className={`font-bold ${isForced ? 'text-slate-500' : 'text-purple-100'}`}>{getPlayerStat(player.player_id, stat)}</div>
-                              {rank && rank <= 15 && (
-                                <div className="text-[9px] font-black text-amber-500 leading-none mt-0.5">{getOrdinal(rank)}</div>
-                              )}
-                            </td>
-                          );
-                        })}
-                      </tr>
                     </React.Fragment>
                   ))
                 )}
