@@ -701,7 +701,8 @@ export default function DraftPage() {
             position_list: p.player?.position_list || '',
             batter_or_pitcher: p.player?.batter_or_pitcher || '',
             original_name: p.player?.original_name || '',
-            identity: p.player?.identity || ''
+            identity: p.player?.identity || '',
+            real_life_status: p.player?.real_life_status || ''
         }));
 
         // Viewing Team (Opponent View)
@@ -720,7 +721,8 @@ export default function DraftPage() {
                 position_list: p.player?.position_list || '',
                 batter_or_pitcher: p.player?.batter_or_pitcher || '',
                 original_name: p.player?.original_name || '',
-                identity: p.player?.identity || ''
+                identity: p.player?.identity || '',
+                real_life_status: p.player?.real_life_status || ''
             }));
         }
 
@@ -923,6 +925,26 @@ export default function DraftPage() {
         }
     };
 
+    const renderRealLifeStatusBadge = (player) => {
+        const status = (player?.real_life_status || '').toUpperCase();
+        if (!status || status === 'MAJOR') return null;
+
+        const isMinor = status === 'MINOR';
+        const isDeregistered = status === 'DEREGISTERED';
+        const label = isMinor ? 'NA' : isDeregistered ? 'DR' : 'NR';
+        const classes = isMinor
+            ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30'
+            : isDeregistered
+                ? 'bg-red-500/20 text-red-300 border-red-500/30'
+                : 'bg-slate-500/20 text-slate-300 border-slate-500/30';
+
+        return (
+            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${classes}`} title={status}>
+                {label}
+            </span>
+        );
+    };
+
     const formatTime = (seconds) => {
         if (seconds >= 86400) return `${Math.floor(seconds / 86400)}d ${Math.floor((seconds % 86400) / 3600)}h`;
         if (seconds >= 3600) return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
@@ -962,6 +984,7 @@ export default function DraftPage() {
                                 {player.identity?.toLowerCase() === 'foreigner' && (
                                     <span className="text-[8px] sm:text-[9px] font-bold bg-purple-900/50 text-purple-300 px-1 rounded border border-purple-500/30 shrink-0">F</span>
                                 )}
+                                {renderRealLifeStatusBadge(player)}
                                 <span className={`px-1 py-0.5 sm:px-1.5 sm:py-0.5 rounded-[4px] text-[8px] sm:text-[9px] font-bold border leading-none shrink-0 ${getTeamColor(player.team)}`}>
                                     {getTeamAbbr(player.team)}
                                 </span>
@@ -1564,6 +1587,7 @@ export default function DraftPage() {
                                                                         <span className="text-[10px] text-slate-500">{player.original_name}</span>
                                                                     )}
                                                                     <div className="flex gap-1">
+                                                                        {renderRealLifeStatusBadge(player)}
                                                                         {isForeigner && (
                                                                             <span className="text-[9px] font-bold bg-purple-900/50 text-purple-300 px-1 rounded border border-purple-500/30">F</span>
                                                                         )}
@@ -1592,6 +1616,7 @@ export default function DraftPage() {
                                                                         <span className={`px-1 py-0.5 rounded-[3px] text-[9px] font-bold border leading-none ${getTeamColor(player.team)}`}>
                                                                             {getTeamAbbr(player.team)}
                                                                         </span>
+                                                                        {renderRealLifeStatusBadge(player)}
                                                                         {isForeigner && (
                                                                             <span className="text-[9px] font-bold bg-purple-900/50 text-purple-300 px-1 rounded border border-purple-500/30">F</span>
                                                                         )}
@@ -1726,6 +1751,7 @@ export default function DraftPage() {
                                                                 <span className="text-[10px] font-bold text-cyan-400 mr-1">#{playerRankings[pick.player_id]}</span>
                                                             )}
                                                             {pick.player?.name}
+                                                            {renderRealLifeStatusBadge(pick.player)}
                                                             {(pick.player?.identity || pick.identity)?.toLowerCase() === 'foreigner' && (
                                                                 <span className="text-[9px] font-bold bg-purple-900/50 text-purple-300 px-1 rounded border border-purple-500/30">F</span>
                                                             )}
@@ -1819,6 +1845,7 @@ export default function DraftPage() {
                                                                         )}
                                                                         <span className="text-slate-200 font-bold group-hover:text-white text-base">{p.name}</span>
                                                                         <span className="text-xs text-slate-400 font-mono">{filterPositions(p)}</span>
+                                                                        {renderRealLifeStatusBadge(p)}
                                                                         {p.identity?.toLowerCase() === 'foreigner' && (
                                                                             <span className="text-[9px] font-bold bg-purple-900/50 text-purple-300 px-1 rounded border border-purple-500/30">F</span>
                                                                         )}
@@ -1893,6 +1920,7 @@ export default function DraftPage() {
                                                                                         <span className="text-[10px] font-bold text-cyan-400 mr-0.5">#{playerRankings[assignment.player_id]}</span>
                                                                                     )}
                                                                                     {assignment.name}
+                                                                                    {renderRealLifeStatusBadge(assignment)}
                                                                                     <span className={`px-1.5 py-0.5 rounded-[4px] text-[9px] font-bold border leading-none ${getTeamColor(assignment.team)}`}>
                                                                                         {getTeamAbbr(assignment.team)}
                                                                                     </span>
@@ -1981,6 +2009,7 @@ export default function DraftPage() {
                                                                 <span className="text-[10px] font-bold text-cyan-400">#{playerRankings[player.player_id]}</span>
                                                             )}
                                                             {player.name}
+                                                            {renderRealLifeStatusBadge(player)}
                                                             <span className={`px-1 py-0.5 rounded-[4px] text-[8px] font-bold border leading-none ${getTeamColor(player.team)}`}>
                                                                 {getTeamAbbr(player.team)}
                                                             </span>
@@ -2363,6 +2392,7 @@ export default function DraftPage() {
                                                                         <span className="text-[10px] font-bold text-cyan-400">#{playerRankings[player.player_id]}</span>
                                                                     )}
                                                                     {player.name}
+                                                                    {renderRealLifeStatusBadge(player)}
                                                                     <span className={`px-1 py-0.5 rounded-[4px] text-[8px] font-bold border leading-none ${getTeamColor(player.team)}`}>
                                                                         {getTeamAbbr(player.team)}
                                                                     </span>
@@ -2687,6 +2717,7 @@ export default function DraftPage() {
                                                     <span className="text-[10px] font-bold text-cyan-400 mr-1">#{playerRankings[pick.player_id]}</span>
                                                 )}
                                                 {pick.player?.name}
+                                                {renderRealLifeStatusBadge(pick.player)}
                                                 {(pick.player?.identity || pick.identity)?.toLowerCase() === 'foreigner' && (
                                                     <span className="text-[9px] font-bold bg-purple-900/50 text-purple-300 px-1 rounded border border-purple-500/30">F</span>
                                                 )}
