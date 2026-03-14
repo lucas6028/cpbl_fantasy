@@ -98,7 +98,10 @@ export async function GET(req) {
 
     // 計算球員持有率（排除 test_league）
     const [rosterRes, leagueRes, testLeagueRes] = await Promise.all([
-      supabase.from('rosters').select('player_id, league_id'),
+      supabase
+        .from('league_player_ownership')
+        .select('player_id, league_id')
+        .ilike('status', 'on team'),
       supabase.from('league_settings').select('league_id'),
       supabase.from('test_league').select('league_id'),
     ]);
