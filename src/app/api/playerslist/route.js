@@ -89,6 +89,8 @@ export async function GET(req) {
       console.error('Error fetching schedule:', scheduleError);
     }
 
+    console.log(`[playerslist] Schedule date=${scheduleDateStr}, games=${scheduleData?.length || 0}`);
+
     const gameMap = {};
     if (scheduleData) {
       scheduleData.forEach(game => {
@@ -96,6 +98,8 @@ export async function GET(req) {
         gameMap[game.away] = { opponent: game.home, is_home: false, time: game.time, away_team_score: game.away_team_score, home_team_score: game.home_team_score, is_postponed: game.is_postponed };
       });
     }
+
+    console.log(`[playerslist] Game map teams=${Object.keys(gameMap).length}: ${Object.keys(gameMap).join(', ') || '(none)'}`);
 
     // 計算球員持有率（排除 test_league）
     const [rosterRes, leagueRes, testLeagueRes] = await Promise.all([
@@ -131,6 +135,14 @@ export async function GET(req) {
       game_info: player.Team ? gameMap[player.Team] : null,
       roster_percentage: rosterPercentageMap[player.player_id] ?? 0
     }));
+
+    const playersWithTeam = (players || []).filter(p => !!p.Team);
+    const matchedPlayers = playersWithTeam.filter(p => !!gameMap[p.Team]).length;
+    const unmatchedTeams = [...new Set(playersWithTeam.filter(p => !gameMap[p.Team]).map(p => p.Team))];
+    console.log(`[playerslist] Match result: playersWithTeam=${playersWithTeam.length}, matched=${matchedPlayers}, unmatched=${playersWithTeam.length - matchedPlayers}`);
+    if (unmatchedTeams.length > 0) {
+      console.log(`[playerslist] Unmatched team keys: ${unmatchedTeams.join(', ')}`);
+    }
 
     return NextResponse.json({
       success: true,
