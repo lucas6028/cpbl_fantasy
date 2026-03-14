@@ -86,7 +86,7 @@ export async function GET(request, { params }) {
                 const endStr = `${endObj.getMonth() + 1}/${endObj.getDate()}`;
                 dateRange = `${startStr} - ${endStr}`;
 
-                // 3. Count 'ADD' transactions in this week
+                // 3. Count add-type transactions in this week
                 const startTw = new Date(`${weekData.week_start}T00:00:00+08:00`);
                 const endTw = new Date(`${weekData.week_end}T23:59:59.999+08:00`);
 
@@ -95,7 +95,7 @@ export async function GET(request, { params }) {
                     .select('*', { count: 'exact', head: true })
                     .eq('league_id', leagueId)
                     .eq('manager_id', managerId)
-                    .eq('transaction_type', 'ADD')
+                    .in('transaction_type', ['ADD', 'WAIVER ADD'])
                     .gte('transaction_time', startTw.toISOString())
                     .lte('transaction_time', endTw.toISOString());
 

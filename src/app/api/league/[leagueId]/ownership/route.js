@@ -84,7 +84,7 @@ export async function POST(req, { params }) {
             .select('*', { count: 'exact', head: true })
             .eq('league_id', leagueId)
             .eq('manager_id', manager_id)
-            .eq('transaction_type', 'ADD')
+            .in('transaction_type', ['ADD', 'WAIVER ADD'])
             .gte('transaction_time', startTw.toISOString())
             .lte('transaction_time', endTw.toISOString());
 
