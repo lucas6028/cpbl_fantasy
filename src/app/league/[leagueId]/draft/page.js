@@ -764,16 +764,18 @@ export default function DraftPage() {
                 alert('Pick failed: ' + data.error);
                 setPickingId(null); // Re-enable on failure
             } else {
-                // Force state update
-                const stateRes = await fetch(`/api/league/${leagueId}/draft/state`);
-                const stateData = await stateRes.json();
-                setDraftState(stateData);
+                // Release button immediately for better submit responsiveness.
+                setPickingId(null);
 
                 // Remove from local queue
                 const qItem = queue.find(q => q.player_id === playerId);
                 if (qItem) handleRemoveFromQueue(qItem.queue_id);
 
-                setPickingId(null);
+                // Refresh draft state in background (non-blocking)
+                fetch(`/api/league/${leagueId}/draft/state`)
+                    .then(r => r.json())
+                    .then(stateData => setDraftState(stateData))
+                    .catch(e => console.error('Draft state refresh failed', e));
             }
         } catch (e) {
             console.error(e);

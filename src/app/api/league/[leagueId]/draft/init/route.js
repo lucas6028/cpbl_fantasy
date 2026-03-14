@@ -135,6 +135,7 @@ export async function POST(request, { params }) {
             } else if (pickTimeStr.includes('minute')) {
                 durationSeconds = (parseInt(pickTimeStr) || 1) * 60;
             }
+            durationSeconds += 10;
 
             // Calculate deadline = live_draft_time + pick_time
             const startTime = new Date(settings.live_draft_time);

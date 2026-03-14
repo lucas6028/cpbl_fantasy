@@ -13,18 +13,26 @@ export async function POST(request, { params }) {
         const body = await request.json();
         const { managerId, playerId } = body;
 
-        // 1. Get Current Active Pick
-        const { data: currentPicks, error } = await supabase
-            .from('draft_picks')
-            .select('*')
-            .eq('league_id', leagueId)
-            .is('player_id', null)
-            .order('pick_number', { ascending: true })
-            .limit(1);
+        // 1. Get Current Active Pick + settings in parallel
+        const [{ data: currentPicks, error }, { data: settings, error: settingsError }] = await Promise.all([
+            supabase
+                .from('draft_picks')
+                .select('*')
+                .eq('league_id', leagueId)
+                .is('player_id', null)
+                .order('pick_number', { ascending: true })
+                .limit(1),
+            supabase
+                .from('league_settings')
+                .select('foreigner_active_limit, live_draft_pick_time')
+                .eq('league_id', leagueId)
+                .single()
+        ]);
 
         if (error || !currentPicks || currentPicks.length === 0) {
             return NextResponse.json({ success: false, error: 'Draft is not active or completed' }, { status: 400 });
         }
+        if (settingsError) throw settingsError;
 
         const currentPick = currentPicks[0];
 
@@ -34,23 +42,16 @@ export async function POST(request, { params }) {
         }
 
         // 3. Validate Availability
-        const { data: taken } = await supabase
+        const { count: takenCount, error: takenError } = await supabase
             .from('draft_picks')
-            .select('pick_id')
+            .select('*', { count: 'exact', head: true })
             .eq('league_id', leagueId)
-            .eq('player_id', playerId)
-            .single();
+            .eq('player_id', playerId);
+        if (takenError) throw takenError;
 
-        if (taken) {
+        if ((takenCount || 0) > 0) {
             return NextResponse.json({ success: false, error: 'Player already taken' }, { status: 400 });
         }
-
-        // 3.5 Check Foreigner Limit
-        const { data: settings } = await supabase
-            .from('league_settings')
-            .select('foreigner_active_limit')
-            .eq('league_id', leagueId)
-            .single();
 
         if (settings?.foreigner_active_limit !== null && settings.foreigner_active_limit !== undefined) {
             // Check if current player is Foreigner
@@ -109,13 +110,6 @@ export async function POST(request, { params }) {
             .limit(1);
 
         if (nextPicks && nextPicks.length > 0) {
-            // Fetch Settings for duration
-            const { data: settings } = await supabase
-                .from('league_settings')
-                .select('live_draft_pick_time')
-                .eq('league_id', leagueId)
-                .single();
-
             let duration = 60; // Default
             if (settings?.live_draft_pick_time) {
                 const timeStr = settings.live_draft_pick_time.toLowerCase();
@@ -127,6 +121,7 @@ export async function POST(request, { params }) {
                     duration = parseInt(timeStr);
                 }
             }
+            duration += 10;
 
             const nextDeadline = new Date(now.getTime() + duration * 1000);
             await supabase

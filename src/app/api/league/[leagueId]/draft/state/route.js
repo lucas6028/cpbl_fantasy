@@ -195,6 +195,7 @@ export async function GET(request, { params }) {
                     duration = parseInt(timeStr);
                 }
             }
+            duration += 10;
 
             // Init Deadline if needed
             if (!currentPick.deadline) {
