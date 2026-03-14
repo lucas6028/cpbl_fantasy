@@ -548,6 +548,9 @@ export default function PlayersPage() {
         matchesOwnership = watchedPlayerIds.has(player.player_id);
       }
 
+      // When user is typing a search term, bypass all other filters
+      if (searchTerm !== '') return matchesSearch;
+
       return matchesSearch && matchesType && matchesIdentity && matchesOwnership && matchesTeam && matchesPosition;
     });
 
