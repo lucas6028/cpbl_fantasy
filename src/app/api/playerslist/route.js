@@ -91,15 +91,25 @@ export async function GET(req) {
 
     console.log(`[playerslist] Schedule date=${scheduleDateStr}, games=${scheduleData?.length || 0}`);
 
+    const normalizeTeamKey = (team) => String(team || '').trim().toLowerCase();
     const gameMap = {};
+    const gameMapDisplayKeys = new Set();
     if (scheduleData) {
       scheduleData.forEach(game => {
-        gameMap[game.home] = { opponent: game.away, is_home: true, time: game.time, away_team_score: game.away_team_score, home_team_score: game.home_team_score, is_postponed: game.is_postponed };
-        gameMap[game.away] = { opponent: game.home, is_home: false, time: game.time, away_team_score: game.away_team_score, home_team_score: game.home_team_score, is_postponed: game.is_postponed };
+        const homeKey = normalizeTeamKey(game.home);
+        const awayKey = normalizeTeamKey(game.away);
+        gameMapDisplayKeys.add(game.home);
+        gameMapDisplayKeys.add(game.away);
+        if (homeKey) {
+          gameMap[homeKey] = { opponent: game.away, is_home: true, time: game.time, away_team_score: game.away_team_score, home_team_score: game.home_team_score, is_postponed: game.is_postponed };
+        }
+        if (awayKey) {
+          gameMap[awayKey] = { opponent: game.home, is_home: false, time: game.time, away_team_score: game.away_team_score, home_team_score: game.home_team_score, is_postponed: game.is_postponed };
+        }
       });
     }
 
-    console.log(`[playerslist] Game map teams=${Object.keys(gameMap).length}: ${Object.keys(gameMap).join(', ') || '(none)'}`);
+    console.log(`[playerslist] Game map teams=${gameMapDisplayKeys.size}: ${[...gameMapDisplayKeys].join(', ') || '(none)'}`);
 
     // 計算球員持有率（排除 test_league）
     const [rosterRes, leagueRes, testLeagueRes] = await Promise.all([
@@ -132,13 +142,13 @@ export async function GET(req) {
       ...player,
       position_list: positionMap[player.player_id] || null,
       real_life_status: statusMap[player.player_id] || 'UNREGISTERED', // 預設
-      game_info: player.Team ? gameMap[player.Team] : null,
+      game_info: gameMap[normalizeTeamKey(player.team ?? player.Team)] || null,
       roster_percentage: rosterPercentageMap[player.player_id] ?? 0
     }));
 
-    const playersWithTeam = (players || []).filter(p => !!p.Team);
-    const matchedPlayers = playersWithTeam.filter(p => !!gameMap[p.Team]).length;
-    const unmatchedTeams = [...new Set(playersWithTeam.filter(p => !gameMap[p.Team]).map(p => p.Team))];
+    const playersWithTeam = (players || []).filter(p => !!(p.team ?? p.Team));
+    const matchedPlayers = playersWithTeam.filter(p => !!gameMap[normalizeTeamKey(p.team ?? p.Team)]).length;
+    const unmatchedTeams = [...new Set(playersWithTeam.filter(p => !gameMap[normalizeTeamKey(p.team ?? p.Team)]).map(p => p.team ?? p.Team))];
     console.log(`[playerslist] Match result: playersWithTeam=${playersWithTeam.length}, matched=${matchedPlayers}, unmatched=${playersWithTeam.length - matchedPlayers}`);
     if (unmatchedTeams.length > 0) {
       console.log(`[playerslist] Unmatched team keys: ${unmatchedTeams.join(', ')}`);
