@@ -17,6 +17,7 @@ export default function DraftPage() {
     const [timeLeft, setTimeLeft] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
     const [pickingId, setPickingId] = useState(null);
+    const [pickSubmitting, setPickSubmitting] = useState(false);
     const [assigning, setAssigning] = useState(false);
     const [assigningId, setAssigningId] = useState(null); // Track specific ID being assigned/removed
 
@@ -751,7 +752,8 @@ export default function DraftPage() {
     }, [draftState, myManagerId, viewingManagerId, foreignerLimit]);
 
     const handlePick = async (playerId) => {
-        if (pickingId) return;
+        if (pickSubmitting || pickingId) return;
+        setPickSubmitting(true);
         setPickingId(playerId); // Disable and show spinner for this ID
 
         try {
@@ -765,23 +767,28 @@ export default function DraftPage() {
             if (!data.success) {
                 alert('Pick failed: ' + data.error);
                 setPickingId(null); // Re-enable on failure
+                setPickSubmitting(false);
             } else {
-                // Release button immediately for better submit responsiveness.
-                setPickingId(null);
-
                 // Remove from local queue
                 const qItem = queue.find(q => q.player_id === playerId);
                 if (qItem) handleRemoveFromQueue(qItem.queue_id);
 
-                // Refresh draft state in background (non-blocking)
-                fetch(`/api/league/${leagueId}/draft/state`)
-                    .then(r => r.json())
-                    .then(stateData => setDraftState(stateData))
-                    .catch(e => console.error('Draft state refresh failed', e));
+                // Keep all draft buttons disabled until state sync completes.
+                try {
+                    const stateRes = await fetch(`/api/league/${leagueId}/draft/state`);
+                    const stateData = await stateRes.json();
+                    setDraftState(stateData);
+                } catch (e) {
+                    console.error('Draft state refresh failed', e);
+                } finally {
+                    setPickingId(null);
+                    setPickSubmitting(false);
+                }
             }
         } catch (e) {
             console.error(e);
             setPickingId(null);
+            setPickSubmitting(false);
         }
     };
 
@@ -1017,7 +1024,7 @@ export default function DraftPage() {
                 </div>
                 <button
                     onClick={() => handlePick(player.player_id)}
-                    disabled={!!pickingId || draftState?.status !== 'active' || draftState?.currentPick?.manager_id !== myManagerId || takenIds.has(player.player_id) || (player.identity?.toLowerCase() === 'foreigner' && foreignerLimit !== null && foreignerCount >= foreignerLimit)}
+                    disabled={pickSubmitting || !!pickingId || draftState?.status !== 'active' || draftState?.currentPick?.manager_id !== myManagerId || takenIds.has(player.player_id) || (player.identity?.toLowerCase() === 'foreigner' && foreignerLimit !== null && foreignerCount >= foreignerLimit)}
                     className={`mt-2 w-full py-1 rounded text-xs font-bold transition-all flex items-center justify-center gap-2
                         ${draftState?.status === 'active' && draftState?.currentPick?.manager_id === myManagerId && !takenIds.has(player.player_id) && !(player.identity?.toLowerCase() === 'foreigner' && foreignerLimit !== null && foreignerCount >= foreignerLimit)
                             ? 'bg-green-600 hover:bg-green-500 text-white shadow-lg'
@@ -1508,9 +1515,9 @@ export default function DraftPage() {
                                                         <div className="flex flex-col items-center gap-1">
                                                             <button
                                                                 onClick={() => handlePick(player.player_id)}
-                                                                disabled={!!pickingId || draftState?.status !== 'active' || draftState?.currentPick?.manager_id !== myManagerId || takenIds.has(String(player.player_id)) || (isForeigner && foreignerLimit !== null && foreignerCount >= foreignerLimit)}
+                                                                disabled={pickSubmitting || !!pickingId || draftState?.status !== 'active' || draftState?.currentPick?.manager_id !== myManagerId || takenIds.has(String(player.player_id)) || (isForeigner && foreignerLimit !== null && foreignerCount >= foreignerLimit)}
                                                                 className={`px-2 sm:px-4 py-1 sm:py-1.5 rounded-[4px] text-[10px] sm:text-xs font-bold shadow-md transition-all flex items-center gap-1
-                                                            ${draftState?.status === 'active' && draftState?.currentPick?.manager_id === myManagerId && !pickingId && !(isForeigner && foreignerLimit !== null && foreignerCount >= foreignerLimit)
+                                                            ${draftState?.status === 'active' && draftState?.currentPick?.manager_id === myManagerId && !pickSubmitting && !pickingId && !(isForeigner && foreignerLimit !== null && foreignerCount >= foreignerLimit)
                                                                         ? 'bg-green-600 hover:bg-green-500 text-white hover:scale-105 active:scale-95'
                                                                         : 'bg-slate-700/50 text-slate-600 cursor-not-allowed'
                                                                     }`}
@@ -1531,9 +1538,9 @@ export default function DraftPage() {
                                                         <div className="flex flex-col items-center gap-1">
                                                             <button
                                                                 onClick={() => handlePick(player.player_id)}
-                                                                disabled={!!pickingId || draftState?.status !== 'active' || draftState?.currentPick?.manager_id !== myManagerId || takenIds.has(String(player.player_id)) || (isForeigner && foreignerLimit !== null && foreignerCount >= foreignerLimit)}
+                                                                disabled={pickSubmitting || !!pickingId || draftState?.status !== 'active' || draftState?.currentPick?.manager_id !== myManagerId || takenIds.has(String(player.player_id)) || (isForeigner && foreignerLimit !== null && foreignerCount >= foreignerLimit)}
                                                                 className={`px-2 sm:px-4 py-1 sm:py-1.5 rounded-[4px] text-[10px] sm:text-xs font-bold shadow-md transition-all flex items-center gap-1
-                                                            ${draftState?.status === 'active' && draftState?.currentPick?.manager_id === myManagerId && !pickingId && !(isForeigner && foreignerLimit !== null && foreignerCount >= foreignerLimit)
+                                                            ${draftState?.status === 'active' && draftState?.currentPick?.manager_id === myManagerId && !pickSubmitting && !pickingId && !(isForeigner && foreignerLimit !== null && foreignerCount >= foreignerLimit)
                                                                         ? 'bg-green-600 hover:bg-green-500 text-white hover:scale-105 active:scale-95'
                                                                         : 'bg-slate-700/50 text-slate-600 cursor-not-allowed'
                                                                     }`}
