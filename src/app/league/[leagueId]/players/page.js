@@ -2092,7 +2092,7 @@ export default function PlayersPage() {
                                     {player.original_name}
                                   </span>
                                 )}
-                                <span className="text-xs text-slate-400 font-mono">
+                                <span className={`text-xs font-mono ${player.game_info && !player.game_info.is_postponed && !(player.game_info.away_team_score != null && player.game_info.home_team_score != null) ? 'text-blue-300' : 'text-slate-400'}`}>
                                   {player.game_info ? (
                                     player.game_info.is_postponed ? (
                                       <span className="text-red-400 font-bold">PPD</span>
@@ -2189,7 +2189,7 @@ export default function PlayersPage() {
                                       {player.original_name}
                                     </span>
                                   )}
-                                  <span className="text-xs text-slate-400 font-mono">
+                                  <span className={`text-xs font-mono ${player.game_info && !player.game_info.is_postponed && !(player.game_info.away_team_score != null && player.game_info.home_team_score != null) ? 'text-blue-300' : 'text-slate-400'}`}>
                                     {player.game_info ? (
                                       player.game_info.is_postponed ? (
                                         <span className="text-red-400 font-bold">PPD</span>
