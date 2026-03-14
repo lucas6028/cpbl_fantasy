@@ -74,15 +74,15 @@ export async function GET(req) {
       });
     }
 
-    // 獲取今日賽程資料 (Taiwan Time)
+    // 賽程日期固定抓台灣今天
     const now = new Date();
     const nowTaiwan = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
-    const todayStr = `${nowTaiwan.getFullYear()}-${String(nowTaiwan.getMonth() + 1).padStart(2, '0')}-${String(nowTaiwan.getDate()).padStart(2, '0')}`;
+    const scheduleDateStr = `${nowTaiwan.getFullYear()}-${String(nowTaiwan.getMonth() + 1).padStart(2, '0')}-${String(nowTaiwan.getDate()).padStart(2, '0')}`;
 
     const { data: scheduleData, error: scheduleError } = await supabase
       .from('cpbl_schedule_2026')
       .select('*')
-      .eq('date', todayStr)
+      .eq('date', scheduleDateStr)
       .eq('major_game', true);
 
     if (scheduleError) {

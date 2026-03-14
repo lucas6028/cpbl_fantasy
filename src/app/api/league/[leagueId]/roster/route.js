@@ -206,7 +206,8 @@ export async function GET(request, { params }) {
         const { data: scheduleData, error: scheduleError } = await supabase
             .from('cpbl_schedule_2026')
             .select('*')
-            .eq('date', gameDateStr);
+            .eq('date', gameDateStr)
+            .eq('major_game', true);
 
         if (scheduleError) {
             console.error('Error fetching schedule:', scheduleError);
