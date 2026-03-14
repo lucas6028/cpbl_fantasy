@@ -2092,10 +2092,10 @@ export default function PlayersPage() {
                                     {player.original_name}
                                   </span>
                                 )}
-                                <span className="text-xs text-slate-400 font-mono flex items-center gap-1">
+                                <span className="text-xs text-slate-400 font-mono">
                                   {player.game_info ? (
                                     player.game_info.is_postponed ? (
-                                      <span className="text-red-400">PPD</span>
+                                      <span className="text-red-400 font-bold">PPD</span>
                                     ) : player.game_info.away_team_score != null && player.game_info.home_team_score != null ? (
                                       (() => {
                                         const myScore = player.game_info.is_home ? player.game_info.home_team_score : player.game_info.away_team_score;
@@ -2122,7 +2122,7 @@ export default function PlayersPage() {
                                       </>
                                     )
                                   ) : (
-                                    'No game'
+                                    <span className="text-slate-400">No game</span>
                                   )}
                                 </span>
                                 {player.real_life_status && player.real_life_status !== 'MAJOR' && (
@@ -2189,10 +2189,10 @@ export default function PlayersPage() {
                                       {player.original_name}
                                     </span>
                                   )}
-                                  <span className="text-xs text-slate-400 font-mono flex items-center gap-1">
+                                  <span className="text-xs text-slate-400 font-mono">
                                     {player.game_info ? (
                                       player.game_info.is_postponed ? (
-                                        <span className="text-red-400">PPD</span>
+                                        <span className="text-red-400 font-bold">PPD</span>
                                       ) : player.game_info.away_team_score != null && player.game_info.home_team_score != null ? (
                                         (() => {
                                           const myScore = player.game_info.is_home ? player.game_info.home_team_score : player.game_info.away_team_score;
@@ -2219,7 +2219,7 @@ export default function PlayersPage() {
                                         </>
                                       )
                                     ) : (
-                                      'No game'
+                                      <span className="text-slate-400">No game</span>
                                     )}
                                   </span>
                                   {player.real_life_status && player.real_life_status !== 'MAJOR' && (
