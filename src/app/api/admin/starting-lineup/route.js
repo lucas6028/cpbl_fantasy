@@ -13,7 +13,7 @@ export async function GET(request) {
     try {
         const { data, error } = await supabase
             .from('starting_lineup')
-            .select('*')
+            .select('id, date, team, batting_no, player_id, player:player_id(player_id, name, team)')
             .eq('date', date)
             .order('team')
             .order('batting_no', { ascending: true });
@@ -32,7 +32,7 @@ export async function POST(request) {
     try {
         const body = await request.json();
         const { date, team, lineup } = body;
-        // lineup = [{ batting_no: 1, name: '...' }, ...]
+        // lineup = [{ batting_no: 1, player_id: '...' }, ...]
 
         if (!date || !team || !lineup || !Array.isArray(lineup)) {
             return NextResponse.json({ success: false, error: 'Missing date, team, or lineup' }, { status: 400 });
@@ -47,15 +47,15 @@ export async function POST(request) {
 
         if (delError) throw delError;
 
-        // Filter out empty names
-        const validLineup = lineup.filter(l => l.name && l.name.trim());
+        // Filter out empty player IDs
+        const validLineup = lineup.filter(l => l.player_id);
 
         if (validLineup.length > 0) {
             const rows = validLineup.map(l => ({
                 date,
                 team,
                 batting_no: l.batting_no,
-                name: l.name.trim()
+                player_id: l.player_id
             }));
 
             const { error: insertError } = await supabase

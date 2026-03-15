@@ -13,7 +13,7 @@ export async function GET(request) {
     try {
         const { data, error } = await supabase
             .from('starting_pitcher')
-            .select('*')
+            .select('id, date, team, player_id, created_at, player:player_id(player_id, name, team)')
             .eq('date', date)
             .order('team');
 
@@ -31,14 +31,14 @@ export async function POST(request) {
     try {
         const body = await request.json();
         const { date, pitchers } = body;
-        // pitchers = [{ team: '...', name: '...', is_confirmed: true/false }, ...]
+        // pitchers = [{ team: '...', player_id: '...' }, ...]
 
         if (!date || !pitchers || !Array.isArray(pitchers)) {
             return NextResponse.json({ success: false, error: 'Missing date or pitchers' }, { status: 400 });
         }
 
-        // Filter out empty names
-        const validPitchers = pitchers.filter(p => p.name && p.name.trim() && p.team);
+        // Filter out empty player IDs
+        const validPitchers = pitchers.filter(p => p.player_id && p.team);
 
         // Get unique teams from the input to delete their existing entries
         const teams = [...new Set(validPitchers.map(p => p.team))];
@@ -58,7 +58,7 @@ export async function POST(request) {
             const rows = validPitchers.map(p => ({
                 date,
                 team: p.team,
-                name: p.name.trim()
+                player_id: p.player_id
             }));
 
             const { error: insertError } = await supabase

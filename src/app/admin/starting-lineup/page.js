@@ -31,6 +31,13 @@ function getTomorrowTW() {
     return twTime.toISOString().split('T')[0]
 }
 
+function getTodayTW() {
+    const now = new Date()
+    const twOffset = 8 * 60 * 60 * 1000
+    const twTime = new Date(now.getTime() + (now.getTimezoneOffset() * 60 * 1000) + twOffset)
+    return twTime.toISOString().split('T')[0]
+}
+
 export default function StartingLineupPage() {
     const router = useRouter()
 
@@ -39,7 +46,8 @@ export default function StartingLineupPage() {
     const [checkingAdmin, setCheckingAdmin] = useState(true)
 
     // Date
-    const [selectedDate, setSelectedDate] = useState(getTomorrowTW())
+    const [selectedPitcherDate, setSelectedPitcherDate] = useState(getTomorrowTW())
+    const [selectedLineupDate, setSelectedLineupDate] = useState(getTodayTW())
 
     // Pitcher State: { team: { name: '', is_confirmed: false } }
     const [pitchers, setPitchers] = useState(() => {
@@ -60,7 +68,18 @@ export default function StartingLineupPage() {
 
     // UI State
     const [loading, setLoading] = useState(false)
+    const [loadingPitchers, setLoadingPitchers] = useState(false)
+    const [loadingLineups, setLoadingLineups] = useState(false)
     const [message, setMessage] = useState({ type: '', text: '' })
+    const [checkingPending, setCheckingPending] = useState(false)
+    const [pendingLineupTeams, setPendingLineupTeams] = useState([])
+    const [pendingPitcherTeams, setPendingPitcherTeams] = useState([])
+    const [todayMajorTeamCount, setTodayMajorTeamCount] = useState(0)
+    const [tomorrowMajorTeamCount, setTomorrowMajorTeamCount] = useState(0)
+    const [playerMap, setPlayerMap] = useState({})
+
+    const todayTW = getTodayTW()
+    const tomorrowTW = getTomorrowTW()
 
     // Admin check
     useEffect(() => {
@@ -84,21 +103,67 @@ export default function StartingLineupPage() {
         check()
     }, [router])
 
-    // Fetch data when date changes
+    // Fetch pitcher data when pitcher date changes
     useEffect(() => {
-        if (!isAdmin || !selectedDate) return
-        fetchData()
-    }, [isAdmin, selectedDate])
+        if (!isAdmin || !selectedPitcherDate) return
+        fetchPitchers()
+    }, [isAdmin, selectedPitcherDate])
 
-    const fetchData = async () => {
-        setLoading(true)
+    // Fetch lineup data when lineup date changes
+    useEffect(() => {
+        if (!isAdmin || !selectedLineupDate) return
+        fetchLineups()
+    }, [isAdmin, selectedLineupDate])
+
+    useEffect(() => {
+        if (!isAdmin) return
+        fetchPendingTeams()
+    }, [isAdmin])
+
+    useEffect(() => {
+        if (!isAdmin) return
+        fetchPlayers()
+    }, [isAdmin])
+
+    const normalize = (v) => String(v || '').trim().toLowerCase()
+
+    const makePlayerKey = (team, name) => `${normalize(team)}__${normalize(name)}`
+
+    const fetchPlayers = async () => {
         try {
-            const [pitcherRes, lineupRes] = await Promise.all([
-                fetch(`/api/admin/starting-pitcher?date=${selectedDate}`),
-                fetch(`/api/admin/starting-lineup?date=${selectedDate}`)
-            ])
+            const res = await fetch('/api/playerslist?available=false')
+            const data = await res.json()
+            if (!data.success || !Array.isArray(data.players)) return
+
+            const map = {}
+            data.players.forEach((p) => {
+                const key = makePlayerKey(p.team || p.Team, p.name || p.Name)
+                if (!map[key]) map[key] = []
+                map[key].push({
+                    player_id: p.player_id,
+                    name: p.name || p.Name,
+                    team: p.team || p.Team
+                })
+            })
+            setPlayerMap(map)
+        } catch (err) {
+            console.error('Players fetch error:', err)
+        }
+    }
+
+    const resolvePlayerByTeamAndName = (team, name) => {
+        const key = makePlayerKey(team, name)
+        const matches = playerMap[key] || []
+        if (matches.length === 0) return { status: 'not_found', player: null, matches: [] }
+        if (matches.length > 1) return { status: 'ambiguous', player: null, matches }
+        return { status: 'ok', player: matches[0], matches }
+    }
+
+    const fetchPitchers = async () => {
+        setLoadingPitchers(true)
+        try {
+            const pitcherRes = await fetch(`/api/admin/starting-pitcher?date=${selectedPitcherDate}`)
             const pitcherData = await pitcherRes.json()
-            const lineupData = await lineupRes.json()
 
             // Reset pitchers
             const newPitchers = {}
@@ -106,11 +171,24 @@ export default function StartingLineupPage() {
             if (pitcherData.success && pitcherData.data) {
                 pitcherData.data.forEach(p => {
                     if (newPitchers[p.team]) {
-                        newPitchers[p.team] = { name: p.name }
+                        const pitcherName = p.name || p.player?.name || ''
+                        newPitchers[p.team] = { name: pitcherName }
                     }
                 })
             }
             setPitchers(newPitchers)
+        } catch (err) {
+            console.error('Pitcher fetch error:', err)
+        } finally {
+            setLoadingPitchers(false)
+        }
+    }
+
+    const fetchLineups = async () => {
+        setLoadingLineups(true)
+        try {
+            const lineupRes = await fetch(`/api/admin/starting-lineup?date=${selectedLineupDate}`)
+            const lineupData = await lineupRes.json()
 
             // Reset lineups
             const newLineups = {}
@@ -120,15 +198,53 @@ export default function StartingLineupPage() {
             if (lineupData.success && lineupData.data) {
                 lineupData.data.forEach(l => {
                     if (newLineups[l.team] && l.batting_no >= 1 && l.batting_no <= 9) {
-                        newLineups[l.team][l.batting_no - 1].name = l.name
+                        newLineups[l.team][l.batting_no - 1].name = l.name || l.player?.name || ''
                     }
                 })
             }
             setLineups(newLineups)
         } catch (err) {
-            console.error('Fetch error:', err)
+            console.error('Lineup fetch error:', err)
         } finally {
-            setLoading(false)
+            setLoadingLineups(false)
+        }
+    }
+
+    const fetchPendingTeams = async () => {
+        setCheckingPending(true)
+        try {
+            const [todayScheduleRes, tomorrowScheduleRes, todayLineupRes, tomorrowPitcherRes] = await Promise.all([
+                fetch(`/api/admin/cpbl-schedule?date=${todayTW}`),
+                fetch(`/api/admin/cpbl-schedule?date=${tomorrowTW}`),
+                fetch(`/api/admin/starting-lineup?date=${todayTW}`),
+                fetch(`/api/admin/starting-pitcher?date=${tomorrowTW}`)
+            ])
+
+            const [todayScheduleData, tomorrowScheduleData, todayLineupData, tomorrowPitcherData] = await Promise.all([
+                todayScheduleRes.json(),
+                tomorrowScheduleRes.json(),
+                todayLineupRes.json(),
+                tomorrowPitcherRes.json()
+            ])
+
+            const todayMajorGames = (todayScheduleData.data || []).filter(g => g.major_game !== false)
+            const tomorrowMajorGames = (tomorrowScheduleData.data || []).filter(g => g.major_game !== false)
+
+            const todayMajorTeams = [...new Set(todayMajorGames.flatMap(g => [g.away, g.home]))]
+            const tomorrowMajorTeams = [...new Set(tomorrowMajorGames.flatMap(g => [g.away, g.home]))]
+
+            setTodayMajorTeamCount(todayMajorTeams.length)
+            setTomorrowMajorTeamCount(tomorrowMajorTeams.length)
+
+            const lineupTeams = new Set((todayLineupData.data || []).map(r => r.team))
+            const pitcherTeams = new Set((tomorrowPitcherData.data || []).map(r => r.team))
+
+            setPendingLineupTeams(todayMajorTeams.filter(team => !lineupTeams.has(team)))
+            setPendingPitcherTeams(tomorrowMajorTeams.filter(team => !pitcherTeams.has(team)))
+        } catch (err) {
+            console.error('Pending teams check error:', err)
+        } finally {
+            setCheckingPending(false)
         }
     }
 
@@ -136,19 +252,31 @@ export default function StartingLineupPage() {
     const savePitchers = async () => {
         setLoading(true)
         try {
-            const pitcherList = TEAMS.map(t => ({
-                team: t,
-                name: pitchers[t].name
-            })).filter(p => p.name.trim())
+            const pitcherList = TEAMS
+                .map(t => {
+                    const rawName = pitchers[t].name?.trim()
+                    if (!rawName) return null
+                    const resolved = resolvePlayerByTeamAndName(t, rawName)
+                    if (resolved.status !== 'ok') return { team: t, name: rawName, invalid: true }
+                    return { team: t, player_id: resolved.player.player_id }
+                })
+                .filter(Boolean)
+
+            const invalidPitchers = pitcherList.filter(p => p.invalid)
+            if (invalidPitchers.length > 0) {
+                setMessage({ type: 'error', text: `❌ 找不到或重複球員：${invalidPitchers.map(p => `${p.team} ${p.name}`).join('、')}` })
+                return
+            }
 
             const res = await fetch('/api/admin/starting-pitcher', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ date: selectedDate, pitchers: pitcherList })
+                body: JSON.stringify({ date: selectedPitcherDate, pitchers: pitcherList })
             })
             const data = await res.json()
             if (data.success) {
                 setMessage({ type: 'success', text: `✅ 先發投手已儲存 (${data.inserted} 筆)` })
+                fetchPendingTeams()
             } else {
                 setMessage({ type: 'error', text: `❌ ${data.error}` })
             }
@@ -163,18 +291,35 @@ export default function StartingLineupPage() {
     const saveLineup = async (team) => {
         setLoading(true)
         try {
+            const resolvedLineup = lineups[team].map(slot => {
+                const rawName = slot.name?.trim()
+                if (!rawName) return { batting_no: slot.batting_no, player_id: null }
+                const resolved = resolvePlayerByTeamAndName(team, rawName)
+                if (resolved.status !== 'ok') {
+                    return { batting_no: slot.batting_no, player_id: null, invalidName: rawName }
+                }
+                return { batting_no: slot.batting_no, player_id: resolved.player.player_id }
+            })
+
+            const invalid = resolvedLineup.filter(x => x.invalidName)
+            if (invalid.length > 0) {
+                setMessage({ type: 'error', text: `❌ ${team} 名單有無法匹配球員：${invalid.map(x => `第${x.batting_no}棒 ${x.invalidName}`).join('、')}` })
+                return
+            }
+
             const res = await fetch('/api/admin/starting-lineup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    date: selectedDate,
+                    date: selectedLineupDate,
                     team,
-                    lineup: lineups[team]
+                    lineup: resolvedLineup
                 })
             })
             const data = await res.json()
             if (data.success) {
                 setMessage({ type: 'success', text: `✅ ${team} 先發打序已儲存 (${data.inserted} 人)` })
+                fetchPendingTeams()
             } else {
                 setMessage({ type: 'error', text: `❌ ${data.error}` })
             }
@@ -194,19 +339,36 @@ export default function StartingLineupPage() {
                 const hasData = lineups[team].some(l => l.name.trim())
                 if (!hasData) continue
 
+                const resolvedLineup = lineups[team].map(slot => {
+                    const rawName = slot.name?.trim()
+                    if (!rawName) return { batting_no: slot.batting_no, player_id: null }
+                    const resolved = resolvePlayerByTeamAndName(team, rawName)
+                    if (resolved.status !== 'ok') {
+                        return { batting_no: slot.batting_no, player_id: null, invalidName: rawName }
+                    }
+                    return { batting_no: slot.batting_no, player_id: resolved.player.player_id }
+                })
+
+                const invalid = resolvedLineup.filter(x => x.invalidName)
+                if (invalid.length > 0) {
+                    setMessage({ type: 'error', text: `❌ ${team} 有無法匹配球員：${invalid.map(x => `第${x.batting_no}棒 ${x.invalidName}`).join('、')}` })
+                    return
+                }
+
                 const res = await fetch('/api/admin/starting-lineup', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        date: selectedDate,
+                        date: selectedLineupDate,
                         team,
-                        lineup: lineups[team]
+                        lineup: resolvedLineup
                     })
                 })
                 const data = await res.json()
                 if (data.success) totalInserted += data.inserted
             }
             setMessage({ type: 'success', text: `✅ 全部先發打序已儲存 (${totalInserted} 人)` })
+            fetchPendingTeams()
         } catch (err) {
             setMessage({ type: 'error', text: `❌ ${err.message}` })
         } finally {
@@ -281,12 +443,6 @@ export default function StartingLineupPage() {
                             <p className="text-slate-400 mt-1 text-sm">登錄每日先發投手與先發打序</p>
                         </div>
                         <div className="flex items-center gap-3">
-                            <input
-                                type="date"
-                                value={selectedDate}
-                                onChange={e => setSelectedDate(e.target.value)}
-                                className="bg-slate-800/60 border border-purple-500/30 text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            />
                             <button
                                 onClick={() => router.push('/admin')}
                                 className="px-4 py-3 bg-slate-700/50 hover:bg-slate-600/50 text-white rounded-lg border border-slate-500/30 transition-colors whitespace-nowrap"
@@ -297,18 +453,70 @@ export default function StartingLineupPage() {
                     </div>
                 </div>
 
-                {loading && (
+                {(loading || loadingPitchers || loadingLineups) && (
                     <div className="text-center py-4">
                         <div className="inline-block w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
                     </div>
                 )}
 
+                {/* Pending Registration Check (Major League) */}
+                <div className="mb-8 bg-gradient-to-br from-yellow-600/15 to-amber-600/15 backdrop-blur-lg border border-yellow-500/30 rounded-2xl p-6 shadow-2xl">
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-lg font-bold text-yellow-300">⚠️ 一軍未登錄檢查</h2>
+                        {checkingPending && <span className="text-xs text-yellow-200/80">檢查中...</span>}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="p-4 rounded-xl border border-yellow-500/30 bg-slate-900/40">
+                            <div className="text-sm font-semibold text-yellow-200 mb-2">今日 ({todayTW}) 未登錄打序</div>
+                            {todayMajorTeamCount === 0 ? (
+                                <div className="text-xs text-slate-300">無一軍賽程</div>
+                            ) : pendingLineupTeams.length === 0 ? (
+                                <div className="text-xs text-emerald-300">全部已登錄</div>
+                            ) : (
+                                <div className="flex flex-wrap gap-2">
+                                    {pendingLineupTeams.map(team => (
+                                        <span key={team} className="px-2 py-1 rounded bg-yellow-800/30 border border-yellow-500/30 text-xs text-yellow-100">
+                                            {team}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="p-4 rounded-xl border border-yellow-500/30 bg-slate-900/40">
+                            <div className="text-sm font-semibold text-yellow-200 mb-2">明日 ({tomorrowTW}) 未登錄先發投手</div>
+                            {tomorrowMajorTeamCount === 0 ? (
+                                <div className="text-xs text-slate-300">無一軍賽程</div>
+                            ) : pendingPitcherTeams.length === 0 ? (
+                                <div className="text-xs text-emerald-300">全部已登錄</div>
+                            ) : (
+                                <div className="flex flex-wrap gap-2">
+                                    {pendingPitcherTeams.map(team => (
+                                        <span key={team} className="px-2 py-1 rounded bg-yellow-800/30 border border-yellow-500/30 text-xs text-yellow-100">
+                                            {team}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
                 {/* ===== Section 1: Starting Pitchers ===== */}
                 <div className="mb-8 bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl p-6 shadow-2xl">
                     <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-xl font-bold text-purple-300 flex items-center gap-2">
-                            🔥 先發投手
-                        </h2>
+                        <div className="flex items-center gap-3">
+                            <h2 className="text-xl font-bold text-purple-300 flex items-center gap-2">
+                                🔥 先發投手
+                            </h2>
+                            <input
+                                type="date"
+                                value={selectedPitcherDate}
+                                onChange={e => setSelectedPitcherDate(e.target.value)}
+                                className="bg-slate-800/60 border border-purple-500/30 text-white p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            />
+                        </div>
                         <button
                             onClick={savePitchers}
                             disabled={loading}
@@ -319,7 +527,9 @@ export default function StartingLineupPage() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {TEAMS.map(team => (
+                        {TEAMS.map(team => {
+                            const resolved = resolvePlayerByTeamAndName(team, pitchers[team].name)
+                            return (
                             <div key={team} className={`p-4 rounded-xl border ${TEAM_COLORS[team]} transition-all`}>
                                 <div className={`text-sm font-bold mb-3 ${TEAM_TEXT[team]}`}>{team}</div>
                                 <div className="flex items-center gap-3">
@@ -331,17 +541,37 @@ export default function StartingLineupPage() {
                                         className="flex-1 bg-slate-800/60 border border-slate-600/40 text-white px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-slate-500"
                                     />
                                 </div>
+                                <div className="mt-2 text-[11px]">
+                                    {!pitchers[team].name?.trim() && <span className="text-slate-400">尚未輸入</span>}
+                                    {pitchers[team].name?.trim() && resolved.status === 'ok' && (
+                                        <span className="text-emerald-300">player_id: {resolved.player.player_id}</span>
+                                    )}
+                                    {pitchers[team].name?.trim() && resolved.status === 'not_found' && (
+                                        <span className="text-amber-300">找不到此隊伍的同名球員</span>
+                                    )}
+                                    {pitchers[team].name?.trim() && resolved.status === 'ambiguous' && (
+                                        <span className="text-amber-300">同隊有重複姓名，請改用更精確名稱</span>
+                                    )}
+                                </div>
                             </div>
-                        ))}
+                        )})}
                     </div>
                 </div>
 
                 {/* ===== Section 2: Starting Lineup ===== */}
                 <div className="bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl p-6 shadow-2xl">
                     <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-xl font-bold text-purple-300 flex items-center gap-2">
-                            📋 先發打序
-                        </h2>
+                        <div className="flex items-center gap-3">
+                            <h2 className="text-xl font-bold text-purple-300 flex items-center gap-2">
+                                📋 先發打序
+                            </h2>
+                            <input
+                                type="date"
+                                value={selectedLineupDate}
+                                onChange={e => setSelectedLineupDate(e.target.value)}
+                                className="bg-slate-800/60 border border-purple-500/30 text-white p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            />
+                        </div>
                         <button
                             onClick={saveAllLineups}
                             disabled={loading}
@@ -385,7 +615,8 @@ export default function StartingLineupPage() {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                             {lineups[selectedTeam]?.map((slot, idx) => (
-                                <div key={idx} className="flex items-center gap-3">
+                                <div key={idx} className="flex flex-col gap-1">
+                                    <div className="flex items-center gap-3">
                                     <span className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-700/60 text-slate-300 text-sm font-bold shrink-0">
                                         {slot.batting_no}
                                     </span>
@@ -396,6 +627,14 @@ export default function StartingLineupPage() {
                                         placeholder={`第 ${slot.batting_no} 棒`}
                                         className="flex-1 bg-slate-800/60 border border-slate-600/40 text-white px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-slate-500"
                                     />
+                                </div>
+                                    {(() => {
+                                        const resolved = resolvePlayerByTeamAndName(selectedTeam, slot.name)
+                                        if (!slot.name?.trim()) return <div className="pl-11 text-[11px] text-slate-400">尚未輸入</div>
+                                        if (resolved.status === 'ok') return <div className="pl-11 text-[11px] text-emerald-300">player_id: {resolved.player.player_id}</div>
+                                        if (resolved.status === 'not_found') return <div className="pl-11 text-[11px] text-amber-300">找不到此隊伍的同名球員</div>
+                                        return <div className="pl-11 text-[11px] text-amber-300">同隊有重複姓名，請改用更精確名稱</div>
+                                    })()}
                                 </div>
                             ))}
                         </div>

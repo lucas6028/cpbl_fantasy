@@ -1910,6 +1910,9 @@ export default function PlayersPage() {
                       <p className="text-[10px] sm:text-xs text-purple-200/80 leading-relaxed font-sans normal-case tracking-normal">
                         *Rate/Negative stats require PA/IP top 60% qualification to rank.
                       </p>
+                      <p className="mt-2 pt-2 border-t border-purple-500/30 text-[10px] sm:text-xs text-emerald-200/90 leading-relaxed font-sans normal-case tracking-normal">
+                        Waiver players with no claims become Free Agents at 00:10 Taiwan time after waiver expires.
+                      </p>
                     </div>
                   )}
                 </div>
