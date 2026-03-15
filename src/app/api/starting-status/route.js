@@ -2,10 +2,16 @@ import { NextResponse } from 'next/server';
 import supabaseAdmin from '@/lib/supabaseAdmin';
 
 function getTodayTW() {
-  const now = new Date();
-  const twOffset = 8 * 60 * 60 * 1000;
-  const twTime = new Date(now.getTime() + (now.getTimezoneOffset() * 60 * 1000) + twOffset);
-  return twTime.toISOString().split('T')[0];
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Taipei',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  const year = parts.find((p) => p.type === 'year')?.value;
+  const month = parts.find((p) => p.type === 'month')?.value;
+  const day = parts.find((p) => p.type === 'day')?.value;
+  return `${year}-${month}-${day}`;
 }
 
 export async function GET(request) {

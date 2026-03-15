@@ -9,10 +9,16 @@ import WaiverModal from '../../../../components/WaiverModal';
 import PlayerDetailModal from '../../../../components/PlayerDetailModal';
 
 function getTodayTW() {
-    const now = new Date();
-    const twOffset = 8 * 60 * 60 * 1000;
-    const twTime = new Date(now.getTime() + (now.getTimezoneOffset() * 60 * 1000) + twOffset);
-    return twTime.toISOString().split('T')[0];
+    const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Taipei',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    }).formatToParts(new Date());
+    const year = parts.find((p) => p.type === 'year')?.value;
+    const month = parts.find((p) => p.type === 'month')?.value;
+    const day = parts.find((p) => p.type === 'day')?.value;
+    return `${year}-${month}-${day}`;
 }
 
 export default function RosterPage() {
@@ -323,13 +329,11 @@ export default function RosterPage() {
                     // Initialize selected date to today in Taiwan timezone
                     if (dates.length > 0) {
                         const now = new Date();
-                        const taiwanTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
-                        const todayStr = taiwanTime.toISOString().split('T')[0];
+                        const todayStr = getTodayTW();
 
                         console.log('='.repeat(80));
                         console.log('📅 [Roster] Date Initialization');
                         console.log('UTC Time:', now.toISOString());
-                        console.log('Taiwan Time (UTC+8):', taiwanTime.toISOString());
                         console.log('Today (Taiwan):', todayStr);
                         console.log('Available Dates Range:', dates[0], 'to', dates[dates.length - 1]);
                         console.log('Total Available Dates:', dates.length);
@@ -657,9 +661,7 @@ export default function RosterPage() {
         if (!gameDate) return true;
 
         // 1. Past Date Check
-        const now = new Date();
-        const taiwanTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
-        const todayStr = taiwanTime.toISOString().split('T')[0];
+        const todayStr = getTodayTW();
 
         if (gameDate < todayStr) return false;
 
@@ -695,9 +697,7 @@ export default function RosterPage() {
         // Check if game has started (not postponed)
         if (player.game_info.is_postponed) return false;
 
-        const now = new Date();
-        const taiwanTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
-        const todayStr = taiwanTime.toISOString().split('T')[0];
+        const todayStr = getTodayTW();
 
         // Only check for today's games
         if (selectedDate !== todayStr) return false;
@@ -1284,9 +1284,7 @@ export default function RosterPage() {
                                             {selectedDate || date}
                                         </span>
                                         {(() => {
-                                            const now = new Date();
-                                            const taiwanTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
-                                            const todayStr = taiwanTime.toISOString().split('T')[0];
+                                            const todayStr = getTodayTW();
                                             const isToday = selectedDate === todayStr;
                                             return isToday ? (
                                                 <span className="px-2 py-0.5 rounded-full bg-green-500/20 text-green-300 border border-green-500/30 text-xs font-bold">
@@ -1349,9 +1347,7 @@ export default function RosterPage() {
                                                         const dateStr = `${viewDate.getFullYear()}-${String(viewDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                                                         const isAvailable = availableDates.includes(dateStr);
                                                         const isSelected = selectedDate === dateStr;
-                                                        const now = new Date();
-                                                        const taiwanTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
-                                                        const todayStr = taiwanTime.toISOString().split('T')[0];
+                                                        const todayStr = getTodayTW();
                                                         const isToday = dateStr === todayStr;
 
                                                         return (
