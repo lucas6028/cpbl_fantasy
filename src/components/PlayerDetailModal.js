@@ -23,6 +23,7 @@ export default function PlayerDetailModal({
     leagueStatus,       // 'in season', 'post-draft & pre-season', etc.
     tradeEndDate,
     seasonYear,
+    statusDate,
     isPlayerLocked,     // Boolean: is this player locked in a pending trade?
     isDropLockedByGameStart, // Boolean: is drop locked because game has started and player is in active lineup?
     onAdd,              // (player, isWaiver) => void
@@ -44,6 +45,11 @@ export default function PlayerDetailModal({
     // Recent games state
     const [recentGames, setRecentGames] = useState([]);
     const [recentGamesLoading, setRecentGamesLoading] = useState(true);
+    const [startingStatus, setStartingStatus] = useState({
+        lineupByPlayerId: {},
+        lineupTeams: new Set(),
+        pitcherPlayerIds: new Set(),
+    });
 
     // Tab state for Split vs Recent Games
     const [activeTab, setActiveTab] = useState('split');
@@ -117,6 +123,34 @@ export default function PlayerDetailModal({
             fetchStats();
         }
     }, [isOpen, player]);
+
+    useEffect(() => {
+        const getTodayTW = () => {
+            const now = new Date();
+            const twOffset = 8 * 60 * 60 * 1000;
+            const twTime = new Date(now.getTime() + (now.getTimezoneOffset() * 60 * 1000) + twOffset);
+            return twTime.toISOString().split('T')[0];
+        };
+
+        const fetchStartingStatus = async () => {
+            if (!isOpen || !player?.player_id) return;
+            const dateForStatus = statusDate || getTodayTW();
+            try {
+                const res = await fetch(`/api/starting-status?date=${dateForStatus}`);
+                const data = await res.json();
+                if (!data.success) return;
+                setStartingStatus({
+                    lineupByPlayerId: data.lineup_by_player_id || {},
+                    lineupTeams: new Set(data.lineup_teams || []),
+                    pitcherPlayerIds: new Set((data.pitcher_player_ids || []).map(String)),
+                });
+            } catch (err) {
+                console.error('Failed to fetch starting status:', err);
+            }
+        };
+
+        fetchStartingStatus();
+    }, [isOpen, player, statusDate]);
 
     // Fetch recent game stats
     useEffect(() => {
@@ -405,6 +439,27 @@ export default function PlayerDetailModal({
         return badges.length > 0 ? <div className="flex items-center gap-1.5 ml-2">{badges}</div> : null;
     };
 
+    const renderStartingBadge = () => {
+        if (!player?.player_id) return null;
+
+        const playerType = (player.batter_or_pitcher || '').toLowerCase();
+        const pid = String(player.player_id);
+
+        if (playerType === 'batter' && startingStatus.lineupTeams.has(player.team)) {
+            const battingNo = startingStatus.lineupByPlayerId[pid];
+            if (battingNo) {
+                return <span className="px-2 py-0.5 rounded text-xs font-bold bg-green-600 text-white">{battingNo}</span>;
+            }
+            return <span className="px-2 py-0.5 rounded text-xs font-bold bg-red-600 text-white">X</span>;
+        }
+
+        if (playerType === 'pitcher' && startingStatus.pitcherPlayerIds.has(pid)) {
+            return <span className="px-2 py-0.5 rounded text-xs font-bold bg-green-600 text-white">V</span>;
+        }
+
+        return null;
+    };
+
     // Use portal to render modal directly under body to avoid positioning issues from parent transforms
     if (typeof document === 'undefined') return null;
 
@@ -449,6 +504,7 @@ export default function PlayerDetailModal({
                         </div>
 
                         <div className="flex items-center gap-3 mt-1 text-sm font-semibold flex-wrap">
+                            {renderStartingBadge()}
                             <span className={`${teamColor} bg-white/5 py-1 px-2.5 rounded shadow-sm border border-white/5`}>
                                 {teamAbbr}
                             </span>

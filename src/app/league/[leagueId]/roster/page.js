@@ -8,6 +8,13 @@ import MyTradesModal from '../../../../components/MyTradesModal';
 import WaiverModal from '../../../../components/WaiverModal';
 import PlayerDetailModal from '../../../../components/PlayerDetailModal';
 
+function getTodayTW() {
+    const now = new Date();
+    const twOffset = 8 * 60 * 60 * 1000;
+    const twTime = new Date(now.getTime() + (now.getTimezoneOffset() * 60 * 1000) + twOffset);
+    return twTime.toISOString().split('T')[0];
+}
+
 export default function RosterPage() {
     const params = useParams();
     const leagueId = params.leagueId;
@@ -72,6 +79,11 @@ export default function RosterPage() {
 
     // Roster Percentage Map
     const [rosterPercentageMap, setRosterPercentageMap] = useState({});
+    const [startingStatus, setStartingStatus] = useState({
+        lineupByPlayerId: {},
+        lineupTeams: new Set(),
+        pitcherPlayerIds: new Set(),
+    });
 
     // Helpers
     const parseStatName = (stat) => {
@@ -344,6 +356,27 @@ export default function RosterPage() {
 
         fetchSchedule();
     }, [leagueId]);
+
+    useEffect(() => {
+        const fetchStartingStatus = async () => {
+            const dateForStatus = selectedDate || getTodayTW();
+            try {
+                const res = await fetch(`/api/starting-status?date=${dateForStatus}`);
+                const data = await res.json();
+                if (!data.success) return;
+
+                setStartingStatus({
+                    lineupByPlayerId: data.lineup_by_player_id || {},
+                    lineupTeams: new Set(data.lineup_teams || []),
+                    pitcherPlayerIds: new Set((data.pitcher_player_ids || []).map(String)),
+                });
+            } catch (err) {
+                console.error('Failed to fetch starting status:', err);
+            }
+        };
+
+        fetchStartingStatus();
+    }, [selectedDate]);
 
     // Fetch roster when selectedDate changes
     useEffect(() => {
@@ -931,6 +964,23 @@ export default function RosterPage() {
     const renderPlayerBadges = (player) => {
         if (player.player_id === 'empty') return null;
         const badges = [];
+
+        const playerType = (player.batter_or_pitcher || '').toLowerCase();
+        const pid = String(player.player_id || '');
+        if (pid) {
+            if (playerType === 'batter' && startingStatus.lineupTeams.has(player.team)) {
+                const battingNo = startingStatus.lineupByPlayerId[pid];
+                if (battingNo) {
+                    badges.push(<span key="start-bat" className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-600 text-white" title="In starting lineup">{battingNo}</span>);
+                } else {
+                    badges.push(<span key="start-bat-x" className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-600 text-white" title="Not in starting lineup">X</span>);
+                }
+            }
+            if (playerType === 'pitcher' && startingStatus.pitcherPlayerIds.has(pid)) {
+                badges.push(<span key="start-sp" className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-600 text-white" title="Today's starting pitcher">V</span>);
+            }
+        }
+
         if (player.identity && player.identity.toLowerCase() === 'foreigner') {
             badges.push(<span key="f" title="Foreign Player" className="w-5 h-5 flex items-center justify-center rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[10px] font-bold">F</span>);
         }
@@ -1879,6 +1929,7 @@ export default function RosterPage() {
                     leagueStatus={leagueStatus}
                     tradeEndDate={tradeEndDate}
                     seasonYear={seasonYear}
+                    statusDate={selectedDate || getTodayTW()}
                     isPlayerLocked={selectedPlayerModal ? activeTradePlayerIds.has(selectedPlayerModal.player_id) : false}
                     isDropLockedByGameStart={selectedPlayerModal ? isDropLockedByGameStart(selectedPlayerModal) : false}
                     onDrop={(player) => handleDropPlayer(player)}

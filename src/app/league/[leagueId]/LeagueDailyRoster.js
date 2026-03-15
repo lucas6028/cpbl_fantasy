@@ -81,6 +81,11 @@ export default function LeagueDailyRoster({ leagueId, members }) {
     const [showTradeErrorNotification, setShowTradeErrorNotification] = useState(false);
     const [tradeSuccessMessage, setTradeSuccessMessage] = useState({ title: '', description: '' });
     const [tradeErrorMessage, setTradeErrorMessage] = useState({ title: '', description: '' });
+    const [startingStatus, setStartingStatus] = useState({
+        lineupByPlayerId: {},
+        lineupTeams: new Set(),
+        pitcherPlayerIds: new Set(),
+    });
 
     // Get current user's manager ID
     useEffect(() => {
@@ -318,6 +323,27 @@ export default function LeagueDailyRoster({ leagueId, members }) {
         };
         fetchStats();
     }, [selectedManagerId, selectedDate]);
+
+    useEffect(() => {
+        if (!selectedDate) return;
+        const fetchStartingStatus = async () => {
+            try {
+                const res = await fetch(`/api/starting-status?date=${selectedDate}`);
+                const data = await res.json();
+                if (!data.success) return;
+
+                setStartingStatus({
+                    lineupByPlayerId: data.lineup_by_player_id || {},
+                    lineupTeams: new Set(data.lineup_teams || []),
+                    pitcherPlayerIds: new Set((data.pitcher_player_ids || []).map(String)),
+                });
+            } catch (err) {
+                console.error('Failed to fetch starting status:', err);
+            }
+        };
+
+        fetchStartingStatus();
+    }, [selectedDate]);
 
     const handleDateChange = (days) => {
         const currentIdx = availableDates.indexOf(selectedDate);
@@ -625,6 +651,25 @@ export default function LeagueDailyRoster({ leagueId, members }) {
 
         // Game info — vivid inline display
         let gameInfoEl = null;
+        let startingBadge = null;
+
+        if (!isEmpty && p.player_id) {
+            const playerType = (p.batter_or_pitcher || '').toLowerCase();
+            const pid = String(p.player_id);
+
+            if (playerType === 'batter' && startingStatus.lineupTeams.has(p.team)) {
+                const battingNo = startingStatus.lineupByPlayerId[pid];
+                if (battingNo) {
+                    startingBadge = <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-600 text-white">{battingNo}</span>;
+                } else {
+                    startingBadge = <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-600 text-white">X</span>;
+                }
+            }
+
+            if (playerType === 'pitcher' && startingStatus.pitcherPlayerIds.has(pid)) {
+                startingBadge = <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-600 text-white">V</span>;
+            }
+        }
         if (!isEmpty && p.game_info) {
             if (p.game_info.is_postponed) {
                 gameInfoEl = <span className="text-[11px] text-red-400 font-bold flex-shrink-0 ml-1">PPD</span>;
@@ -722,6 +767,7 @@ export default function LeagueDailyRoster({ leagueId, members }) {
                             >
                                 {name}
                             </span>
+                            {!isEmpty && startingBadge}
                             {!isEmpty && p.team && (
                                 <span className={`${getTeamColor(p.team)} font-bold text-[10px] flex-shrink-0`}>{teamAbbr}</span>
                             )}
@@ -896,6 +942,7 @@ export default function LeagueDailyRoster({ leagueId, members }) {
                 leagueStatus={leagueStatus}
                 tradeEndDate={tradeEndDate}
                 seasonYear={seasonYear}
+                statusDate={selectedDate}
                 onTrade={handleOpenTrade}
                 isWatched={selectedPlayerModal ? watchedPlayerIds.has(selectedPlayerModal.player_id) : false}
                 onToggleWatch={handleToggleWatch}

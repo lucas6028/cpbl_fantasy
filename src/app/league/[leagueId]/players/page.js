@@ -5,6 +5,13 @@ import { useParams } from 'next/navigation';
 import LegendModal from '../../../../components/LegendModal';
 import PlayerDetailModal from '../../../../components/PlayerDetailModal';
 
+function getTodayTW() {
+  const now = new Date();
+  const twOffset = 8 * 60 * 60 * 1000;
+  const twTime = new Date(now.getTime() + (now.getTimezoneOffset() * 60 * 1000) + twOffset);
+  return twTime.toISOString().split('T')[0];
+}
+
 export default function PlayersPage() {
   const params = useParams();
   const leagueId = params.leagueId;
@@ -65,6 +72,12 @@ export default function PlayersPage() {
   const [isFetchingTradeData, setIsFetchingTradeData] = useState(false);
   const [selectedPlayerModal, setSelectedPlayerModal] = useState(null);
   const [showRankInfo, setShowRankInfo] = useState(false);
+  const [startingStatus, setStartingStatus] = useState({
+    lineupByPlayerId: {},
+    lineupTeams: new Set(),
+    pitcherPlayerIds: new Set(),
+  });
+  const [statusDate] = useState(getTodayTW());
 
   // Watch State
   const [watchedPlayerIds, setWatchedPlayerIds] = useState(new Set());
@@ -188,6 +201,26 @@ export default function PlayersPage() {
 
     fetchData();
   }, [leagueId]);
+
+  useEffect(() => {
+    const fetchStartingStatus = async () => {
+      try {
+        const res = await fetch(`/api/starting-status?date=${statusDate}`);
+        const data = await res.json();
+        if (!data.success) return;
+
+        setStartingStatus({
+          lineupByPlayerId: data.lineup_by_player_id || {},
+          lineupTeams: new Set(data.lineup_teams || []),
+          pitcherPlayerIds: new Set((data.pitcher_player_ids || []).map(String)),
+        });
+      } catch (err) {
+        console.error('Failed to fetch starting status:', err);
+      }
+    };
+
+    fetchStartingStatus();
+  }, [statusDate]);
 
   // Determine default timeWindow based on Taiwan time vs first week start
   useEffect(() => {
@@ -1746,6 +1779,40 @@ export default function PlayersPage() {
     );
   }
 
+  const renderStartingBadge = (player) => {
+    if (!player?.player_id) return null;
+
+    const playerType = (player.batter_or_pitcher || '').toLowerCase();
+    const pid = String(player.player_id);
+
+    if (playerType === 'batter') {
+      if (!startingStatus.lineupTeams.has(player.team)) return null;
+      const battingNo = startingStatus.lineupByPlayerId[pid];
+      if (battingNo) {
+        return (
+          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-600 text-white" title="In starting lineup">
+            {battingNo}
+          </span>
+        );
+      }
+      return (
+        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-600 text-white" title="Not in starting lineup">
+          X
+        </span>
+      );
+    }
+
+    if (playerType === 'pitcher' && startingStatus.pitcherPlayerIds.has(pid)) {
+      return (
+        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-600 text-white" title="Today's starting pitcher">
+          V
+        </span>
+      );
+    }
+
+    return null;
+  };
+
   if (error) {
     return (
       <div className="min-h-[100dvh] bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4 sm:p-8">
@@ -2087,6 +2154,7 @@ export default function PlayersPage() {
                                     {player.team ? `${getTeamAbbr(player.team)}` : ''}
                                   </span>
                                 </span>
+                                {renderStartingBadge(player)}
                                 {renderStatusTag(player)}
                               </div>
                               <div className="flex items-center gap-2 mt-1 flex-nowrap whitespace-nowrap">
@@ -2184,6 +2252,7 @@ export default function PlayersPage() {
                                       {player.team ? `${getTeamAbbr(player.team)}` : ''}
                                     </span>
                                   </span>
+                                  {renderStartingBadge(player)}
                                   {renderStatusTag(player)}
                                 </div>
                                 <div className="flex items-center gap-2 mt-1 flex-nowrap whitespace-nowrap">
@@ -2939,6 +3008,7 @@ export default function PlayersPage() {
         leagueStatus={leagueStatus}
         tradeEndDate={tradeEndDate}
         seasonYear={seasonYear}
+        statusDate={statusDate}
         isPlayerLocked={selectedPlayerModal ? activeTradePlayerIds.has(selectedPlayerModal.player_id) : false}
         onAdd={(player, isWaiver) => handleAddPlayer(player, isWaiver)}
         onDrop={(player) => handleDropPlayer(player)}
