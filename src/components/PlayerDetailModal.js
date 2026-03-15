@@ -563,7 +563,7 @@ export default function PlayerDetailModal({
                                         </table>
                                     </div>
 
-                                    {/* Mobile card layout */}
+                                    {/* Mobile layout: fixed info row + horizontal stats row */}
                                     <div className="sm:hidden space-y-2">
                                         {TIME_WINDOWS.map((tw) => {
                                             const windowStats = dataByWindow[tw];
@@ -572,33 +572,31 @@ export default function PlayerDetailModal({
                                                     <div className="bg-slate-800/80 px-3 py-2 border-b border-white/10">
                                                         <span className="text-xs font-black text-purple-300 uppercase tracking-widest">{tw}</span>
                                                     </div>
+
                                                     <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
-                                                        <table className="w-full text-left border-collapse" style={{ minWidth: `${abbreviations.length * 52}px` }}>
-                                                            <thead>
-                                                                <tr className="border-b border-white/5">
-                                                                    {abbreviations.map((abbr, i) => (
-                                                                        <th key={i} className="py-1.5 px-2 text-center text-[10px] font-black text-slate-500 uppercase tracking-wider whitespace-nowrap">
-                                                                            {abbr}
-                                                                        </th>
-                                                                    ))}
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                <tr>
-                                                                    {abbreviations.map((abbr, i) => {
-                                                                        const val = windowStats ? windowStats[abbr.toLowerCase()] : null;
-                                                                        const displayVal = val === null || val === undefined ? '-' : val;
-                                                                        const isZeroOrDash = displayVal === '-' || displayVal === 0 || displayVal === '0';
-                                                                        const isRefStat = abbr === 'AB' || abbr === 'IP';
-                                                                        return (
-                                                                            <td key={i} className={`py-2 px-2 text-center text-sm font-mono whitespace-nowrap ${isZeroOrDash ? 'text-slate-600' : isRefStat ? 'text-slate-400' : 'text-cyan-300'}`}>
-                                                                                {displayVal}
-                                                                            </td>
-                                                                        );
-                                                                    })}
-                                                                </tr>
-                                                            </tbody>
-                                                        </table>
+                                                        <div className="min-w-max">
+                                                            <div className="grid grid-flow-col auto-cols-[56px] border-b border-white/5">
+                                                                {abbreviations.map((abbr, i) => (
+                                                                    <div key={i} className="py-1.5 px-2 text-center text-[10px] font-black text-slate-500 uppercase tracking-wider whitespace-nowrap">
+                                                                        {abbr}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+
+                                                            <div className="grid grid-flow-col auto-cols-[56px]">
+                                                                {abbreviations.map((abbr, i) => {
+                                                                    const val = windowStats ? windowStats[abbr.toLowerCase()] : null;
+                                                                    const displayVal = val === null || val === undefined ? '-' : val;
+                                                                    const isZeroOrDash = displayVal === '-' || displayVal === 0 || displayVal === '0';
+                                                                    const isRefStat = abbr === 'AB' || abbr === 'IP';
+                                                                    return (
+                                                                        <div key={i} className={`py-2 px-2 text-center text-sm font-mono whitespace-nowrap ${isZeroOrDash ? 'text-slate-600' : isRefStat ? 'text-slate-400' : 'text-cyan-300'}`}>
+                                                                            {displayVal}
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             );
@@ -669,7 +667,7 @@ export default function PlayerDetailModal({
                                         </table>
                                     </div>
 
-                                    {/* Mobile card layout */}
+                                    {/* Mobile layout: fixed info row + horizontal stats row */}
                                     <div className="sm:hidden space-y-2">
                                         {recentGames.map((game, idx) => {
                                             const dateStr = game.game_date ? new Date(game.game_date).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' }) : '-';
@@ -680,38 +678,36 @@ export default function PlayerDetailModal({
                                                     <div className="bg-slate-800/80 px-3 py-2 border-b border-white/10">
                                                         <span className="text-xs font-black text-purple-300 uppercase tracking-widest">{displayLabel}</span>
                                                     </div>
+
                                                     <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
-                                                        <table className="w-full text-left border-collapse" style={{ minWidth: `${abbreviations.length * 52}px` }}>
-                                                            <thead>
-                                                                <tr className="border-b border-white/5">
-                                                                    {abbreviations.map((abbr, i) => (
-                                                                        <th key={i} className="py-1.5 px-2 text-center text-[10px] font-black text-slate-500 uppercase tracking-wider whitespace-nowrap">
-                                                                            {abbr}
-                                                                        </th>
-                                                                    ))}
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                <tr>
-                                                                    {abbreviations.map((abbr, i) => {
-                                                                        const val = game[abbr];
-                                                                        const isRateCol = ['AVG', 'OBP', 'SLG', 'ERA', 'WHIP'].includes(abbr);
-                                                                        const displayVal = val == null || val === '-'
-                                                                            ? '-'
-                                                                            : isRateCol
-                                                                                ? parseFloat(val).toFixed(abbr === 'ERA' || abbr === 'WHIP' ? 2 : 3)
-                                                                                : val;
-                                                                        const isZeroOrDash = displayVal === '-' || displayVal === 0 || displayVal === '0';
-                                                                        const isRefStat = abbr === 'AB' || abbr === 'IP';
-                                                                        return (
-                                                                            <td key={i} className={`py-2 px-2 text-center text-sm font-mono whitespace-nowrap ${isZeroOrDash ? 'text-slate-600' : isRefStat ? 'text-slate-400' : 'text-cyan-300'}`}>
-                                                                                {displayVal}
-                                                                            </td>
-                                                                        );
-                                                                    })}
-                                                                </tr>
-                                                            </tbody>
-                                                        </table>
+                                                        <div className="min-w-max">
+                                                            <div className="grid grid-flow-col auto-cols-[56px] border-b border-white/5">
+                                                                {abbreviations.map((abbr, i) => (
+                                                                    <div key={i} className="py-1.5 px-2 text-center text-[10px] font-black text-slate-500 uppercase tracking-wider whitespace-nowrap">
+                                                                        {abbr}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+
+                                                            <div className="grid grid-flow-col auto-cols-[56px]">
+                                                                {abbreviations.map((abbr, i) => {
+                                                                    const val = game[abbr];
+                                                                    const isRateCol = ['AVG', 'OBP', 'SLG', 'ERA', 'WHIP'].includes(abbr);
+                                                                    const displayVal = val == null || val === '-'
+                                                                        ? '-'
+                                                                        : isRateCol
+                                                                            ? parseFloat(val).toFixed(abbr === 'ERA' || abbr === 'WHIP' ? 2 : 3)
+                                                                            : val;
+                                                                    const isZeroOrDash = displayVal === '-' || displayVal === 0 || displayVal === '0';
+                                                                    const isRefStat = abbr === 'AB' || abbr === 'IP';
+                                                                    return (
+                                                                        <div key={i} className={`py-2 px-2 text-center text-sm font-mono whitespace-nowrap ${isZeroOrDash ? 'text-slate-600' : isRefStat ? 'text-slate-400' : 'text-cyan-300'}`}>
+                                                                            {displayVal}
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             );
