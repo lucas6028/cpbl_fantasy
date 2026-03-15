@@ -50,6 +50,7 @@ export default function RosterPage() {
     const [showLegendModal, setShowLegendModal] = useState(false);
     const [showWaiverModal, setShowWaiverModal] = useState(false);
     const [showMoveModal, setShowMoveModal] = useState(false);
+    const [showStartActiveModal, setShowStartActiveModal] = useState(false);
     const [playerToMove, setPlayerToMove] = useState(null);
     const [selectedPlayerModal, setSelectedPlayerModal] = useState(null);
 
@@ -652,18 +653,18 @@ export default function RosterPage() {
     };
 
     // Move Restriction Helper
-    const isMoveAllowed = (player) => {
-        if (!selectedDate) return true;
+    const isMoveAllowedForDate = (player, gameDate) => {
+        if (!gameDate) return true;
 
         // 1. Past Date Check
         const now = new Date();
         const taiwanTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
         const todayStr = taiwanTime.toISOString().split('T')[0];
 
-        if (selectedDate < todayStr) return false;
+        if (gameDate < todayStr) return false;
 
         // 2. Game Time Check (Only for Today)
-        if (selectedDate === todayStr && player.game_info && player.game_info.time) {
+        if (gameDate === todayStr && player.game_info && player.game_info.time) {
             // game_info.time is stored as timestamptz (e.g., '2026-03-09 10:35:00+00')
             // Compare directly using UTC
             const gameTimeUTC = new Date(player.game_info.time);
@@ -681,6 +682,8 @@ export default function RosterPage() {
 
         return true;
     };
+
+    const isMoveAllowed = (player) => isMoveAllowedForDate(player, selectedDate);
 
     // Drop Lock Helper - Check if player cannot be dropped due to game start
     const isDropLockedByGameStart = (player) => {
@@ -734,11 +737,11 @@ export default function RosterPage() {
         return [...new Set(positions)].filter(pos => ACTIVE_POSITIONS_ORDER.includes(pos) && (parseInt(rosterPositionsConfig[pos], 10) || 0) > 0);
     };
 
-    const buildAutoStartPlan = () => {
-        const rosterPlayers = roster.filter(player => !player.isEmpty && player.player_id !== 'empty');
+    const buildAutoStartPlan = (rosterForDate, gameDate) => {
+        const rosterPlayers = rosterForDate.filter(player => !player.isEmpty && player.player_id !== 'empty');
         const fixedPlayerIds = new Set(
             rosterPlayers
-                .filter(player => ACTIVE_POSITIONS_ORDER.includes(player.position) && !isMoveAllowed(player))
+                .filter(player => ACTIVE_POSITIONS_ORDER.includes(player.position) && !isMoveAllowedForDate(player, gameDate))
                 .map(player => player.player_id)
         );
 
@@ -756,7 +759,7 @@ export default function RosterPage() {
             .filter(player => !fixedPlayerIds.has(player.player_id))
             .filter(player => !['NA', 'IL', 'Minor'].includes(player.position))
             .filter(player => hasPlayableGame(player))
-            .filter(player => !(player.position === 'BN' && !isMoveAllowed(player)))
+            .filter(player => !(player.position === 'BN' && !isMoveAllowedForDate(player, gameDate)))
             .map(player => {
                 const eligibleSlots = getEligibleActivePositions(player)
                     .flatMap(position => availableSlots.filter(slot => slot.position === position))
@@ -858,7 +861,7 @@ export default function RosterPage() {
         return { desiredPositions, fixedPlayerIds };
     };
 
-    const applyRosterMove = async (playerId, currentPosition, targetPosition) => {
+    const applyRosterMove = async (playerId, currentPosition, targetPosition, gameDate) => {
         const response = await fetch(`/api/league/${leagueId}/roster/move`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -867,7 +870,7 @@ export default function RosterPage() {
                 playerId,
                 currentPosition,
                 targetPosition,
-                gameDate: selectedDate,
+                gameDate,
             })
         });
 
@@ -880,18 +883,34 @@ export default function RosterPage() {
         return data;
     };
 
-    const handleStartActive = async () => {
-        if (!myManagerId || !selectedDate || isAutoStarting || loading || actionLoading) return;
-        if (Object.keys(rosterPositionsConfig).length === 0) return;
+    const resolveStartActiveDates = (mode) => {
+        const today = getTodayTW();
+        const preferredStart = availableDates.includes(today) ? today : selectedDate;
+        const startIdx = Math.max(0, availableDates.indexOf(preferredStart));
 
-        const { desiredPositions, fixedPlayerIds } = buildAutoStartPlan();
-        const rosterPlayers = roster.filter(player => !player.isEmpty && player.player_id !== 'empty');
+        if (mode === 'five-days') {
+            return availableDates.slice(startIdx, startIdx + 5);
+        }
+
+        return preferredStart ? [preferredStart] : [];
+    };
+
+    const executeStartActiveForDate = async (gameDate) => {
+        const res = await fetch(`/api/league/${leagueId}/roster?manager_id=${myManagerId}&game_date=${gameDate}`);
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            throw new Error(data.error || `Failed to load roster for ${gameDate}`);
+        }
+
+        const rosterForDate = data.roster || [];
+        const { desiredPositions, fixedPlayerIds } = buildAutoStartPlan(rosterForDate, gameDate);
+        const rosterPlayers = rosterForDate.filter(player => !player.isEmpty && player.player_id !== 'empty');
         const currentPositions = new Map(rosterPlayers.map(player => [player.player_id, player.position]));
 
         const playersToBench = rosterPlayers
             .filter(player => ACTIVE_POSITIONS_ORDER.includes(player.position))
             .filter(player => !fixedPlayerIds.has(player.player_id))
-            .filter(player => isMoveAllowed(player))
+            .filter(player => isMoveAllowedForDate(player, gameDate))
             .filter(player => desiredPositions.get(player.player_id) !== player.position)
             .sort((left, right) => ACTIVE_POSITIONS_ORDER.indexOf(left.position) - ACTIVE_POSITIONS_ORDER.indexOf(right.position));
 
@@ -907,44 +926,80 @@ export default function RosterPage() {
 
         const moveDetails = [];
 
-        if (playersToBench.length === 0 && playersToActivate.length === 0) {
-            setNotification({ type: 'success', message: 'Already optimized', details: ['All playable non-NA players are already in the best active slots.'] });
-            setTimeout(() => setNotification(null), 2500);
+        for (const player of playersToBench) {
+            const currentPosition = currentPositions.get(player.player_id);
+            if (currentPosition === 'BN') continue;
+
+            await applyRosterMove(player.player_id, currentPosition, 'BN', gameDate);
+            currentPositions.set(player.player_id, 'BN');
+            moveDetails.push(`${player.name} -> BN`);
+        }
+
+        for (const player of playersToActivate) {
+            const targetPosition = desiredPositions.get(player.player_id);
+            const currentPosition = currentPositions.get(player.player_id);
+
+            if (!targetPosition || currentPosition === targetPosition) continue;
+
+            await applyRosterMove(player.player_id, currentPosition, targetPosition, gameDate);
+            currentPositions.set(player.player_id, targetPosition);
+            moveDetails.push(`${player.name} -> ${targetPosition}`);
+        }
+
+        return moveDetails;
+    };
+
+    const handleStartActive = async (mode = 'today') => {
+        if (!myManagerId || !selectedDate || isAutoStarting || loading || actionLoading) return;
+        if (Object.keys(rosterPositionsConfig).length === 0) return;
+
+        const datesToRun = resolveStartActiveDates(mode);
+        if (datesToRun.length === 0) {
+            setNotification({ type: 'error', message: 'Start Active Failed', details: ['No valid schedule date found.'] });
+            setTimeout(() => setNotification(null), 3000);
             return;
         }
 
         setIsAutoStarting(true);
         setActionLoading(true);
         setNotification(null);
+        setShowStartActiveModal(false);
 
         try {
-            for (const player of playersToBench) {
-                const currentPosition = currentPositions.get(player.player_id);
-                if (currentPosition === 'BN') continue;
+            const isMultiDay = mode === 'five-days';
+            let todayMoveDetails = [];
+            let anyMove = false;
 
-                await applyRosterMove(player.player_id, currentPosition, 'BN');
-                currentPositions.set(player.player_id, 'BN');
-                moveDetails.push(`${player.name} -> BN`);
-            }
-
-            for (const player of playersToActivate) {
-                const targetPosition = desiredPositions.get(player.player_id);
-                const currentPosition = currentPositions.get(player.player_id);
-
-                if (!targetPosition || currentPosition === targetPosition) continue;
-
-                await applyRosterMove(player.player_id, currentPosition, targetPosition);
-                currentPositions.set(player.player_id, targetPosition);
-                moveDetails.push(`${player.name} -> ${targetPosition}`);
+            for (let i = 0; i < datesToRun.length; i += 1) {
+                const gameDate = datesToRun[i];
+                const moveDetails = await executeStartActiveForDate(gameDate);
+                if (moveDetails.length > 0) {
+                    anyMove = true;
+                    if (!isMultiDay && i === 0) {
+                        todayMoveDetails = moveDetails;
+                    }
+                }
             }
 
             await refreshRoster();
-            setNotification({
-                type: 'success',
-                message: 'Start Active Complete',
-                details: moveDetails
-            });
-            setTimeout(() => setNotification(null), 3500);
+
+            if (!anyMove) {
+                setNotification({ type: 'success', message: 'Already optimized', details: ['All playable non-NA players are already in the best active slots.'] });
+                setTimeout(() => setNotification(null), 2500);
+                return;
+            }
+
+            if (isMultiDay) {
+                setNotification({ type: 'success', message: 'Success', details: [] });
+                setTimeout(() => setNotification(null), 2500);
+            } else {
+                setNotification({
+                    type: 'success',
+                    message: 'Start Active Complete',
+                    details: todayMoveDetails
+                });
+                setTimeout(() => setNotification(null), 3500);
+            }
         } catch (err) {
             console.error('Failed to auto-start roster:', err);
             await refreshRoster();
@@ -1365,7 +1420,7 @@ export default function RosterPage() {
                                 WAIVER
                             </button>
                             <button
-                                onClick={handleStartActive}
+                                onClick={() => setShowStartActiveModal(true)}
                                 disabled={isAutoStarting || loading || actionLoading || !selectedDate || Object.keys(rosterPositionsConfig).length === 0}
                                 className={`px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border flex items-center justify-center transition-colors text-[10px] sm:text-xs font-bold tracking-wider ${isAutoStarting || loading || actionLoading || !selectedDate || Object.keys(rosterPositionsConfig).length === 0
                                     ? 'bg-slate-700/50 border-slate-600/50 text-slate-400 cursor-not-allowed'
@@ -1907,6 +1962,36 @@ export default function RosterPage() {
                         </div>
                     )
                 }
+
+                {showStartActiveModal && (
+                    <div className="fixed inset-0 z-[100050] flex items-center justify-center p-4">
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowStartActiveModal(false)} />
+                        <div className="relative bg-gradient-to-br from-slate-900 to-slate-800 border border-emerald-500/30 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+                            <h3 className="text-lg font-bold text-white mb-2">Start Active Range</h3>
+                            <p className="text-sm text-slate-300 mb-5">Choose how far to apply Start Active.</p>
+                            <div className="grid grid-cols-1 gap-3">
+                                <button
+                                    onClick={() => handleStartActive('today')}
+                                    className="w-full px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-colors"
+                                >
+                                    Today
+                                </button>
+                                <button
+                                    onClick={() => handleStartActive('five-days')}
+                                    className="w-full px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-bold transition-colors"
+                                >
+                                    5 Days (include today)
+                                </button>
+                                <button
+                                    onClick={() => setShowStartActiveModal(false)}
+                                    className="w-full px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-100 font-semibold transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 <MoveModal
                     isOpen={showMoveModal}
