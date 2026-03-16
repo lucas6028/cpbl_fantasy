@@ -213,6 +213,15 @@ export default function HomePage() {
                 CPBL Schedule
               </h2>
               <CpblScheduleWidget />
+              <p className="mt-4 text-sm text-purple-200/90 leading-relaxed">
+                Feedback and optimization suggestions, contact{' '}
+                <a
+                  href="mailto:fantasycpbl@gmail.com"
+                  className="font-semibold text-cyan-300 hover:text-cyan-200 underline underline-offset-2"
+                >
+                  fantasycpbl@gmail.com
+                </a>
+              </p>
             </div>
           </div>
         </div>
