@@ -145,6 +145,20 @@ export async function DELETE(request, { params }) {
       );
     }
 
+    // Remove test_league linkage first to avoid FK constraint conflicts.
+    const { error: testLeagueDeleteError } = await supabase
+      .from('test_league')
+      .delete()
+      .eq('league_id', leagueId);
+
+    if (testLeagueDeleteError) {
+      console.error('Error deleting test_league row:', testLeagueDeleteError);
+      return NextResponse.json(
+        { success: false, error: 'Failed to delete test_league relation', details: testLeagueDeleteError.message },
+        { status: 500 }
+      );
+    }
+
     // Delete league_settings will cascade delete all related data
     const { error: deleteError } = await supabase
       .from('league_settings')
