@@ -261,8 +261,15 @@ export default function AdminLeagueOverviewPage() {
 
                 {/* Roster Positions */}
                 <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-                    <div className="px-5 py-3 bg-gray-50 border-b border-gray-200">
+                    <div className="px-5 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
                         <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Roster Positions</h3>
+                        {league.roster_positions && (
+                            <span className="text-xs font-bold text-blue-600">
+                                {Object.entries(league.roster_positions)
+                                    .filter(([pos, count]) => pos !== 'Minor' && Number(count) > 0)
+                                    .reduce((sum, [, count]) => sum + Number(count), 0)} slots (excl. Minor)
+                            </span>
+                        )}
                     </div>
                     {!league.roster_positions || Object.keys(league.roster_positions).length === 0 ? (
                         <div className="px-5 py-12 text-center text-gray-400 text-sm">No roster positions configured.</div>
