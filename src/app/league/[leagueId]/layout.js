@@ -10,6 +10,7 @@ export default function LeagueLayout({ children }) {
   const leagueId = params.leagueId;
 
   const [currentUserRole, setCurrentUserRole] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
   const [error, setError] = useState('');
@@ -27,10 +28,27 @@ export default function LeagueLayout({ children }) {
       try {
         const cookie = document.cookie.split('; ').find(row => row.startsWith('user_id='));
         const currentUserId = cookie?.split('=')[1];
+        let adminBypass = false;
+
+        // Admin can view all pages under /league/[leagueId] regardless of membership.
+        try {
+          const adminRes = await fetch('/api/admin/check');
+          const adminData = await adminRes.json();
+          if (adminData?.isAdmin) {
+            adminBypass = true;
+            setIsAdmin(true);
+            setAccessDenied(false);
+            setError('');
+          }
+        } catch (adminErr) {
+          console.error('Admin check failed:', adminErr);
+        }
 
         if (!currentUserId) {
-          setAccessDenied(true);
-          setError('Please log in to view this league');
+          if (!adminBypass) {
+            setAccessDenied(true);
+            setError('Please log in to view this league');
+          }
           setLoading(false);
           return;
         }
@@ -41,7 +59,7 @@ export default function LeagueLayout({ children }) {
         if (result.success && result.members) {
           const isMember = result.members.some(m => m.manager_id === currentUserId);
 
-          if (!isMember) {
+          if (!isMember && !adminBypass) {
             setAccessDenied(true);
             setError('Access Denied: You are not a member of this league');
             setLoading(false);

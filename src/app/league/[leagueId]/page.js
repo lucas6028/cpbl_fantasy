@@ -243,6 +243,7 @@ export default function LeaguePage() {
   const [error, setError] = useState('');
   const [leagueStatus, setLeagueStatus] = useState('');
   const [currentUserRole, setCurrentUserRole] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
   const [maxTeams, setMaxTeams] = useState(0);
   const [invitePermissions, setInvitePermissions] = useState('');
   const [showCopied, setShowCopied] = useState(false);
@@ -258,6 +259,20 @@ export default function LeaguePage() {
   const [draftResetError, setDraftResetError] = useState('');
   const [draftResetSaving, setDraftResetSaving] = useState(false);
   const [draftResetSuccess, setDraftResetSuccess] = useState(false);
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      try {
+        const res = await fetch('/api/admin/check');
+        const data = await res.json();
+        setIsAdmin(Boolean(data?.isAdmin));
+      } catch (err) {
+        console.error('Failed to check admin status:', err);
+      }
+    };
+
+    checkAdmin();
+  }, []);
 
   useEffect(() => {
     if (!leagueId) return;
@@ -797,6 +812,8 @@ export default function LeaguePage() {
   }
 
   const canShowInviteLink = () => {
+    if (isAdmin) return true;
+
     // 联盟未满 且 状态是 pre-draft 且 未 finalized
     if (members.length >= maxTeams || leagueStatus !== 'pre-draft' || leagueSettings?.is_finalized) {
       return false;
@@ -1625,7 +1642,7 @@ export default function LeaguePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
                 <span>Even number of managers required</span>
-                {(currentUserRole === 'Commissioner' || currentUserRole === 'Co-Commissioner') && !leagueSettings?.is_finalized && (
+                {(isAdmin || currentUserRole === 'Commissioner' || currentUserRole === 'Co-Commissioner') && !leagueSettings?.is_finalized && (
                   <span className="ml-2 px-2.5 py-1 rounded-full border border-amber-300/70 bg-amber-500/20 text-[10px] sm:text-[11px] text-amber-100 font-bold tracking-wide shadow-md shadow-amber-500/25">
                     Make sure to go to League Settings and finalize before the draft.
                   </span>
@@ -1693,7 +1710,7 @@ export default function LeaguePage() {
         )}
 
         {/* Draft Reset Section */}
-        {draftResetNeeded && (currentUserRole === 'Commissioner' || currentUserRole === 'Co-Commissioner') && (
+        {draftResetNeeded && (isAdmin || currentUserRole === 'Commissioner' || currentUserRole === 'Co-Commissioner') && (
           <div className="mb-4 sm:mb-8 bg-gradient-to-r from-red-600/20 to-orange-600/20 backdrop-blur-lg border border-red-500/30 rounded-2xl p-4 sm:p-8 shadow-2xl">
             <div className="text-center">
               <div className="flex items-center justify-center gap-2 mb-2 sm:mb-4">
