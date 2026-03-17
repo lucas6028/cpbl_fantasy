@@ -387,6 +387,8 @@ export default function LeagueMonitorPage() {
                                                 {/* Actions */}
                                                 <td className="px-3 py-3 text-center whitespace-nowrap">
                                                     <div className="flex items-center justify-center gap-2">
+                                                        <a href={`/admin/league-monitor/${league.league_id}`} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline">概覽</a>
+                                                        <span className="text-gray-300">|</span>
                                                         <a href={`/admin/league-monitor/${league.league_id}/matchups`} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline">賽程</a>
                                                         <span className="text-gray-300">|</span>
                                                         <a href={`/admin/league-monitor/${league.league_id}/rosters`} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline">陣容</a>

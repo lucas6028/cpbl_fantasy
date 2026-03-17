@@ -8,6 +8,7 @@ import CpblScheduleWidget from '@/components/CpblScheduleWidget';
 export default function HomePage() {
   const [leagues, setLeagues] = useState([])
   const [loading, setLoading] = useState(true)
+  const [showWeekRule, setShowWeekRule] = useState(false)
 
   useEffect(() => {
     const fetchLeagues = async () => {
@@ -213,10 +214,23 @@ export default function HomePage() {
                 CPBL Schedule
               </h2>
               <CpblScheduleWidget />
-              <div className="mt-4 rounded-xl border border-amber-300/50 bg-amber-500/10 px-3 py-2">
-                <p className="text-xs sm:text-sm text-amber-100 font-semibold leading-relaxed">
-                  Week Extension Rule: If any team cannot complete 3 games within a fantasy week, all subsequent weeks will be pushed back by one week.
-                </p>
+              <div className="mt-3">
+                <button
+                  onClick={() => setShowWeekRule(prev => !prev)}
+                  className="flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-amber-300/80 hover:text-amber-200 transition-colors"
+                >
+                  <svg className={`w-3 h-3 transition-transform duration-200 ${showWeekRule ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                  </svg>
+                  Week Extension Rule
+                </button>
+                {showWeekRule && (
+                  <div className="mt-2 rounded-xl border border-amber-300/50 bg-amber-500/10 px-3 py-2">
+                    <p className="text-xs sm:text-sm text-amber-100 font-semibold leading-relaxed">
+                      If any team cannot complete 3 games within a fantasy week, all subsequent weeks will be pushed back by one week.
+                    </p>
+                  </div>
+                )}
               </div>
               <p className="mt-4 text-sm text-purple-200/90 leading-relaxed">
                 Feedback and optimization suggestions, contact{' '}

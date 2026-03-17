@@ -9,6 +9,7 @@ export default function AdminLeagueMonitorLayout({ children }) {
     const leagueId = params.leagueId;
 
     const navItems = [
+        { name: 'Overview', path: `/admin/league-monitor/${leagueId}` },
         { name: 'Matchups', path: `/admin/league-monitor/${leagueId}/matchups` },
         { name: 'Rosters', path: `/admin/league-monitor/${leagueId}/rosters` },
         { name: 'Transactions', path: `/admin/league-monitor/${leagueId}/transactions` }
@@ -42,7 +43,9 @@ export default function AdminLeagueMonitorLayout({ children }) {
 
                     <nav className="flex space-x-1 py-1 -mb-px overflow-x-auto">
                         {navItems.map((item) => {
-                            const isActive = pathname === item.path;
+                            const isActive = item.path === `/admin/league-monitor/${leagueId}`
+                            ? pathname === item.path
+                            : pathname.startsWith(item.path);
                             return (
                                 <Link
                                     key={item.name}
