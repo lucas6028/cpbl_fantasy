@@ -88,16 +88,21 @@ export async function POST(request, { params }) {
         const now = new Date();
 
         // 4. Update Pick
-        const { error: pickError } = await supabase
+        const { data: pickUpdateResult, error: pickError } = await supabase
             .from('draft_picks')
             .update({
                 player_id: playerId,
                 picked_at: now.toISOString(),
                 is_auto_picked: false
             })
-            .eq('pick_id', currentPick.pick_id);
+            .eq('pick_id', currentPick.pick_id)
+            .is('player_id', null)
+            .select('pick_id');
 
         if (pickError) throw pickError;
+        if (!pickUpdateResult || pickUpdateResult.length === 0) {
+            return NextResponse.json({ success: false, error: 'Pick already completed by another request' }, { status: 409 });
+        }
 
         // 5. Start Next Timer
         // Find next pick
