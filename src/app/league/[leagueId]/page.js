@@ -1518,7 +1518,6 @@ export default function LeaguePage() {
         </div>
 
         {/* Right Sidebar: CPBL Schedule */}
-        {/* Right Sidebar: CPBL Schedule */}
         <div className="w-full lg:w-[30%] space-y-4 sm:space-y-8 lg:sticky lg:top-8 lg:h-fit">
           <div className="bg-gradient-to-br from-slate-900/50 to-purple-900/20 backdrop-blur-md rounded-2xl sm:rounded-3xl border border-white/5 p-4 sm:p-6 shadow-xl">
             <h3 className="text-base sm:text-xl font-black text-white mb-4 sm:mb-6 uppercase tracking-wider flex items-center gap-2">
@@ -1526,6 +1525,11 @@ export default function LeaguePage() {
               CPBL Schedule
             </h3>
             <CpblScheduleWidget />
+            <div className="mt-4 rounded-xl border border-amber-300/50 bg-amber-500/10 px-3 py-2">
+              <p className="text-[11px] sm:text-xs text-amber-100 font-semibold leading-relaxed">
+                Week Extension Rule: If any team cannot complete 3 games within a fantasy week, all subsequent weeks will be pushed back by one week.
+              </p>
+            </div>
           </div>
 
           {/* Daily Roster Widget */}

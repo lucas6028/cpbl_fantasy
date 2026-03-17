@@ -213,6 +213,11 @@ export default function HomePage() {
                 CPBL Schedule
               </h2>
               <CpblScheduleWidget />
+              <div className="mt-4 rounded-xl border border-amber-300/50 bg-amber-500/10 px-3 py-2">
+                <p className="text-xs sm:text-sm text-amber-100 font-semibold leading-relaxed">
+                  Week Extension Rule: If any team cannot complete 3 games within a fantasy week, all subsequent weeks will be pushed back by one week.
+                </p>
+              </div>
               <p className="mt-4 text-sm text-purple-200/90 leading-relaxed">
                 Feedback and optimization suggestions, contact{' '}
                 <a
