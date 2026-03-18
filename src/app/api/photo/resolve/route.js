@@ -1,11 +1,14 @@
 import { NextResponse } from 'next/server';
 import path from 'path';
 import fs from 'fs';
+import { readPhotoPrivacyConfig } from '@/lib/photoPrivacy';
 
 // 批次解析多位球員的照片路徑，一次請求處理所有球員
 export async function POST(request) {
   try {
     const body = await request.json();
+    const privacyConfig = await readPhotoPrivacyConfig();
+    const forceDefaultPlayerPhoto = Boolean(privacyConfig?.forceDefaultPlayerPhoto);
     // 支援兩種格式：
     // 1. 批次: { players: [ { id, candidates: [...] }, ... ] }
     // 2. 單一: { candidates: [...] }
@@ -17,7 +20,7 @@ export async function POST(request) {
       for (const player of body.players) {
         const { id, candidates } = player;
         let resolved = '/photo/defaultPlayer.png';
-        if (Array.isArray(candidates)) {
+        if (!forceDefaultPlayerPhoto && Array.isArray(candidates)) {
           for (let candidate of candidates) {
             if (candidate.startsWith('/photo/')) candidate = candidate.slice('/photo/'.length);
             const filename = decodeURIComponent(candidate);
@@ -36,13 +39,15 @@ export async function POST(request) {
 
     // 單一模式（向下相容）
     const candidates = Array.isArray(body?.candidates) ? body.candidates : [];
-    for (let candidate of candidates) {
-      if (candidate.startsWith('/photo/')) candidate = candidate.slice('/photo/'.length);
-      const filename = decodeURIComponent(candidate);
-      const filePath = path.join(photoDir, filename);
-      if (fs.existsSync(filePath)) {
-        const encoded = filename.split('/').map(encodeURIComponent).join('/');
-        return NextResponse.json({ path: `/photo/${encoded}` });
+    if (!forceDefaultPlayerPhoto) {
+      for (let candidate of candidates) {
+        if (candidate.startsWith('/photo/')) candidate = candidate.slice('/photo/'.length);
+        const filename = decodeURIComponent(candidate);
+        const filePath = path.join(photoDir, filename);
+        if (fs.existsSync(filePath)) {
+          const encoded = filename.split('/').map(encodeURIComponent).join('/');
+          return NextResponse.json({ path: `/photo/${encoded}` });
+        }
       }
     }
 
