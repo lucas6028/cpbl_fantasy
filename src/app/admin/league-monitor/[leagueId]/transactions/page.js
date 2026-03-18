@@ -17,6 +17,8 @@ export default function AdminTransactionsPage() {
     const [waiverSubTab, setWaiverSubTab] = useState('pending'); // 'pending' | 'completed'
     const [viewAll, setViewAll] = useState(false);
 
+    const getPersonalPriority = (claim) => claim.personal_priority ?? claim.waiver_claims?.personal_priority ?? '-';
+
     // Modal State
     const [selectedPlayerModal, setSelectedPlayerModal] = useState(null);
 
@@ -184,9 +186,9 @@ export default function AdminTransactionsPage() {
                     </button>
                     <button
                         onClick={() => { setActiveTab('waivers'); setViewAll(false); }}
-                        className={`text-sm sm:text-xl font-black uppercase tracking-wider flex items-center gap-2 transition-all whitespace-nowrap ${activeTab === 'waivers' ? 'text-orange-400 opacity-100' : 'text-slate-500 hover:text-slate-400'}`}
+                        className={`text-sm sm:text-xl font-black uppercase tracking-wider flex items-center gap-2 transition-all whitespace-nowrap ${activeTab === 'waivers' ? 'text-emerald-300 opacity-100' : 'text-slate-500 hover:text-slate-400'}`}
                     >
-                        <span className={`w-1.5 sm:w-2 h-5 sm:h-6 rounded-full transition-all ${activeTab === 'waivers' ? 'bg-orange-500' : 'bg-transparent'}`}></span>
+                        <span className={`w-1.5 sm:w-2 h-5 sm:h-6 rounded-full transition-all ${activeTab === 'waivers' ? 'bg-emerald-400' : 'bg-transparent'}`}></span>
                         Waivers
                     </button>
                 </div>
@@ -293,16 +295,43 @@ export default function AdminTransactionsPage() {
                             <div className="flex items-center gap-4 border-b border-gray-200 px-3 sm:px-6 py-3">
                                 <button
                                     onClick={() => { setWaiverSubTab('pending'); setViewAll(false); }}
-                                    className={`text-sm font-bold uppercase tracking-wider transition-all ${waiverSubTab === 'pending' ? 'text-orange-600 border-b-2 border-orange-600 pb-3' : 'text-gray-400 hover:text-gray-600'}`}
+                                    className={`text-sm font-bold uppercase tracking-wider transition-all ${waiverSubTab === 'pending' ? 'text-emerald-700 border-b-2 border-emerald-600 pb-3' : 'text-gray-400 hover:text-gray-600'}`}
                                 >
                                     Pending
                                 </button>
                                 <button
                                     onClick={() => { setWaiverSubTab('completed'); setViewAll(false); }}
-                                    className={`text-sm font-bold uppercase tracking-wider transition-all ${waiverSubTab === 'completed' ? 'text-orange-600 border-b-2 border-orange-600 pb-3' : 'text-gray-400 hover:text-gray-600'}`}
+                                    className={`text-sm font-bold uppercase tracking-wider transition-all ${waiverSubTab === 'completed' ? 'text-emerald-700 border-b-2 border-emerald-600 pb-3' : 'text-gray-400 hover:text-gray-600'}`}
                                 >
                                     Completed
                                 </button>
+                            </div>
+
+                            <div className="px-3 sm:px-6 py-3 border-b border-emerald-200/60 bg-emerald-50/30">
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                                    <h3 className="text-xs sm:text-sm font-black uppercase tracking-widest text-emerald-800">
+                                        Waiver Priority Board
+                                    </h3>
+                                    <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">
+                                        Managers: {totalManagers}
+                                    </span>
+                                </div>
+
+                                {priorityRankings.length === 0 ? (
+                                    <div className="text-xs font-bold text-gray-500 uppercase tracking-wider">No waiver priority data.</div>
+                                ) : (
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                                        {priorityRankings.map((row) => (
+                                            <div
+                                                key={`priority-${row.nickname}-${row.rank}`}
+                                                className="flex items-center justify-between px-2.5 py-1.5 rounded-md border border-emerald-300 bg-white/80"
+                                            >
+                                                <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">#{row.rank}</span>
+                                                <span className="text-xs font-black text-gray-800 truncate ml-2">{row.nickname}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
 
                             {/* Pending Waivers */}
@@ -312,10 +341,10 @@ export default function AdminTransactionsPage() {
                                 ) : (
                                     <div className="space-y-4">
                                         {(viewAll ? groupedWaivers.pending : groupedWaivers.pending.slice(0, 5)).map((dateGroup, dateIdx) => (
-                                            <div key={`date-${dateIdx}`} className="border border-gray-200 rounded-lg overflow-hidden">
+                                            <div key={`date-${dateIdx}`} className="border border-emerald-200/60 rounded-lg overflow-hidden bg-emerald-50/20">
                                                 {/* Date Header */}
-                                                <div className="bg-gray-50 px-3 sm:px-6 py-2 border-b border-gray-200">
-                                                    <span className="text-sm font-bold text-gray-700 uppercase tracking-widest">
+                                                <div className="bg-emerald-100/60 px-3 sm:px-6 py-2 border-b border-emerald-200/70">
+                                                    <span className="text-sm font-bold text-emerald-800 uppercase tracking-widest">
                                                         Processes: {dateGroup.date}
                                                     </span>
                                                 </div>
@@ -325,24 +354,24 @@ export default function AdminTransactionsPage() {
                                                     {dateGroup.playerGroups.map((playerGroup, playerIdx) => (
                                                         <div key={`player-${dateIdx}-${playerIdx}`}>
                                                             {/* Player Name Header */}
-                                                            <div className="bg-blue-50 px-3 sm:px-6 py-2 border-b border-gray-100">
-                                                                <span className="text-sm font-black text-blue-700">{playerGroup.playerName}</span>
+                                                            <div className="bg-teal-100/70 px-3 sm:px-6 py-2 border-b border-emerald-200/60">
+                                                                <span className="text-sm font-black text-teal-900">{playerGroup.playerName}</span>
                                                             </div>
 
                                                             {/* Claims for this player */}
                                                             <div className="divide-y divide-gray-100">
                                                                 {playerGroup.claims.map((claim) => (
-                                                                    <div key={claim.id} className="px-3 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-gray-50 transition-all gap-4">
+                                                                    <div key={claim.id} className="px-3 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-emerald-50/50 transition-all gap-4">
                                                                         {/* Left: Add/Drop Players */}
                                                                         <div className="flex flex-col gap-3 flex-1 min-w-0">
                                                                             {/* Add Player */}
                                                                             <div className="flex items-center gap-4">
                                                                                 <div className="w-6 flex justify-center flex-shrink-0">
-                                                                                    <span className="text-xl font-black text-yellow-500 leading-none">+</span>
+                                                                                    <span className="text-xl font-black text-emerald-500 leading-none">+</span>
                                                                                 </div>
                                                                                 <div className="flex flex-col min-w-0">
                                                                                     <span
-                                                                                        className="text-base font-black text-gray-800 hover:text-purple-600 cursor-pointer transition-colors leading-tight truncate"
+                                                                                        className="text-base font-black text-gray-800 hover:text-emerald-700 cursor-pointer transition-colors leading-tight truncate"
                                                                                         onClick={() => claim.player && setSelectedPlayerModal(claim.player)}
                                                                                     >
                                                                                         {claim.player?.name}
@@ -375,13 +404,13 @@ export default function AdminTransactionsPage() {
                                                                         </div>
 
                                                                         {/* Right: Manager and Priority */}
-                                                                        <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 flex-shrink-0 mt-2 sm:mt-0 pt-3 sm:pt-0 border-t border-gray-100 sm:border-0">
-                                                                            <div className="text-sm sm:text-base font-black text-orange-600 mb-0.5 text-right">
+                                                                        <div className="flex flex-col items-end gap-2 flex-shrink-0 mt-2 sm:mt-0 pt-3 sm:pt-0 border-t border-gray-100 sm:border-0">
+                                                                            <div className="text-sm sm:text-base font-black text-emerald-700 mb-0.5 text-right">
                                                                                 {claim.manager?.nickname}
                                                                             </div>
                                                                             <div className="flex items-center gap-2">
-                                                                                <div className="flex items-center gap-1.5 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-md">
-                                                                                    <span className="text-[10px] font-bold text-purple-600 uppercase tracking-widest">Priority: {claim.waiver_priority}</span>
+                                                                                <div className="flex items-center gap-1.5 bg-emerald-100/80 border border-emerald-300 px-2 py-0.5 rounded-md">
+                                                                                    <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-widest">Personal Priority: {getPersonalPriority(claim)}</span>
                                                                                 </div>
                                                                             </div>
                                                                         </div>
@@ -398,7 +427,7 @@ export default function AdminTransactionsPage() {
                                             <div className="text-center py-3">
                                                 <button
                                                     onClick={() => setViewAll(!viewAll)}
-                                                    className="text-xs font-bold text-orange-600 hover:text-orange-500 uppercase tracking-widest transition-colors"
+                                                    className="text-xs font-bold text-emerald-700 hover:text-emerald-600 uppercase tracking-widest transition-colors"
                                                 >
                                                     {viewAll ? 'View Less' : 'View All Pending'}
                                                 </button>
@@ -417,24 +446,24 @@ export default function AdminTransactionsPage() {
                                         {(viewAll ? groupedWaivers.completed : groupedWaivers.completed.slice(0, 10)).map((playerGroup, idx) => (
                                             <div key={`completed-${idx}`}>
                                                 {/* Player Name Header */}
-                                                <div className="px-3 sm:px-6 py-2 bg-blue-50 border-b border-gray-100">
-                                                    <span className="text-sm font-black text-blue-700">{playerGroup.playerName}</span>
+                                                <div className="px-3 sm:px-6 py-2 bg-teal-100/70 border-b border-emerald-200/60">
+                                                    <span className="text-sm font-black text-teal-900">{playerGroup.playerName}</span>
                                                 </div>
 
                                                 {/* Claims for this player */}
                                                 <div className="divide-y divide-gray-100">
                                                     {playerGroup.claims.map((claim) => (
-                                                        <div key={claim.id} className="px-3 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-gray-50 transition-all gap-4">
+                                                        <div key={claim.id} className="px-3 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-emerald-50/50 transition-all gap-4">
                                                             {/* Left: Add/Drop Players */}
                                                             <div className="flex flex-col gap-3 flex-1 min-w-0">
                                                                 {/* Add Player */}
                                                                 <div className="flex items-center gap-4">
                                                                     <div className="w-6 flex justify-center flex-shrink-0">
-                                                                        <span className="text-xl font-black text-yellow-500 leading-none">+</span>
+                                                                        <span className="text-xl font-black text-emerald-500 leading-none">+</span>
                                                                     </div>
                                                                     <div className="flex flex-col min-w-0">
                                                                         <span
-                                                                            className="text-base font-black text-gray-800 hover:text-purple-600 cursor-pointer transition-colors leading-tight truncate"
+                                                                            className="text-base font-black text-gray-800 hover:text-emerald-700 cursor-pointer transition-colors leading-tight truncate"
                                                                             onClick={() => claim.player && setSelectedPlayerModal(claim.player)}
                                                                         >
                                                                             {claim.player?.name}
@@ -467,12 +496,12 @@ export default function AdminTransactionsPage() {
                                                             </div>
 
                                                             {/* Right: Manager and Info */}
-                                                            <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 flex-shrink-0 mt-2 sm:mt-0 pt-3 sm:pt-0 border-t border-gray-100 sm:border-0">
-                                                                <div className="text-sm sm:text-base font-black text-orange-600 mb-0.5 text-right">
+                                                            <div className="flex flex-col items-end gap-2 flex-shrink-0 mt-2 sm:mt-0 pt-3 sm:pt-0 border-t border-gray-100 sm:border-0">
+                                                                <div className="text-sm sm:text-base font-black text-emerald-700 mb-0.5 text-right">
                                                                     {claim.manager?.nickname}
                                                                 </div>
-                                                                <div className="text-xs font-bold text-gray-500 uppercase tracking-tighter text-right">
-                                                                    {claim.updated_at ? new Date(claim.updated_at).toLocaleDateString() : '-'}
+                                                                <div className="flex items-center gap-1.5 bg-emerald-100/80 border border-emerald-300 px-2 py-0.5 rounded-md">
+                                                                    <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-widest">Personal Priority: {getPersonalPriority(claim)}</span>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -485,7 +514,7 @@ export default function AdminTransactionsPage() {
                                             <div className="px-6 py-3 text-center border-t border-gray-100">
                                                 <button
                                                     onClick={() => setViewAll(!viewAll)}
-                                                    className="text-xs font-bold text-orange-600 hover:text-orange-500 uppercase tracking-widest transition-colors"
+                                                    className="text-xs font-bold text-emerald-700 hover:text-emerald-600 uppercase tracking-widest transition-colors"
                                                 >
                                                     {viewAll ? 'View Less' : 'View All Completed'}
                                                 </button>
