@@ -695,9 +695,15 @@ export default function PlayersPage() {
         .map(e => ({ ...e, val: Number(e.val) }))
         .sort((a, b) => isLowerBetter ? a.val - b.val : b.val - a.val);
 
+      let previousVal;
+      let currentRank = 0;
       entries.forEach((entry, idx) => {
+        if (idx === 0 || entry.val !== previousVal) {
+          currentRank = idx + 1;
+          previousVal = entry.val;
+        }
         if (!rankings[entry.id]) rankings[entry.id] = {};
-        rankings[entry.id][abbr] = idx + 1;
+        rankings[entry.id][abbr] = currentRank;
       });
     });
 
