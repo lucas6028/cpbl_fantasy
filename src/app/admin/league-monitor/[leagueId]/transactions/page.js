@@ -223,7 +223,7 @@ export default function AdminTransactionsPage() {
                                                         <div className="flex flex-col">
                                                             <div className="flex items-center gap-2 flex-wrap">
                                                                 <span
-                                                                    className="text-base font-black text-gray-800 hover:text-purple-600 cursor-pointer transition-colors leading-tight"
+                                                                    className="text-base font-black text-white hover:text-slate-200 cursor-pointer transition-colors leading-tight"
                                                                     onClick={() => item.player && setSelectedPlayerModal(item.player)}
                                                                 >
                                                                     {item.player?.name}
