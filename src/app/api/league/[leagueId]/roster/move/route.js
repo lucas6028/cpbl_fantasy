@@ -12,10 +12,26 @@ export async function POST(request, { params }) {
             return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 });
         }
 
+        const { data: rosterPosData, error: rosterPosError } = await supabase
+            .from('league_roster_positions')
+            .select('position')
+            .eq('league_id', leagueId)
+            .eq('manager_id', managerId)
+            .eq('player_id', playerId)
+            .eq('game_date', gameDate)
+            .maybeSingle();
+
+        if (rosterPosError) throw rosterPosError;
+
+        const effectiveCurrentPosition = rosterPosData?.position || currentPosition;
+        if (!effectiveCurrentPosition) {
+            return NextResponse.json({ success: false, error: 'Player roster position not found for the selected date.' }, { status: 400 });
+        }
+
         console.log('='.repeat(80));
         console.log(`[MoveRoster] 🎯 Request Received`);
         console.log(`[MoveRoster] Player: ${playerId}`);
-        console.log(`[MoveRoster] Position Change: ${currentPosition} -> ${targetPosition}`);
+        console.log(`[MoveRoster] Position Change: ${effectiveCurrentPosition} -> ${targetPosition}`);
         console.log(`[MoveRoster] Game Date: ${gameDate}`);
         console.log(`[MoveRoster] ⚠️  Will update ALL dates >= ${gameDate}`);
         console.log('='.repeat(80));
@@ -60,7 +76,7 @@ export async function POST(request, { params }) {
 
                 if (isGameStarted && !isPostponed) {
                     // Rule 1: Starter Locked
-                    const isStarter = !['BN', 'NA'].includes(currentPosition);
+                    const isStarter = !['BN', 'NA'].includes(effectiveCurrentPosition);
                     if (isStarter) {
                         return NextResponse.json({ success: false, error: 'Cannot move a starter after game has started.' }, { status: 400 });
                     }
@@ -219,9 +235,9 @@ export async function POST(request, { params }) {
             occupantPositions = [...new Set(occupantPositions)]; // Unique
 
             console.log(`[MoveRoster] Target Eligible Positions: [${occupantPositions.join(', ')}]`);
-            console.log(`[MoveRoster] Checking compatibility with Current Pos: ${currentPosition}`);
+            console.log(`[MoveRoster] Checking compatibility with Current Pos: ${effectiveCurrentPosition}`);
 
-            const canSwap = occupantPositions.includes(currentPosition);
+            const canSwap = occupantPositions.includes(effectiveCurrentPosition);
             console.log(`[MoveRoster] Can Swap? ${canSwap}`);
 
             updates.push({ player_id: playerId, new_position: targetPosition }); // Main Player always moves
@@ -229,20 +245,20 @@ export async function POST(request, { params }) {
             if (swapWithPlayerId) {
                 // If explicit swap requested but incompatible, fallback to BN instead of failing.
                 if (canSwap) {
-                    updates.push({ player_id: targetOccupant.player_id, new_position: currentPosition });
+                    updates.push({ player_id: targetOccupant.player_id, new_position: effectiveCurrentPosition });
                     console.log(`[MoveRoster] Action: SWAP performed.`);
                 } else {
                     updates.push({ player_id: targetOccupant.player_id, new_position: 'BN' });
-                    console.log(`[MoveRoster] Action: Explicit swap target incompatible with ${currentPosition}, moved to BN.`);
+                    console.log(`[MoveRoster] Action: Explicit swap target incompatible with ${effectiveCurrentPosition}, moved to BN.`);
                 }
             } else {
                 // Implicit displacement (Legacy/Fallback)
                 if (canSwap) {
-                    updates.push({ player_id: targetOccupant.player_id, new_position: currentPosition });
+                    updates.push({ player_id: targetOccupant.player_id, new_position: effectiveCurrentPosition });
                     console.log(`[MoveRoster] Action: Auto-SWAP performed.`);
                 } else {
                     updates.push({ player_id: targetOccupant.player_id, new_position: 'BN' });
-                    console.log(`[MoveRoster] Action: Target moved to BN (Incompatible with ${currentPosition}).`);
+                    console.log(`[MoveRoster] Action: Target moved to BN (Incompatible with ${effectiveCurrentPosition}).`);
                 }
             }
         }
