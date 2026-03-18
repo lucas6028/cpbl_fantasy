@@ -248,7 +248,7 @@ export default function AdminTransactionsPage() {
 
                                         {/* Right: Manager and Time */}
                                         <div className="text-right flex-shrink-0 ml-3 sm:ml-8">
-                                            <div className="text-sm sm:text-base font-black text-blue-600 hover:text-blue-500 transition-colors mb-0.5">
+                                            <div className="text-sm sm:text-base font-black text-emerald-400 hover:text-emerald-300 transition-colors mb-0.5">
                                                 {(() => {
                                                     const nicknames = [...new Set(group.items.map(i => i.manager?.nickname).filter(Boolean))];
                                                     if (nicknames.length > 1) {
@@ -309,7 +309,7 @@ export default function AdminTransactionsPage() {
 
                             <div className="px-3 sm:px-6 py-3 border-b border-emerald-200/60 bg-emerald-50/30">
                                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-                                    <h3 className="text-xs sm:text-sm font-black uppercase tracking-widest text-emerald-800">
+                                    <h3 className="text-xs sm:text-sm font-black uppercase tracking-widest text-emerald-400">
                                         Waiver Priority Board
                                     </h3>
                                     <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">
@@ -355,7 +355,7 @@ export default function AdminTransactionsPage() {
                                                         <div key={`player-${dateIdx}-${playerIdx}`}>
                                                             {/* Player Name Header */}
                                                             <div className="bg-teal-100/70 px-3 sm:px-6 py-2 border-b border-emerald-200/60">
-                                                                <span className="text-sm font-black text-teal-900">{playerGroup.playerName}</span>
+                                                                <span className="text-sm font-black text-white">{playerGroup.playerName}</span>
                                                             </div>
 
                                                             {/* Claims for this player */}
@@ -371,7 +371,7 @@ export default function AdminTransactionsPage() {
                                                                                 </div>
                                                                                 <div className="flex flex-col min-w-0">
                                                                                     <span
-                                                                                        className="text-base font-black text-gray-800 hover:text-emerald-700 cursor-pointer transition-colors leading-tight truncate"
+                                                                                        className="text-base font-black text-white hover:text-slate-200 cursor-pointer transition-colors leading-tight truncate"
                                                                                         onClick={() => claim.player && setSelectedPlayerModal(claim.player)}
                                                                                     >
                                                                                         {claim.player?.name}
@@ -390,7 +390,7 @@ export default function AdminTransactionsPage() {
                                                                                     </div>
                                                                                     <div className="flex flex-col min-w-0">
                                                                                         <span
-                                                                                            className="text-base font-black text-gray-800 hover:text-purple-600 cursor-pointer transition-colors leading-tight truncate"
+                                                                                            className="text-base font-black text-white hover:text-slate-200 cursor-pointer transition-colors leading-tight truncate"
                                                                                             onClick={() => claim.drop_player && setSelectedPlayerModal(claim.drop_player)}
                                                                                         >
                                                                                             {claim.drop_player?.name}
@@ -405,7 +405,7 @@ export default function AdminTransactionsPage() {
 
                                                                         {/* Right: Manager and Priority */}
                                                                         <div className="flex flex-col items-end gap-2 flex-shrink-0 mt-2 sm:mt-0 pt-3 sm:pt-0 border-t border-gray-100 sm:border-0">
-                                                                            <div className="text-sm sm:text-base font-black text-emerald-700 mb-0.5 text-right">
+                                                                            <div className="text-sm sm:text-base font-black text-emerald-500 mb-0.5 text-right">
                                                                                 {claim.manager?.nickname}
                                                                             </div>
                                                                             <div className="flex items-center gap-2">
@@ -447,7 +447,7 @@ export default function AdminTransactionsPage() {
                                             <div key={`completed-${idx}`}>
                                                 {/* Player Name Header */}
                                                 <div className="px-3 sm:px-6 py-2 bg-teal-100/70 border-b border-emerald-200/60">
-                                                    <span className="text-sm font-black text-teal-900">{playerGroup.playerName}</span>
+                                                    <span className="text-sm font-black text-white">{playerGroup.playerName}</span>
                                                 </div>
 
                                                 {/* Claims for this player */}
@@ -463,7 +463,7 @@ export default function AdminTransactionsPage() {
                                                                     </div>
                                                                     <div className="flex flex-col min-w-0">
                                                                         <span
-                                                                            className="text-base font-black text-gray-800 hover:text-emerald-700 cursor-pointer transition-colors leading-tight truncate"
+                                                                            className="text-base font-black text-white hover:text-slate-200 cursor-pointer transition-colors leading-tight truncate"
                                                                             onClick={() => claim.player && setSelectedPlayerModal(claim.player)}
                                                                         >
                                                                             {claim.player?.name}
@@ -482,7 +482,7 @@ export default function AdminTransactionsPage() {
                                                                         </div>
                                                                         <div className="flex flex-col min-w-0">
                                                                             <span
-                                                                                className="text-base font-black text-gray-800 hover:text-purple-600 cursor-pointer transition-colors leading-tight truncate"
+                                                                                className="text-base font-black text-white hover:text-slate-200 cursor-pointer transition-colors leading-tight truncate"
                                                                                 onClick={() => claim.drop_player && setSelectedPlayerModal(claim.drop_player)}
                                                                             >
                                                                                 {claim.drop_player?.name}
@@ -497,7 +497,7 @@ export default function AdminTransactionsPage() {
 
                                                             {/* Right: Manager and Info */}
                                                             <div className="flex flex-col items-end gap-2 flex-shrink-0 mt-2 sm:mt-0 pt-3 sm:pt-0 border-t border-gray-100 sm:border-0">
-                                                                <div className="text-sm sm:text-base font-black text-emerald-700 mb-0.5 text-right">
+                                                                <div className="text-sm sm:text-base font-black text-emerald-500 mb-0.5 text-right">
                                                                     {claim.manager?.nickname}
                                                                 </div>
                                                                 <div className="flex items-center gap-1.5 bg-emerald-100/80 border border-emerald-300 px-2 py-0.5 rounded-md">
