@@ -36,8 +36,8 @@ export async function GET(request, { params }) {
                 .from('waiver_claims')
                 .select('*')
                 .eq('league_id', leagueId)
-                .eq('status', 'pending')
-                .order('created_at', { ascending: false }),
+                .order('status', { ascending: false })
+                .order('off_waiver', { ascending: false }),
             supabase
                 .from('league_members')
                 .select('manager_id, nickname')

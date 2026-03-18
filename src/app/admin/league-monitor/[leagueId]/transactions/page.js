@@ -12,6 +12,7 @@ export default function AdminTransactionsPage() {
     const [transactions, setTransactions] = useState([]);
     const [waivers, setWaivers] = useState([]);
     const [activeTab, setActiveTab] = useState('transactions'); // 'transactions' | 'waivers'
+    const [waiverSubTab, setWaiverSubTab] = useState('pending'); // 'pending' | 'completed'
     const [viewAll, setViewAll] = useState(false);
 
     // Modal State
@@ -82,6 +83,76 @@ export default function AdminTransactionsPage() {
         // Ensure sorted by time
         return groups.sort((a, b) => new Date(b.time) - new Date(a.time));
     }, [transactions]);
+
+    // Waiver grouping logic: separate pending vs completed, group by player_id and off_waiver date
+    const groupedWaivers = useMemo(() => {
+        const pending = [];
+        const completed = [];
+
+        // Separate by status
+        waivers.forEach(w => {
+            if (w.status === 'pending') {
+                pending.push(w);
+            } else {
+                completed.push(w);
+            }
+        });
+
+        // Group pending by off_waiver date, then by player_id
+        const pendingGrouped = {};
+        pending.forEach(w => {
+            const offWaiverDate = w.off_waiver || 'No Date';
+            if (!pendingGrouped[offWaiverDate]) {
+                pendingGrouped[offWaiverDate] = {};
+            }
+            if (!pendingGrouped[offWaiverDate][w.player_id]) {
+                pendingGrouped[offWaiverDate][w.player_id] = [];
+            }
+            pendingGrouped[offWaiverDate][w.player_id].push(w);
+        });
+
+        // Convert to array format with sorted dates
+        const pendingArray = Object.entries(pendingGrouped)
+            .sort(([dateA], [dateB]) => {
+                if (dateA === 'No Date') return -1;
+                if (dateB === 'No Date') return 1;
+                return new Date(dateB) - new Date(dateA);
+            })
+            .map(([date, playerGroups]) => ({
+                date,
+                playerGroups: Object.entries(playerGroups).map(([playerId, claims]) => ({
+                    playerId,
+                    claims,
+                    playerName: claims[0]?.player?.name || 'Unknown'
+                }))
+            }));
+
+        // Group completed by player_id
+        const completedGrouped = {};
+        completed.forEach(w => {
+            if (!completedGrouped[w.player_id]) {
+                completedGrouped[w.player_id] = [];
+            }
+            completedGrouped[w.player_id].push(w);
+        });
+
+        const completedArray = Object.entries(completedGrouped)
+            .sort(([, claimsA], [, claimsB]) => {
+                const timeA = new Date(claimsA[0]?.updated_at || 0);
+                const timeB = new Date(claimsB[0]?.updated_at || 0);
+                return timeB - timeA;
+            })
+            .map(([playerId, claims]) => ({
+                playerId,
+                claims,
+                playerName: claims[0]?.player?.name || 'Unknown'
+            }));
+
+        return {
+            pending: pendingArray,
+            completed: completedArray
+        };
+    }, [waivers]);
 
 
     if (loading) {
@@ -212,80 +283,213 @@ export default function AdminTransactionsPage() {
                     )}
 
                     {activeTab === 'waivers' && (
-                        waivers.length === 0 ? (
-                            <div className="text-center py-12 text-gray-400 text-sm">No active waiver claims.</div>
-                        ) : (
-                            <div className="divide-y divide-gray-100">
-                                {(viewAll ? waivers : waivers.slice(0, 10)).map((waiver) => (
-                                    <div key={waiver.id} className="px-3 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-gray-50 transition-all duration-300 gap-4">
-
-                                        <div className="flex flex-col gap-3 flex-1 min-w-0">
-                                            {/* Add Player */}
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-6 flex justify-center flex-shrink-0">
-                                                    <span className="text-xl font-black text-yellow-500 leading-none">+</span>
-                                                </div>
-                                                <div className="flex flex-col min-w-0">
-                                                    <span
-                                                        className="text-base font-black text-gray-800 hover:text-purple-600 cursor-pointer transition-colors leading-tight truncate"
-                                                        onClick={() => setSelectedPlayerModal(waiver.player)}
-                                                    >
-                                                        {waiver.player?.name}
-                                                    </span>
-                                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight mt-0.5">
-                                                        Claim from Waivers
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            {/* Drop Player (if any) */}
-                                            {waiver.drop_player && (
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-6 flex justify-center flex-shrink-0">
-                                                        <span className="text-xl font-black text-red-500 leading-none">-</span>
-                                                    </div>
-                                                    <div className="flex flex-col min-w-0">
-                                                        <span
-                                                            className="text-base font-black text-gray-800 hover:text-purple-600 cursor-pointer transition-colors leading-tight truncate"
-                                                            onClick={() => setSelectedPlayerModal(waiver.drop_player)}
-                                                        >
-                                                            {waiver.drop_player?.name}
-                                                        </span>
-                                                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight mt-0.5">
-                                                            Condition Drop
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 flex-shrink-0 mt-2 sm:mt-0 pt-3 sm:pt-0 border-t border-gray-100 sm:border-0">
-                                            <div className="text-sm sm:text-base font-black text-orange-600 mb-0.5 text-right">
-                                                {waiver.manager?.nickname}
-                                            </div>
-                                            <div className="flex items-center gap-3">
-                                                <div className="flex items-center gap-1.5 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-md">
-                                                    <span className="text-[10px] font-bold text-purple-600 uppercase tracking-widest">Priority: {waiver.waiver_priority}</span>
-                                                </div>
-                                                <div className="text-xs font-bold text-gray-500 uppercase tracking-tighter text-right">
-                                                    Processes: {waiver.off_waiver}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                                {waivers.length > 10 && (
-                                    <div className="px-6 py-3 text-center border-t border-gray-100">
-                                        <button
-                                            onClick={() => setViewAll(!viewAll)}
-                                            className="text-xs font-bold text-orange-600 hover:text-orange-500 uppercase tracking-widest transition-colors"
-                                        >
-                                            {viewAll ? 'View Less' : 'View All Waivers'}
-                                        </button>
-                                    </div>
-                                )}
+                        <div className="space-y-1">
+                            {/* Sub-tab for pending/completed */}
+                            <div className="flex items-center gap-4 border-b border-gray-200 px-3 sm:px-6 py-3">
+                                <button
+                                    onClick={() => { setWaiverSubTab('pending'); setViewAll(false); }}
+                                    className={`text-sm font-bold uppercase tracking-wider transition-all ${waiverSubTab === 'pending' ? 'text-orange-600 border-b-2 border-orange-600 pb-3' : 'text-gray-400 hover:text-gray-600'}`}
+                                >
+                                    Pending
+                                </button>
+                                <button
+                                    onClick={() => { setWaiverSubTab('completed'); setViewAll(false); }}
+                                    className={`text-sm font-bold uppercase tracking-wider transition-all ${waiverSubTab === 'completed' ? 'text-orange-600 border-b-2 border-orange-600 pb-3' : 'text-gray-400 hover:text-gray-600'}`}
+                                >
+                                    Completed
+                                </button>
                             </div>
-                        )
+
+                            {/* Pending Waivers */}
+                            {waiverSubTab === 'pending' && (
+                                groupedWaivers.pending.length === 0 ? (
+                                    <div className="text-center py-12 text-gray-400 text-sm">No pending waiver claims.</div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {(viewAll ? groupedWaivers.pending : groupedWaivers.pending.slice(0, 5)).map((dateGroup, dateIdx) => (
+                                            <div key={`date-${dateIdx}`} className="border border-gray-200 rounded-lg overflow-hidden">
+                                                {/* Date Header */}
+                                                <div className="bg-gray-50 px-3 sm:px-6 py-2 border-b border-gray-200">
+                                                    <span className="text-sm font-bold text-gray-700 uppercase tracking-widest">
+                                                        Processes: {dateGroup.date}
+                                                    </span>
+                                                </div>
+
+                                                {/* Player Groups */}
+                                                <div className="divide-y divide-gray-100">
+                                                    {dateGroup.playerGroups.map((playerGroup, playerIdx) => (
+                                                        <div key={`player-${dateIdx}-${playerIdx}`}>
+                                                            {/* Player Name Header */}
+                                                            <div className="bg-blue-50 px-3 sm:px-6 py-2 border-b border-gray-100">
+                                                                <span className="text-sm font-black text-blue-700">{playerGroup.playerName}</span>
+                                                            </div>
+
+                                                            {/* Claims for this player */}
+                                                            <div className="divide-y divide-gray-100">
+                                                                {playerGroup.claims.map((claim) => (
+                                                                    <div key={claim.id} className="px-3 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-gray-50 transition-all gap-4">
+                                                                        {/* Left: Add/Drop Players */}
+                                                                        <div className="flex flex-col gap-3 flex-1 min-w-0">
+                                                                            {/* Add Player */}
+                                                                            <div className="flex items-center gap-4">
+                                                                                <div className="w-6 flex justify-center flex-shrink-0">
+                                                                                    <span className="text-xl font-black text-yellow-500 leading-none">+</span>
+                                                                                </div>
+                                                                                <div className="flex flex-col min-w-0">
+                                                                                    <span
+                                                                                        className="text-base font-black text-gray-800 hover:text-purple-600 cursor-pointer transition-colors leading-tight truncate"
+                                                                                        onClick={() => claim.player && setSelectedPlayerModal(claim.player)}
+                                                                                    >
+                                                                                        {claim.player?.name}
+                                                                                    </span>
+                                                                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight mt-0.5">
+                                                                                        Claim from Waivers
+                                                                                    </span>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            {/* Drop Player (if any) */}
+                                                                            {claim.drop_player && (
+                                                                                <div className="flex items-center gap-4">
+                                                                                    <div className="w-6 flex justify-center flex-shrink-0">
+                                                                                        <span className="text-xl font-black text-red-500 leading-none">-</span>
+                                                                                    </div>
+                                                                                    <div className="flex flex-col min-w-0">
+                                                                                        <span
+                                                                                            className="text-base font-black text-gray-800 hover:text-purple-600 cursor-pointer transition-colors leading-tight truncate"
+                                                                                            onClick={() => claim.drop_player && setSelectedPlayerModal(claim.drop_player)}
+                                                                                        >
+                                                                                            {claim.drop_player?.name}
+                                                                                        </span>
+                                                                                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight mt-0.5">
+                                                                                            Condition Drop
+                                                                                        </span>
+                                                                                    </div>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+
+                                                                        {/* Right: Manager and Priority */}
+                                                                        <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 flex-shrink-0 mt-2 sm:mt-0 pt-3 sm:pt-0 border-t border-gray-100 sm:border-0">
+                                                                            <div className="text-sm sm:text-base font-black text-orange-600 mb-0.5 text-right">
+                                                                                {claim.manager?.nickname}
+                                                                            </div>
+                                                                            <div className="flex items-center gap-2">
+                                                                                <div className="flex items-center gap-1.5 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-md">
+                                                                                    <span className="text-[10px] font-bold text-purple-600 uppercase tracking-widest">Priority: {claim.waiver_priority}</span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+
+                                        {groupedWaivers.pending.length > 5 && (
+                                            <div className="text-center py-3">
+                                                <button
+                                                    onClick={() => setViewAll(!viewAll)}
+                                                    className="text-xs font-bold text-orange-600 hover:text-orange-500 uppercase tracking-widest transition-colors"
+                                                >
+                                                    {viewAll ? 'View Less' : 'View All Pending'}
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )
+                            )}
+
+                            {/* Completed Waivers */}
+                            {waiverSubTab === 'completed' && (
+                                groupedWaivers.completed.length === 0 ? (
+                                    <div className="text-center py-12 text-gray-400 text-sm">No completed waiver claims.</div>
+                                ) : (
+                                    <div className="divide-y divide-gray-100">
+                                        {(viewAll ? groupedWaivers.completed : groupedWaivers.completed.slice(0, 10)).map((playerGroup, idx) => (
+                                            <div key={`completed-${idx}`}>
+                                                {/* Player Name Header */}
+                                                <div className="px-3 sm:px-6 py-2 bg-blue-50 border-b border-gray-100">
+                                                    <span className="text-sm font-black text-blue-700">{playerGroup.playerName}</span>
+                                                </div>
+
+                                                {/* Claims for this player */}
+                                                <div className="divide-y divide-gray-100">
+                                                    {playerGroup.claims.map((claim) => (
+                                                        <div key={claim.id} className="px-3 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-gray-50 transition-all gap-4">
+                                                            {/* Left: Add/Drop Players */}
+                                                            <div className="flex flex-col gap-3 flex-1 min-w-0">
+                                                                {/* Add Player */}
+                                                                <div className="flex items-center gap-4">
+                                                                    <div className="w-6 flex justify-center flex-shrink-0">
+                                                                        <span className="text-xl font-black text-yellow-500 leading-none">+</span>
+                                                                    </div>
+                                                                    <div className="flex flex-col min-w-0">
+                                                                        <span
+                                                                            className="text-base font-black text-gray-800 hover:text-purple-600 cursor-pointer transition-colors leading-tight truncate"
+                                                                            onClick={() => claim.player && setSelectedPlayerModal(claim.player)}
+                                                                        >
+                                                                            {claim.player?.name}
+                                                                        </span>
+                                                                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight mt-0.5">
+                                                                            {claim.status === 'accepted' ? '✓ Accepted' : claim.status === 'rejected' ? '✗ Rejected' : 'Claim'}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Drop Player (if any) */}
+                                                                {claim.drop_player && (
+                                                                    <div className="flex items-center gap-4">
+                                                                        <div className="w-6 flex justify-center flex-shrink-0">
+                                                                            <span className="text-xl font-black text-red-500 leading-none">-</span>
+                                                                        </div>
+                                                                        <div className="flex flex-col min-w-0">
+                                                                            <span
+                                                                                className="text-base font-black text-gray-800 hover:text-purple-600 cursor-pointer transition-colors leading-tight truncate"
+                                                                                onClick={() => claim.drop_player && setSelectedPlayerModal(claim.drop_player)}
+                                                                            >
+                                                                                {claim.drop_player?.name}
+                                                                            </span>
+                                                                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight mt-0.5">
+                                                                                Condition Drop
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Right: Manager and Info */}
+                                                            <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 flex-shrink-0 mt-2 sm:mt-0 pt-3 sm:pt-0 border-t border-gray-100 sm:border-0">
+                                                                <div className="text-sm sm:text-base font-black text-orange-600 mb-0.5 text-right">
+                                                                    {claim.manager?.nickname}
+                                                                </div>
+                                                                <div className="text-xs font-bold text-gray-500 uppercase tracking-tighter text-right">
+                                                                    {claim.updated_at ? new Date(claim.updated_at).toLocaleDateString() : '-'}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+
+                                        {groupedWaivers.completed.length > 10 && (
+                                            <div className="px-6 py-3 text-center border-t border-gray-100">
+                                                <button
+                                                    onClick={() => setViewAll(!viewAll)}
+                                                    className="text-xs font-bold text-orange-600 hover:text-orange-500 uppercase tracking-widest transition-colors"
+                                                >
+                                                    {viewAll ? 'View Less' : 'View All Completed'}
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )
+                            )}
+                        </div>
                     )}
                 </div>
             </div>
