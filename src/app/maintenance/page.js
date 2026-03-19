@@ -7,6 +7,7 @@ export default function MaintenancePage() {
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(true);
+  const [announcements, setAnnouncements] = useState([]);
 
   // Check maintenance status and admin status
   useEffect(() => {
@@ -43,6 +44,17 @@ export default function MaintenancePage() {
           } catch (e) {
             console.error('Error checking admin status:', e);
           }
+        }
+
+        // Load active announcements for maintenance notice
+        try {
+          const annRes = await fetch('/api/announcements');
+          const annData = await annRes.json();
+          if (isMounted && annData.success) {
+            setAnnouncements(Array.isArray(annData.announcements) ? annData.announcements : []);
+          }
+        } catch (e) {
+          console.error('Error loading announcements:', e);
         }
 
         if (isMounted) {
@@ -127,6 +139,23 @@ export default function MaintenancePage() {
           <p className="text-sm text-slate-400 mb-8">
             We&apos;re automatically checking if the system is back online...
           </p>
+
+          {announcements.length > 0 && (
+            <div className="mt-8 text-left border-t border-orange-500/30 pt-6">
+              <h2 className="text-lg font-bold text-orange-200 mb-4">Latest Announcement</h2>
+              <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
+                {announcements.slice(0, 3).map((announcement) => (
+                  <div key={announcement.id} className="rounded-xl border border-orange-400/30 bg-orange-900/20 p-4">
+                    <p className="text-sm font-bold text-orange-100 mb-1">{announcement.title}</p>
+                    <p className="text-sm text-slate-200 whitespace-pre-wrap">{announcement.content}</p>
+                    <p className="text-xs text-slate-400 mt-2">
+                      {new Date(announcement.created_at).toLocaleString('en-US')}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Admin Info */}
           {isAdmin && (
