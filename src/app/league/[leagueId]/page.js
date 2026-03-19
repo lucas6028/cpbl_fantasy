@@ -259,6 +259,7 @@ export default function LeaguePage() {
   const [draftResetError, setDraftResetError] = useState('');
   const [draftResetSaving, setDraftResetSaving] = useState(false);
   const [draftResetSuccess, setDraftResetSuccess] = useState(false);
+  const [showFinalizeReminder, setShowFinalizeReminder] = useState(false);
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -336,6 +337,12 @@ export default function LeaguePage() {
     };
     checkDraftReset();
   }, [leagueId]);
+
+  useEffect(() => {
+    if (!loading && leagueStatus === 'pre-draft' && !leagueSettings?.is_finalized) {
+      setShowFinalizeReminder(true);
+    }
+  }, [loading, leagueStatus, leagueSettings?.is_finalized]);
 
   const [currentWeek, setCurrentWeek] = useState(1);
   const [matchups, setMatchups] = useState([]);
@@ -1590,6 +1597,40 @@ export default function LeaguePage() {
 
   return (
     <div className="p-3 sm:p-8">
+      {showFinalizeReminder && (
+        <div
+          className="fixed inset-0 z-[9999] bg-black/65 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setShowFinalizeReminder(false)}
+        >
+          <div
+            className="w-full max-w-xl bg-gradient-to-br from-slate-900 to-slate-950 border border-amber-400/40 rounded-2xl shadow-[0_0_50px_rgba(251,191,36,0.2)] p-6 sm:p-7"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-400/40 text-amber-300 flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 4h.01M10.29 3.86l-7.2 12.46A2 2 0 004.83 19h14.34a2 2 0 001.74-2.68l-7.2-12.46a2 2 0 00-3.42 0z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-lg sm:text-xl font-black text-amber-200 tracking-wide">Pre-Draft Reminder</h3>
+                <p className="text-sm sm:text-base text-slate-200 mt-2 leading-relaxed">
+                  Please remind the Commissioner to go to <span className="font-bold text-white">League Settings -&gt; Finalize</span> and turn on <span className="font-bold text-amber-200">Finalize and lock teams</span>. Otherwise, the draft cannot begin.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setShowFinalizeReminder(false)}
+                className="px-5 py-2.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black transition-all shadow-lg shadow-amber-500/25"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="mb-3 sm:mb-8 bg-gradient-to-r from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-xl sm:rounded-2xl p-3 sm:p-8 shadow-2xl">
