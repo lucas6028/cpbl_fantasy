@@ -92,7 +92,8 @@ CREATE INDEX IF NOT EXISTS idx_system_settings_key ON system_settings(key);
 ### 1. Global Check (guard.js)
 - 每 30 秒檢查一次維護狀態
 - 非 Admin 用戶在維護模式下自動重定向到 `/maintenance`
-- Admin 用戶可以正常訪問所有頁面
+- **Admin 用戶可以正常訪問所有頁面**（不會被攔截）
+- Admin 可以在維護時進行管理工作
 
 ### 2. Draft Page Protection (draft/page.js)
 - 導入 `useMaintenanceStatus` hook

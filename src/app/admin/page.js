@@ -227,6 +227,32 @@ export default function AdminPage() {
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Schedule Delay System</h2>
             <p className="text-gray-600">Delay fantasy weeks by one week and sync schedule/matchups dates</p>
           </div>
+
+          <div
+            onClick={() => router.push('/admin/announcements')}
+            className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer border border-gray-200"
+          >
+            <div className="flex items-center justify-center w-12 h-12 bg-fuchsia-100 rounded-lg mb-4">
+              <svg className="w-6 h-6 text-fuchsia-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882A1 1 0 0111.894 5h4.212A2 2 0 0118 7v10a2 2 0 01-1.894 2h-4.212A1 1 0 0111 18.118l-4-2A1 1 0 016 15.236V8.764a1 1 0 011-1.882l4-2zM6 9v6" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Announcement Management</h2>
+            <p className="text-gray-600">Create, edit and publish system announcements for all users</p>
+          </div>
+
+          <div
+            onClick={() => router.push('/admin/maintenance')}
+            className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer border border-gray-200"
+          >
+            <div className="flex items-center justify-center w-12 h-12 bg-rose-100 rounded-lg mb-4">
+              <svg className="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.67 1.73-3L13.73 4c-.77-1.33-2.69-1.33-3.46 0L3.34 16c-.77 1.33.19 3 1.73 3z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Maintenance Mode</h2>
+            <p className="text-gray-600">Turn maintenance mode on/off and pause non-admin access immediately</p>
+          </div>
         </div>
       </div>
     </div>
