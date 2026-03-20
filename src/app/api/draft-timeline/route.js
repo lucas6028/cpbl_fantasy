@@ -7,7 +7,7 @@ const supabase = createClient(
 );
 
 const MIN_DRAFT_GAP_MINUTES = 90;
-const DRAFT_DURATION_MINUTES = 90; // 預設每個 draft 時長 1.5 小時
+const DRAFT_DURATION_MINUTES = 90;
 
 function toMillis(timeValue) {
   if (!timeValue) return null;
@@ -56,7 +56,6 @@ export async function GET(request) {
       slotMap[slot.league_id] = slot;
     });
 
-    // 構建時間線資料
     const fixedLeaguesWithTime = leagues
       .filter(league => {
         const slot = slotMap[league.league_id];
@@ -78,7 +77,6 @@ export async function GET(request) {
       })
       .sort((a, b) => a.draft_start_ms - b.draft_start_ms);
 
-    // 檢查衝突 (改為 2 個以上才算衝突)
     let conflicts = [];
     if (proposedDraftTime) {
       const proposedMs = toMillis(proposedDraftTime);
@@ -97,23 +95,18 @@ export async function GET(request) {
           }
         }
         
-        // 只有當重疊數 >= 2 才回傳衝突，讓前端顯示紅叉
         if (foundConflicts.length >= 2) {
           conflicts = foundConflicts;
         }
       }
     }
 
-    // 計算可用槽位 (同步 2 盟規則)
     const now = Date.now();
     const availableSlots = [];
-    const timelineHours = 48;
-
-    for (let hourOffset = 0; hourOffset <= timelineHours; hourOffset++) {
+    for (let hourOffset = 0; hourOffset <= 48; hourOffset++) {
       const slotTime = new Date(now);
       slotTime.setHours(slotTime.getHours() + hourOffset, 0, 0, 0);
       const slotMs = slotTime.getTime();
-
       if (slotMs < now) continue;
 
       const overlappingCount = fixedLeaguesWithTime.filter(league => {
@@ -130,7 +123,6 @@ export async function GET(request) {
       }
     }
 
-    // 計算 Line A / Line B (UI 顯示用)
     const timelineA = [];
     const timelineB = [];
     for (const league of fixedLeaguesWithTime) {
@@ -149,10 +141,7 @@ export async function GET(request) {
       success: true,
       minGapMinutes: MIN_DRAFT_GAP_MINUTES,
       draftDurationMinutes: DRAFT_DURATION_MINUTES,
-      timeline: {
-        lineA: timelineA,
-        lineB: timelineB,
-      },
+      timeline: { lineA: timelineA, lineB: timelineB },
       conflicts,
       availableSlots: availableSlots.slice(0, 15),
       allLeaguesCount: leagues.length,
@@ -160,9 +149,6 @@ export async function GET(request) {
     });
   } catch (error) {
     console.error('Draft timeline GET error:', error);
-    return NextResponse.json({ error: 'Server error', details: error.message }, { status: 500 });
-  }
-}
     return NextResponse.json({ error: 'Server error', details: error.message }, { status: 500 });
   }
 }
