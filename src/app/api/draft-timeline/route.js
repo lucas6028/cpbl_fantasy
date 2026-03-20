@@ -111,11 +111,11 @@ export async function GET(request) {
 
     // 檢查衝突
     const conflicts = [];
-    if (proposedDraftTime && excludeLeagueId) {
+    if (proposedDraftTime) {
       const proposedMs = toMillis(proposedDraftTime);
       if (proposedMs) {
         for (const league of fixedLeaguesWithTime) {
-          if (league.league_id === excludeLeagueId) continue;
+          if (excludeLeagueId && league.league_id === excludeLeagueId) continue;
           
           const gapMs = Math.abs(proposedMs - league.draft_start_ms);
           if (gapMs < MIN_DRAFT_GAP_MINUTES * 60 * 1000) {

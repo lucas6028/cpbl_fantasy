@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 
 /**
- * DraftTimeline 元件 - 顯示【雙時間線】表示目前各時段選秀狀況
+ * DraftTimeline 元件 - 顯示 now 到 4/20 的已排選秀時間（只顯示時間）
  * @param {string} proposedTime - 提議的選秀時間 (ISO string)
  * @param {string} excludeLeagueId - 要排除的聯盟 ID（例如正在編輯的聯盟）
  * @param {boolean} showAvailableSlots - 是否顯示可用時間槽位
@@ -43,9 +43,9 @@ export default function DraftTimeline({
 
       setTimelineData(data);
 
-      // 如果有衝突，觸發回調
-      if (onConflictDetected && data.conflicts && data.conflicts.length > 0) {
-        onConflictDetected(data.conflicts);
+      // 同步衝突資訊（包含無衝突）
+      if (onConflictDetected) {
+        onConflictDetected(data.conflicts || []);
       }
     } catch (err) {
       console.error('Error fetching timeline:', err);
@@ -81,21 +81,25 @@ export default function DraftTimeline({
     return null;
   }
 
-  const { timeline, conflicts, availableSlots, minGapMinutes, draftDurationMinutes } = timelineData;
+  const { timeline, conflicts, minGapMinutes } = timelineData;
   const lineA = timeline?.lineA || [];
   const lineB = timeline?.lineB || [];
+  const allDrafts = [...lineA, ...lineB];
 
-  const formatTime = (isoString) => {
-    if (!isoString) return '-';
+  const now = new Date();
+  const endDate = new Date('2026-04-20T23:59:59');
+  const formatTimeOnly = (isoString) => {
     const date = new Date(isoString);
-    return date.toLocaleString('zh-TW', {
-      month: 'numeric',
-      day: 'numeric',
+    return date.toLocaleTimeString('zh-TW', {
       hour: '2-digit',
       minute: '2-digit',
       hour12: false,
     });
   };
+  const upcomingDraftTimes = allDrafts
+    .map((draft) => new Date(draft.draft_time))
+    .filter((d) => !Number.isNaN(d.getTime()) && d >= now && d <= endDate)
+    .sort((a, b) => a.getTime() - b.getTime());
 
   return (
     <div className="space-y-4">
@@ -113,91 +117,26 @@ export default function DraftTimeline({
         </div>
       )}
 
-      {/* 時間線說明 */}
-      <div className="text-xs text-slate-500 mb-2">
-        <span>最多 2 個選秀同時進行（每個選秀預設 {draftDurationMinutes} 分鐘）</span>
-        <span className="mx-2">|</span>
-        <span>時間線 A 和 B 可同時進行，但不同時間線間需至少 {minGapMinutes} 分鐘間隔</span>
-      </div>
-
-      {/* 雙時間線顯示 */}
-      <div className="grid grid-cols-2 gap-4">
-        {/* Timeline A */}
-        <div className="border border-blue-500/30 rounded-lg p-4 bg-blue-500/5">
-          <h3 className="font-bold text-blue-300 mb-3 text-sm uppercase tracking-wider">時間線 A</h3>
-          {lineA.length > 0 ? (
-            <div className="space-y-2">
-              {lineA.map((league) => (
-                <div
-                  key={league.league_id}
-                  className="px-3 py-2 bg-blue-600/20 border border-blue-500/50 rounded-lg"
-                >
-                  <div className="font-semibold text-blue-200 text-sm">{league.league_name}</div>
-                  <div className="text-xs text-blue-300/80 mt-1">
-                    {league.queue_number && (
-                      <span className="inline-block mr-2 px-2 py-1 bg-blue-600 rounded">
-                        #{league.queue_number}
-                      </span>
-                    )}
-                    {formatTime(league.draft_time)}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-xs text-slate-500 italic">無安排的選秀</div>
-          )}
-        </div>
-
-        {/* Timeline B */}
-        <div className="border border-amber-500/30 rounded-lg p-4 bg-amber-500/5">
-          <h3 className="font-bold text-amber-300 mb-3 text-sm uppercase tracking-wider">時間線 B</h3>
-          {lineB.length > 0 ? (
-            <div className="space-y-2">
-              {lineB.map((league) => (
-                <div
-                  key={league.league_id}
-                  className="px-3 py-2 bg-amber-600/20 border border-amber-500/50 rounded-lg"
-                >
-                  <div className="font-semibold text-amber-200 text-sm">{league.league_name}</div>
-                  <div className="text-xs text-amber-300/80 mt-1">
-                    {league.queue_number && (
-                      <span className="inline-block mr-2 px-2 py-1 bg-amber-600 rounded">
-                        #{league.queue_number}
-                      </span>
-                    )}
-                    {formatTime(league.draft_time)}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-xs text-slate-500 italic">無安排的選秀</div>
-          )}
-        </div>
-      </div>
-
-      {/* 可用時間槽位 */}
-      {showAvailableSlots && availableSlots && availableSlots.length > 0 && (
-        <div className="border border-green-500/30 rounded-lg p-4 bg-green-500/5">
-          <h3 className="font-bold text-green-300 mb-3 text-sm uppercase tracking-wider">✓ 可用時間</h3>
-          <div className="grid grid-cols-2 gap-2">
-            {availableSlots.slice(0, 6).map((slot, idx) => (
-              <div
-                key={idx}
-                className="px-3 py-2 text-xs bg-green-600/20 border border-green-500/50 rounded-lg text-green-300 cursor-pointer hover:bg-green-600/30 transition-colors"
+      <div className="rounded-lg border border-slate-700/50 bg-slate-900/30 p-3">
+        <div className="text-xs text-slate-400 mb-2">已排選秀時間（Now ~ 4/20）</div>
+        <div className="text-xs text-slate-500 mb-2">規則：最多同時 2 個聯盟選秀；第 3 個聯盟需與任一既有選秀間隔至少 90 分鐘。</div>
+        {upcomingDraftTimes.length === 0 ? (
+          <div className="text-xs text-slate-500">目前沒有已排選秀時間</div>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {upcomingDraftTimes.map((d, idx) => (
+              <span
+                key={`${d.toISOString()}-${idx}`}
+                className="px-2 py-1 rounded-md text-xs font-semibold bg-slate-800/80 border border-slate-600/40 text-slate-200"
               >
-                {slot.displayTime}
-              </div>
+                {formatTimeOnly(d.toISOString())}
+              </span>
             ))}
           </div>
-          {availableSlots.length > 6 && (
-            <div className="text-xs text-green-400 mt-2">
-              還有 {availableSlots.length - 6} 個可用時間...
-            </div>
-          )}
-        </div>
-      )}
+        )}
+      </div>
+
+      <div className="text-xs text-slate-500">間隔需 ≥ {minGapMinutes} 分鐘</div>
     </div>
   );
 }

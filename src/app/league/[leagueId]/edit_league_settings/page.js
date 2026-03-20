@@ -629,6 +629,7 @@ const EditLeagueSettingsPage = ({ params }) => {
   const [draftOrder, setDraftOrder] = useState([]);
   const [isDraftOrderOpen, setIsDraftOrderOpen] = useState(false);
   const [scheduleData, setScheduleData] = useState([]); // Store calculated schedule
+  const [draftTimeConflicts, setDraftTimeConflicts] = useState([]);
 
   const handleScheduleValidation = (error) => {
     setScheduleError(error);
@@ -1141,6 +1142,9 @@ const EditLeagueSettingsPage = ({ params }) => {
       if (!settings.general['Live Draft Time']) {
         errors.push('❌ Live Draft Time is required');
       }
+      if (draftTimeConflicts.length > 0) {
+        errors.push('❌ Draft time conflict: at most 2 leagues can draft concurrently, and any additional draft must be at least 90 minutes apart');
+      }
     }
 
     // Validate Trade Deadline
@@ -1568,7 +1572,15 @@ const EditLeagueSettingsPage = ({ params }) => {
                           >
                             <td className="px-4 sm:px-6 py-3 sm:py-4 font-bold text-purple-200 w-2/5 text-sm sm:text-base">
                               <div className="flex items-center gap-2">
-                                {key}
+                                <span>{key}</span>
+                                {section.key === 'general' &&
+                                  key === 'Live Draft Time' &&
+                                  settings.general['Draft Type'] === 'Live Draft' &&
+                                  value &&
+                                  !dateValidationErrors.draftTimeError &&
+                                  draftTimeConflicts.length === 0 && (
+                                    <span className="text-emerald-400 font-black" title="時間可安排">✓</span>
+                                  )}
                                 {getSettingDescription(key) && (
                                   <button
                                     onClick={() => setActiveHelpKey(key)}
@@ -1617,6 +1629,7 @@ const EditLeagueSettingsPage = ({ params }) => {
                                       proposedTime={value || null}
                                       excludeLeagueId={leagueId}
                                       onConflictDetected={(conflicts) => {
+                                        setDraftTimeConflicts(conflicts || []);
                                         if (conflicts.length > 0) {
                                           setSaveMessage(`⚠️ 時間衝突：需要調整選秀時間以符合 1.5 小時間隔規則`);
                                         }

@@ -157,6 +157,18 @@ export default function MaintenancePage() {
             </div>
           )}
 
+          <div className="mt-8 pt-6 border-t border-orange-500/30">
+            <p className="text-sm text-orange-200 font-semibold mb-3">
+              Draft Reschedule Queue
+            </p>
+            <button
+              onClick={() => router.push('/draft-reschedule')}
+              className="inline-block px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-lg border border-emerald-400/30 shadow-lg shadow-emerald-500/20 transition-all duration-300"
+            >
+              Open Draft Reschedule
+            </button>
+          </div>
+
           {/* Admin Info */}
           {isAdmin && (
             <div className="mt-12 pt-8 border-t border-orange-500/30">

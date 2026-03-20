@@ -6,6 +6,8 @@ const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
+const MIN_DRAFT_GAP_MINUTES = 90;
+
 // GET: Check if league has a draft reset record
 export async function GET(request, { params }) {
     try {
@@ -51,6 +53,62 @@ export async function POST(request, { params }) {
         const d = new Date(iso);
         if (isNaN(d.getTime())) {
             return NextResponse.json({ success: false, error: 'Invalid datetime' }, { status: 400 });
+        }
+
+        // Enforce draft gap rule against all other live-draft leagues.
+        const { data: leagues, error: leaguesError } = await supabase
+            .from('league_settings')
+            .select('league_id, league_name, live_draft_time, draft_type')
+            .eq('draft_type', 'Live Draft');
+
+        if (leaguesError) {
+            return NextResponse.json({ success: false, error: leaguesError.message }, { status: 500 });
+        }
+
+        const leagueIds = (leagues || []).map((league) => league.league_id);
+        const { data: slots, error: slotsError } = await supabase
+            .from('draft_reschedule_slots')
+            .select('league_id, rescheduled_draft_time')
+            .in('league_id', leagueIds);
+
+        if (slotsError) {
+            return NextResponse.json({ success: false, error: slotsError.message }, { status: 500 });
+        }
+
+        const slotMap = {};
+        (slots || []).forEach((slot) => {
+            slotMap[slot.league_id] = slot;
+        });
+
+        const targetMs = d.getTime();
+        const conflicts = [];
+        for (const league of leagues || []) {
+            if (league.league_id === leagueId) continue;
+            const effectiveTime = slotMap[league.league_id]?.rescheduled_draft_time || league.live_draft_time;
+            if (!effectiveTime) continue;
+            const existingMs = new Date(effectiveTime).getTime();
+            if (Number.isNaN(existingMs)) continue;
+
+            const gapMs = Math.abs(targetMs - existingMs);
+            if (gapMs < MIN_DRAFT_GAP_MINUTES * 60 * 1000) {
+                conflicts.push({
+                    league_id: league.league_id,
+                    league_name: league.league_name,
+                    minutes_apart: Math.floor(gapMs / 60 / 1000),
+                });
+            }
+        }
+
+        if (conflicts.length > 0) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: 'Draft time conflict: at most 2 leagues can draft concurrently, and any additional draft must be at least 90 minutes apart.',
+                    minGapMinutes: MIN_DRAFT_GAP_MINUTES,
+                    conflicts,
+                },
+                { status: 400 }
+            );
         }
 
         // Update league_settings with the new draft time

@@ -866,6 +866,9 @@ const CreateLeaguePage = () => {
     if (settings.general['Draft Type'] === 'Live Draft') {
       if (!settings.general['Live Draft Pick Time']) errors.push('❌ Live Draft Pick Time is required');
       if (!settings.general['Live Draft Time']) errors.push('❌ Live Draft Time is required');
+      if (draftTimeConflicts.length > 0) {
+        errors.push('❌ Draft time conflict: at most 2 leagues can draft concurrently, and any additional draft must be at least 90 minutes apart');
+      }
     }
     if (!settings.acquisitions['Trade Deadline']) errors.push('❌ Trade Deadline is required');
     if (!settings.acquisitions['Max Acquisitions per Week']) errors.push('❌ Max Acquisitions per Week is required');
@@ -1166,7 +1169,15 @@ const CreateLeaguePage = () => {
                           <tr key={key} className={`${index % 2 === 0 ? 'bg-slate-900/40' : 'bg-slate-800/40'} hover:bg-purple-500/20 transition-colors border-b border-purple-500/20`}>
                             <td className="px-4 sm:px-6 py-3 sm:py-4 font-bold text-purple-200 w-2/5 text-sm sm:text-base">
                               <div className="flex items-center gap-2">
-                                {key}
+                                <span>{key}</span>
+                                {section.key === 'general' &&
+                                  key === 'Live Draft Time' &&
+                                  settings.general['Draft Type'] === 'Live Draft' &&
+                                  value &&
+                                  !dateValidationErrors.draftTimeError &&
+                                  draftTimeConflicts.length === 0 && (
+                                    <span className="text-emerald-400 font-black" title="時間可安排">✓</span>
+                                  )}
                                 {getSettingDescription(key) && (
                                   <button onClick={() => setActiveHelpKey(key)} className="cursor-help text-purple-400 hover:text-purple-200 bg-purple-500/20 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold border border-purple-500/50 transition-colors" type="button">?</button>
                                 )}
@@ -1196,8 +1207,9 @@ const CreateLeaguePage = () => {
                                       proposedTime={value || null}
                                       excludeLeagueId={null}
                                       onConflictDetected={(conflicts) => {
+                                        setDraftTimeConflicts(conflicts || []);
                                         if (conflicts.length > 0) {
-                                          setDraftTimeConflicts(conflicts);
+                                          return;
                                         }
                                       }}
                                     />
