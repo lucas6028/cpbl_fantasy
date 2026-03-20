@@ -32,54 +32,58 @@ export async function GET(request, { params }) {
       );
     }
 
-    // Fetch league schedule
-    // Explicitly select columns to ensure alignment with schema
-    const { data: schedule, error: scheduleError } = await supabase
-      .from('league_schedule')
-      .select(`
-        id,
-        league_id,
-        week_number,
-        week_type,
-        week_start,
-        week_end,
-        week_label
-      `)
-      .eq('league_id', leagueId)
-      .order('week_number', { ascending: true });
+    // These queries are independent, so run them in parallel to reduce latency.
+    const [scheduleRes, statusRes, membersRes, finalizedRes] = await Promise.all([
+      supabase
+        .from('league_schedule')
+        .select(`
+          id,
+          league_id,
+          week_number,
+          week_type,
+          week_start,
+          week_end,
+          week_label
+        `)
+        .eq('league_id', leagueId)
+        .order('week_number', { ascending: true }),
+      supabase
+        .from('league_statuses')
+        .select('status')
+        .eq('league_id', leagueId)
+        .maybeSingle(),
+      supabase
+        .from('league_members')
+        .select(`
+          nickname,
+          joined_at,
+          manager_id,
+          role,
+          managers (
+            name
+          )
+        `)
+        .eq('league_id', leagueId)
+        .order('joined_at', { ascending: true }),
+      supabase
+        .from('league_finalized_status')
+        .select('league_id')
+        .eq('league_id', leagueId)
+        .maybeSingle(),
+    ]);
 
+    const { data: schedule, error: scheduleError } = scheduleRes;
     if (scheduleError) {
       console.error('Supabase schedule error:', scheduleError);
-      // We don't block the page load if schedule fails, but we log it.
-      // The UI will show empty schedule state.
+      // We don't block page load if schedule fails.
     }
 
-    // Fetch league status
-    const { data: statusData, error: statusError } = await supabase
-      .from('league_statuses')
-      .select('status')
-      .eq('league_id', leagueId)
-      .single();
-
+    const { data: statusData, error: statusError } = statusRes;
     if (statusError) {
       console.error('Supabase status error:', statusError);
     }
 
-    // Fetch league members with manager details and role
-    const { data: members, error: membersError } = await supabase
-      .from('league_members')
-      .select(`
-        nickname,
-        joined_at,
-        manager_id,
-        role,
-        managers (
-          name
-        )
-      `)
-      .eq('league_id', leagueId)
-      .order('joined_at', { ascending: true });
-
+    const { data: members, error: membersError } = membersRes;
     if (membersError) {
       console.error('Supabase members error:', membersError);
       return NextResponse.json(
@@ -88,28 +92,30 @@ export async function GET(request, { params }) {
       );
     }
 
-    // Check if league is finalized (record exists = finalized)
-    const { data: finalizedStatus, error: finalizedError } = await supabase
-      .from('league_finalized_status')
-      .select('league_id')
-      .eq('league_id', leagueId)
-      .single();
+    const { data: finalizedStatus, error: finalizedError } = finalizedRes;
 
     // Record exists = finalized, no record or error = not finalized
     const isFinalized = !finalizedError && finalizedStatus != null;
 
-    return NextResponse.json({
-      success: true,
-      league: {
-        ...leagueSettings,
-        is_finalized: isFinalized
+    return NextResponse.json(
+      {
+        success: true,
+        league: {
+          ...leagueSettings,
+          is_finalized: isFinalized
+        },
+        schedule: schedule || [],
+        members: members || [],
+        status: statusData?.status || 'unknown',
+        maxTeams: leagueSettings?.max_teams || 0,
+        invitePermissions: leagueSettings?.invite_permissions || 'commissioner only',
       },
-      schedule: schedule || [],
-      members: members || [],
-      status: statusData?.status || 'unknown',
-      maxTeams: leagueSettings?.max_teams || 0,
-      invitePermissions: leagueSettings?.invite_permissions || 'commissioner only',
-    });
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=15, stale-while-revalidate=45'
+        }
+      }
+    );
   } catch (error) {
     console.error('Server error:', error);
     return NextResponse.json(

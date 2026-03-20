@@ -34,9 +34,9 @@ export default function MaintenancePage() {
 
         if (userId) {
           try {
-            const userRes = await fetch(`/api/admin/check?userId=${userId}`);
+            const userRes = await fetch('/api/username', { method: 'POST' });
             const userData = await userRes.json();
-            if (isMounted && userData.isAdmin) setIsAdmin(true);
+            if (isMounted && (userData?.is_admin ?? userData?.isAdmin)) setIsAdmin(true);
           } catch (e) { console.error('Admin check error:', e); }
         }
 

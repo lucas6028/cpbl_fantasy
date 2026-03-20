@@ -36,10 +36,10 @@ export default function AdminAnnouncementsPage() {
         }
 
         // Check if user is admin
-        const adminRes = await fetch(`/api/admin/check?userId=${userId}`);
+        const adminRes = await fetch('/api/username', { method: 'POST' });
         const adminData = await adminRes.json();
 
-        if (!adminData.isAdmin) {
+        if (!(adminData?.is_admin ?? adminData?.isAdmin)) {
           router.push('/home');
           return;
         }

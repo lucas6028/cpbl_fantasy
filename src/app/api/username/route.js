@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers'
 import supabase from '@/lib/supabase'
 
-export async function POST() {
+async function getUsernamePayload() {
   const cookieStore = cookies()
   const user_id = cookieStore.get('user_id')?.value
 
@@ -9,28 +9,44 @@ export async function POST() {
     return Response.json({ error: '未登入' }, { status: 401 })
   }
 
-  const { data, error } = await supabase
-    .from('managers')
-    .select('name, email_verified')
-    .eq('manager_id', user_id)
-    .single()
+  const [managerRes, adminRes] = await Promise.all([
+    supabase
+      .from('managers')
+      .select('name, email_verified')
+      .eq('manager_id', user_id)
+      .single(),
+    supabase
+      .from('admin')
+      .select('manager_id')
+      .eq('manager_id', user_id)
+      .maybeSingle(),
+  ])
+
+  const { data, error } = managerRes
 
   if (error || !data) {
     return Response.json({ error: '找不到帳號' }, { status: 404 })
   }
 
-  // Check if user is an admin
-  const { data: adminData } = await supabase
-    .from('admin')
-    .select('manager_id')
-    .eq('manager_id', user_id)
-    .single()
+  const { data: adminData, error: adminError } = adminRes
+  if (adminError) {
+    return Response.json({ error: '權限檢查失敗' }, { status: 500 })
+  }
 
   const is_admin = !!adminData
 
   return Response.json({
     name: data.name,
     email_verified: data.email_verified,
-    is_admin
+    is_admin,
+    isAdmin: is_admin,
   })
+}
+
+export async function GET() {
+  return getUsernamePayload()
+}
+
+export async function POST() {
+  return getUsernamePayload()
 }

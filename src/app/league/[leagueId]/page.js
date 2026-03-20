@@ -265,9 +265,9 @@ export default function LeaguePage() {
   useEffect(() => {
     const checkAdmin = async () => {
       try {
-        const res = await fetch('/api/admin/check');
+        const res = await fetch('/api/username', { method: 'POST' });
         const data = await res.json();
-        setIsAdmin(Boolean(data?.isAdmin));
+        setIsAdmin(Boolean(data?.is_admin ?? data?.isAdmin));
       } catch (err) {
         console.error('Failed to check admin status:', err);
       }

@@ -41,9 +41,9 @@ export default function AnnouncementsPage() {
       const userId = userIdCookie?.split('=')[1];
 
       if (userId) {
-        const res = await fetch(`/api/admin/check?userId=${userId}`);
+        const res = await fetch('/api/username', { method: 'POST' });
         const data = await res.json();
-        setIsAdmin(data.isAdmin || false);
+        setIsAdmin(Boolean(data?.is_admin ?? data?.isAdmin));
       }
     } catch (e) {
       console.error('Error checking admin status:', e);

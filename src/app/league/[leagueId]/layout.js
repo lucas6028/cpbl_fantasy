@@ -32,9 +32,9 @@ export default function LeagueLayout({ children }) {
 
         // Admin can view all pages under /league/[leagueId] regardless of membership.
         try {
-          const adminRes = await fetch('/api/admin/check');
+          const adminRes = await fetch('/api/username', { method: 'POST' });
           const adminData = await adminRes.json();
-          if (adminData?.isAdmin) {
+          if (adminData?.is_admin ?? adminData?.isAdmin) {
             adminBypass = true;
             setIsAdmin(true);
             setAccessDenied(false);

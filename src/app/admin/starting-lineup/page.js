@@ -85,9 +85,9 @@ export default function StartingLineupPage() {
     useEffect(() => {
         const check = async () => {
             try {
-                const res = await fetch('/api/admin/check')
+                const res = await fetch('/api/username', { method: 'POST' })
                 const data = await res.json()
-                if (!data.isAdmin) {
+                if (!(data?.is_admin ?? data?.isAdmin)) {
                     alert('You do not have admin privileges')
                     router.push('/home')
                     return

@@ -42,9 +42,9 @@ export function useMaintenanceStatus(shouldCheck = true) {
           if (data.underMaintenance && userId) {
             // Check if user is admin by fetching their role
             try {
-              const userRes = await fetch(`/api/admin/check?userId=${userId}`);
+              const userRes = await fetch('/api/username', { method: 'POST' });
               const userData = await userRes.json();
-              if (!userData.isAdmin) {
+              if (!(userData?.is_admin ?? userData?.isAdmin)) {
                 router.push('/maintenance');
               }
             } catch (e) {

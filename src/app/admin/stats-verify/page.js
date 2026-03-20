@@ -84,9 +84,9 @@ export default function StatsVerifyPage() {
     useEffect(() => {
         const check = async () => {
             try {
-                const res = await fetch('/api/admin/check')
+                const res = await fetch('/api/username', { method: 'POST' })
                 const data = await res.json()
-                if (!data.isAdmin) { alert('No admin privileges'); router.push('/home'); return }
+                if (!(data?.is_admin ?? data?.isAdmin)) { alert('No admin privileges'); router.push('/home'); return }
                 setIsAdmin(true)
             } catch { alert('Failed to check permissions'); router.push('/home') }
             finally { setCheckingAdmin(false) }
