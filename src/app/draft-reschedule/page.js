@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import AmericanDatePicker from '@/components/AmericanDatePicker';
 
 function toLocalInputValue(isoString) {
   if (!isoString) return '';
@@ -30,6 +31,17 @@ function formatDateTime(isoString) {
   });
 }
 
+function minDraftDateTime() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + 1);
+  const pad = (n) => `${n}`.padStart(2, '0');
+  const y = d.getFullYear();
+  const m = pad(d.getMonth() + 1);
+  const day = pad(d.getDate());
+  return `${y}-${m}-${day}T00:00`;
+}
+
 export default function DraftReschedulePage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -43,6 +55,7 @@ export default function DraftReschedulePage() {
 
   const [openWindow, setOpenWindow] = useState(null);
   const [openWindowAt, setOpenWindowAt] = useState(null);
+  const [queueWindows, setQueueWindows] = useState([]);
   const [batchSize, setBatchSize] = useState(5);
   const [minGapMinutes, setMinGapMinutes] = useState(90);
 
@@ -73,6 +86,7 @@ export default function DraftReschedulePage() {
       setRows(data.leagues || []);
       setOpenWindow(data.openWindow || null);
       setOpenWindowAt(data.openWindowAt || null);
+      setQueueWindows(data.queueWindows || []);
       setBatchSize(data.batchSize || 5);
       setMinGapMinutes(data.minGapMinutes || 90);
 
@@ -206,6 +220,39 @@ export default function DraftReschedulePage() {
           </button>
         </div>
 
+        <div className="mb-4 grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
+            <div className="text-xs text-amber-200 uppercase tracking-wide">現在輪到號碼</div>
+            <div className="mt-1 text-2xl font-black text-amber-100">
+              {openWindow ? `${openWindow.start}-${openWindow.end}` : '尚未開放'}
+            </div>
+            <div className="mt-1 text-xs text-amber-300/80">逾期可排：1 到 {openWindow ? openWindow.end : '-'} 皆可由該盟 Commissioner 操作</div>
+          </div>
+
+          <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-4">
+            <div className="text-xs text-slate-300 uppercase tracking-wide mb-2">draft_reschedule_queue_windows</div>
+            {queueWindows.length === 0 ? (
+              <div className="text-xs text-slate-500">目前沒有可顯示的窗口資料</div>
+            ) : (
+              <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
+                {queueWindows.map((w) => (
+                  <div
+                    key={`${w.batch_start_queue}-${w.open_at}`}
+                    className={`flex items-center justify-between text-xs px-2 py-1.5 rounded-md border ${
+                      w.is_open
+                        ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200'
+                        : 'border-slate-700 bg-slate-800/70 text-slate-300'
+                    }`}
+                  >
+                    <span>#{w.batch_start_queue}-{w.batch_end_queue}</span>
+                    <span>{formatDateTime(w.open_at)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
         <div className="mb-4">
           <input
             type="text"
@@ -264,12 +311,12 @@ export default function DraftReschedulePage() {
                         </td>
                         <td className="px-3 py-3 text-center text-slate-300">{formatDateTime(row.effective_draft_time)}</td>
                         <td className="px-3 py-3 text-center">
-                          <input
-                            type="datetime-local"
+                          <AmericanDatePicker
                             value={edit.draftTime || ''}
-                            onChange={(e) => updateDraftTime(row.league_id, e.target.value)}
+                            onChange={(newValue) => updateDraftTime(row.league_id, newValue)}
+                            minDate={minDraftDateTime()}
                             disabled={!row.can_edit || isSaving}
-                            className="w-[210px] border border-slate-600 rounded-md px-2 py-1.5 text-xs bg-slate-800 text-slate-100 disabled:opacity-45"
+                            className="w-[210px]"
                           />
                         </td>
                         <td className="px-3 py-3 text-center">

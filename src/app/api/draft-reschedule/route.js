@@ -57,6 +57,41 @@ async function getOpenWindowFromScheduleTable() {
   };
 }
 
+async function getQueueWindowsForDisplay() {
+  const nowIso = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('draft_reschedule_queue_windows')
+    .select('batch_start_queue, batch_end_queue, open_at')
+    .order('open_at', { ascending: true });
+
+  if (error) {
+    return { windows: [], error };
+  }
+
+  const rows = data || [];
+  if (rows.length === 0) {
+    return { windows: [], error: null };
+  }
+
+  const currentIndex = Math.max(
+    rows.findIndex((row) => row.open_at > nowIso) - 1,
+    rows.findIndex((row) => row.open_at <= nowIso)
+  );
+
+  const safeIndex = currentIndex >= 0 ? currentIndex : 0;
+  const from = Math.max(0, safeIndex - 2);
+  const to = Math.min(rows.length, from + 8);
+  const picked = rows.slice(from, to);
+
+  return {
+    windows: picked.map((row) => ({
+      ...row,
+      is_open: row.open_at <= nowIso,
+    })),
+    error: null,
+  };
+}
+
 function buildEffectiveDraftTimeMap(leagues, slots) {
   const map = new Map();
   for (const league of leagues || []) {
@@ -202,6 +237,8 @@ export async function GET() {
         return String(a.league_name || '').localeCompare(String(b.league_name || ''));
       });
 
+    const displayWindows = await getQueueWindowsForDisplay();
+
     return NextResponse.json({
       success: true,
       batchSize: BATCH_SIZE,
@@ -209,6 +246,7 @@ export async function GET() {
       openWindow,
       openWindowAt: scheduleWindow.openAt || null,
       openWindowSource,
+      queueWindows: displayWindows.windows,
       leagues: rows,
     });
   } catch (error) {
