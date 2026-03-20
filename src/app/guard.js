@@ -41,14 +41,14 @@ export default function GuardLayout({ children }) {
               const adminRes = await fetch('/api/username', { method: 'POST' });
               const adminData = await adminRes.json();
               // If not admin and not on allowed maintenance pages, redirect
-              if (!(adminData?.is_admin ?? adminData?.isAdmin) && pathname !== '/maintenance' && pathname !== '/draft-reschedule') {
+              if (!(adminData?.is_admin ?? adminData?.isAdmin) && pathname !== '/maintenance') {
                 redirectingRef.current = true;
                 router.push('/maintenance');
               }
             } catch (e) {
               console.error('Error checking admin status:', e);
               // Default to redirect if we can't verify
-              if (pathname !== '/maintenance' && pathname !== '/draft-reschedule') {
+              if (pathname !== '/maintenance') {
                 redirectingRef.current = true;
                 router.push('/maintenance');
               }

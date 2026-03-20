@@ -127,10 +127,10 @@ export default function MaintenancePage() {
             </button>
             
             <button
-              onClick={() => router.push('/draft-reschedule')}
+              onClick={() => router.push('/home')}
               className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-lg"
             >
-              Open Draft Reschedule
+              Back to Home
             </button>
 
             {isAdmin && (
