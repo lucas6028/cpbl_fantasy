@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 
 /**
- * DraftTimelineInline 元件 - 時間軸視覺化，用線條表示選秀時長
+ * DraftTimelineInline 元件 - 可滑動時間軸，from now to 2026-04-20
  * @param {string} proposedTime - 提議的選秀時間 (ISO string)
  * @param {string} excludeLeagueId - 要排除的聯盟 ID
  * @param {callback} onConflictDetected - 偵測到衝突時的回調
@@ -68,20 +68,18 @@ export default function DraftTimelineInline({
     return null;
   }
 
-  // 計算時間軸範圍
-  const draftTimes = allDrafts
-    .map(d => new Date(d.draft_time).getTime())
-    .sort((a, b) => a - b);
+  // 時間範圍：now 到 2026-04-20
+  const now = new Date();
+  const endDate = new Date('2026-04-20T23:59:59');
+  const totalTimeMs = endDate.getTime() - now.getTime();
   
-  if (draftTimes.length === 0) return null;
+  // 每個時段佔據的 pixel 寬度（1小時 = 80px）
+  const pixelsPerHour = 80;
+  const timelineWidth = (totalTimeMs / (1000 * 60 * 60)) * pixelsPerHour;
 
-  const minTime = draftTimes[0];
-  const maxTime = draftTimes[draftTimes.length - 1] + 90 * 60 * 1000; // +1.5hr for last draft
-  const timeRange = maxTime - minTime;
-  const pixelsPerMinute = timeRange > 0 ? 300 / (timeRange / 60 / 1000) : 1;
-
-  const getX = (timeMs) => {
-    return ((timeMs - minTime) / timeRange) * 300;
+  const getX = (isoString) => {
+    const time = new Date(isoString).getTime();
+    return ((time - now.getTime()) / totalTimeMs) * timelineWidth;
   };
 
   const formatTimeShort = (isoString) => {
@@ -95,6 +93,15 @@ export default function DraftTimelineInline({
       hour12: false,
     });
   };
+
+  // 生成時間刻度（每日一個）
+  const timeMarks = [];
+  let currentDate = new Date(now);
+  currentDate.setHours(0, 0, 0, 0);
+  while (currentDate <= endDate) {
+    timeMarks.push(new Date(currentDate));
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
 
   return (
     <div className="space-y-3 mt-3">
@@ -112,100 +119,158 @@ export default function DraftTimelineInline({
         </div>
       )}
 
-      {/* 時間軸視覺化 */}
-      <div className="relative">
-        {/* 時間軸刻度背景 */}
-        <div className="relative h-20 bg-slate-900/30 rounded-lg border border-slate-700/30 p-2">
-          {/* 時間刻度線 */}
-          {[0, 0.25, 0.5, 0.75, 1].map((ratio) => (
-            <div
-              key={ratio}
-              className="absolute top-0 bottom-0 w-px bg-slate-700/20"
-              style={{ left: `calc(${ratio * 100}% + ${-0.5}px)` }}
-            />
-          ))}
+      {/* 可滑動時間軸容器 */}
+      <div className="overflow-x-auto rounded-lg border border-slate-700/50 bg-slate-900/40">
+        <div className="relative" style={{ width: `${timelineWidth}px`, minWidth: '100%' }}>
+          {/* 時間軸背景網格 */}
+          <div className="absolute inset-0 flex">
+            {timeMarks.map((mark, idx) => {
+              const x = getX(mark.toISOString());
+              const isToday = 
+                mark.getDate() === now.getDate() &&
+                mark.getMonth() === now.getMonth() &&
+                mark.getFullYear() === now.getFullYear();
+              
+              return (
+                <div
+                  key={idx}
+                  className={`absolute top-0 bottom-0 w-px ${
+                    isToday
+                      ? 'bg-green-500/50 shadow-lg shadow-green-500/30'
+                      : 'bg-slate-700/30'
+                  }`}
+                  style={{ left: `${x}px` }}
+                />
+              );
+            })}
+          </div>
 
-          {/* 選秀時段線條 */}
-          {allDrafts.map((draft, idx) => {
-            const startTime = new Date(draft.draft_time).getTime();
-            const endTime = startTime + 90 * 60 * 1000; // 1.5小時
-            const x = getX(startTime);
-            const width = (90 * 60 * 1000 / timeRange) * 300;
-            const isLineA = lineA.some(d => d.league_id === draft.league_id);
-            const bgColor = isLineA
-              ? 'bg-gradient-to-r from-blue-500 to-blue-600'
-              : 'bg-gradient-to-r from-amber-500 to-amber-600';
-            const textColor = isLineA ? 'text-blue-100' : 'text-amber-100';
+          {/* 選秀時段線條容器 */}
+          <div className="relative h-32 p-3">
+            {/* Timeline A - 上半部 */}
+            <div className="absolute top-3 left-0 right-0 h-12">
+              {lineA.map((draft) => {
+                const startTime = new Date(draft.draft_time).getTime();
+                const endTime = startTime + 90 * 60 * 1000;
+                const x = getX(draft.draft_time);
+                const width = ((endTime - startTime) / totalTimeMs) * timelineWidth;
 
-            return (
+                return (
+                  <div
+                    key={draft.league_id}
+                    className="absolute h-10 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 shadow-lg flex items-center px-2 transition-all hover:shadow-xl hover:scale-105 cursor-pointer group border border-blue-400/50"
+                    style={{
+                      left: `${x}px`,
+                      width: `${Math.max(width, 80)}px`,
+                      top: '2px',
+                    }}
+                    title={`${draft.league_name}\n${formatTimeShort(draft.draft_time)}`}
+                  >
+                    <div className="text-xs font-bold text-blue-100 whitespace-nowrap overflow-hidden text-ellipsis">
+                      {draft.queue_number ? `#${draft.queue_number}` : draft.league_name.slice(0, 6)}
+                    </div>
+
+                    {/* Hover 提示 */}
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white whitespace-nowrap z-20 pointer-events-none">
+                      {draft.league_name}
+                      <br />
+                      {formatTimeShort(draft.draft_time)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Timeline B - 下半部 */}
+            <div className="absolute bottom-3 left-0 right-0 h-12">
+              {lineB.map((draft) => {
+                const startTime = new Date(draft.draft_time).getTime();
+                const endTime = startTime + 90 * 60 * 1000;
+                const x = getX(draft.draft_time);
+                const width = ((endTime - startTime) / totalTimeMs) * timelineWidth;
+
+                return (
+                  <div
+                    key={draft.league_id}
+                    className="absolute h-10 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 shadow-lg flex items-center px-2 transition-all hover:shadow-xl hover:scale-105 cursor-pointer group border border-amber-400/50"
+                    style={{
+                      left: `${x}px`,
+                      width: `${Math.max(width, 80)}px`,
+                      bottom: '2px',
+                    }}
+                    title={`${draft.league_name}\n${formatTimeShort(draft.draft_time)}`}
+                  >
+                    <div className="text-xs font-bold text-amber-100 whitespace-nowrap overflow-hidden text-ellipsis">
+                      {draft.queue_number ? `#${draft.queue_number}` : draft.league_name.slice(0, 6)}
+                    </div>
+
+                    {/* Hover 提示 */}
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white whitespace-nowrap z-20 pointer-events-none">
+                      {draft.league_name}
+                      <br />
+                      {formatTimeShort(draft.draft_time)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* 提議時間標記（綠色豎線） */}
+            {proposedTime && (
               <div
-                key={draft.league_id}
-                className={`absolute h-7 rounded-full ${bgColor} shadow-lg flex items-center px-2 transition-all hover:shadow-xl hover:scale-105 cursor-pointer group`}
+                className="absolute top-0 bottom-0 w-1 bg-green-400 shadow-lg shadow-green-500/50"
                 style={{
-                  left: `${x}px`,
-                  width: `${Math.max(width, 60)}px`,
-                  top: `${isLineA ? 2 : 10}px`,
+                  left: `${getX(proposedTime)}px`,
+                  zIndex: 10,
                 }}
-                title={`${draft.league_name}\n${formatTimeShort(draft.draft_time)}`}
-              >
-                <div className={`text-xs font-bold ${textColor} whitespace-nowrap overflow-hidden text-ellipsis`}>
-                  {draft.queue_number ? `#${draft.queue_number}` : ''}
-                </div>
-
-                {/* Hover 提示 */}
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white whitespace-nowrap z-10">
-                  {draft.league_name} - {formatTimeShort(draft.draft_time)}
-                </div>
-              </div>
-            );
-          })}
-
-          {/* 提議的時間標記（如果有） */}
-          {proposedTime && (
-            <div
-              className="absolute top-0 bottom-0 w-0.5 bg-green-400 shadow-lg shadow-green-500/50"
-              style={{
-                left: `${getX(new Date(proposedTime).getTime())}px`,
-              }}
-            />
-          )}
+              />
+            )}
+          </div>
         </div>
+      </div>
 
-        {/* 時間刻度標籤 */}
-        <div className="flex justify-between text-xs text-slate-400 mt-1 px-2">
-          {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
-            const time = new Date(minTime + ratio * timeRange);
-            return (
-              <div key={ratio} className="text-xs">
-                {time.toLocaleString('zh-TW', {
-                  month: 'numeric',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  hour12: false,
-                })}
-              </div>
-            );
+      {/* 時間刻度標籤 */}
+      <div className="overflow-x-auto rounded-lg bg-slate-900/30 p-2">
+        <div className="flex gap-2 text-xs text-slate-400" style={{ width: `${timelineWidth}px`, minWidth: '100%' }}>
+          {timeMarks.map((mark, idx) => {
+            if (idx % 2 === 0) {
+              // 每兩天顯示一次標籤
+              return (
+                <div
+                  key={idx}
+                  style={{
+                    marginLeft: `${getX(mark.toISOString())}px`,
+                  }}
+                  className="whitespace-nowrap text-xs"
+                >
+                  {mark.toLocaleDateString('zh-TW', {
+                    month: 'numeric',
+                    day: 'numeric',
+                  })}
+                </div>
+              );
+            }
+            return null;
           })}
         </div>
       </div>
 
       {/* 圖例 */}
-      <div className="flex gap-4 text-xs text-slate-400">
+      <div className="flex flex-wrap gap-3 text-xs text-slate-400 p-2 bg-slate-900/20 rounded-lg">
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-500 to-blue-600"></div>
+          <div className="w-3 h-3 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600"></div>
           時間線 A
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-gradient-to-r from-amber-500 to-amber-600"></div>
+          <div className="w-3 h-3 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600"></div>
           時間線 B
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-0.5 h-3 bg-green-400"></div>
+          <div className="w-1 h-3 bg-green-400"></div>
           提議時間
         </div>
         <div className="text-slate-500">
-          間隔需 ≥ {minGapMinutes} 分鐘
+          間隔需 ≥ {minGapMinutes} 分鐘 | 預設 1.5 小時/場
         </div>
       </div>
     </div>
