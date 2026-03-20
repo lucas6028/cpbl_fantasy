@@ -24,6 +24,7 @@ async function getBestRankedAvailablePlayer(leagueId, excludePlayerIds = [], req
 
     const validPlayers = allPlayers?.filter(p => !allExcluded.has(p.player_id)) || [];
     if (validPlayers.length === 0) return null;
+    const validPlayerIdSet = new Set(validPlayers.map(p => p.player_id));
 
     // To get the best ranked player, we fetch the dynamic rankings for this league
     // Need absolute URL for fetch inside server action if URL is provided
@@ -34,7 +35,7 @@ async function getBestRankedAvailablePlayer(leagueId, excludePlayerIds = [], req
             rankingsUrl = `${parsedUrl.origin}/api/league/${leagueId}/rankings`;
         }
 
-        const res = await fetch(rankingsUrl, { cache: 'no-store' });
+        const res = await fetch(rankingsUrl, { cache: 'no-store', signal: AbortSignal.timeout(3000) });
         const data = await res.json();
 
         if (data.success && data.rankings && data.rankings.length > 0) {
@@ -43,10 +44,7 @@ async function getBestRankedAvailablePlayer(leagueId, excludePlayerIds = [], req
 
             // Find the first valid player in the sorted rankings list
             for (const pid of rankedIds) {
-                // Confirm they are actually in our available pool
-                if (validPlayers.some(vp => vp.player_id === pid)) {
-                    return pid;
-                }
+                if (validPlayerIdSet.has(pid)) return pid;
             }
         }
     } catch (e) {
@@ -62,36 +60,39 @@ export async function GET(request, { params }) {
     const { leagueId } = params;
 
     try {
-        // 1. Fetch League Status & Settings
-        const { data: statusData } = await supabase
-            .from('league_statuses')
-            .select('status')
-            .eq('league_id', leagueId)
-            .single();
+        // 1. Fetch core state in parallel
+        const [statusRes, settingsRes, totalRes, remainingRes] = await Promise.all([
+            supabase
+                .from('league_statuses')
+                .select('status')
+                .eq('league_id', leagueId)
+                .maybeSingle(),
+            supabase
+                .from('league_settings')
+                .select('live_draft_time, live_draft_pick_time, foreigner_active_limit')
+                .eq('league_id', leagueId)
+                .single(),
+            supabase
+                .from('draft_picks')
+                .select('*', { count: 'exact', head: true })
+                .eq('league_id', leagueId),
+            supabase
+                .from('draft_picks')
+                .select('*', { count: 'exact', head: true })
+                .eq('league_id', leagueId)
+                .is('player_id', null)
+        ]);
 
-        const { data: settings } = await supabase
-            .from('league_settings')
-            .select('live_draft_time, live_draft_pick_time, foreigner_active_limit')
-            .eq('league_id', leagueId)
-            .single();
+        const { data: statusData } = statusRes;
+        const { data: settings } = settingsRes;
 
         let leagueStatus = statusData?.status;
         const now = new Date();
         const startTime = settings?.live_draft_time ? new Date(settings.live_draft_time) : null;
 
-        // 2. Check Picks counts
-        const { count: totalPicks } = await supabase
-            .from('draft_picks')
-            .select('*', { count: 'exact', head: true })
-            .eq('league_id', leagueId);
-
-        const { count: remainingPicks } = await supabase
-            .from('draft_picks')
-            .select('*', { count: 'exact', head: true })
-            .eq('league_id', leagueId)
-            .is('player_id', null);
-
-        console.log(`[DraftState] Total: ${totalPicks}, Remaining: ${remainingPicks}, Status: ${leagueStatus}`);
+        // 2. Pick counts
+        const totalPicks = totalRes.count || 0;
+        const remainingPicks = remainingRes.count || 0;
 
         // 3. Logic Determination
 
@@ -119,14 +120,24 @@ export async function GET(request, { params }) {
             } else {
                 // Time NOT arrived yet — always treat as pre-draft
                 // Fetch "taken" picks (usually empty in pre-draft, but robust to check)
-                const { data: picks, error: picksError } = await supabase
-                    .from('draft_picks')
-                    .select('pick_id, pick_number, round_number, player_id, manager_id, picked_at, player:player_list(name, team, batter_or_pitcher, identity, original_name)')
-                    .eq('league_id', leagueId)
-                    .filter('player_id', 'not.is', null)
-                    .order('pick_number', { ascending: true });
+                const [picksRes, nextPicksRes] = await Promise.all([
+                    supabase
+                        .from('draft_picks')
+                        .select('pick_id, pick_number, round_number, player_id, manager_id, picked_at, player:player_list(name, team, batter_or_pitcher, identity, original_name)')
+                        .eq('league_id', leagueId)
+                        .filter('player_id', 'not.is', null)
+                        .order('pick_number', { ascending: true }),
+                    supabase
+                        .from('draft_picks')
+                        .select('pick_id, pick_number, round_number, manager_id')
+                        .eq('league_id', leagueId)
+                        .is('player_id', null)
+                        .order('pick_number', { ascending: true })
+                ]);
 
-                // Optimize: Batch fetch positions for taken picks
+                const { data: picks } = picksRes;
+                const { data: nextPicks } = nextPicksRes;
+
                 if (picks && picks.length > 0) {
                     const playerIds = picks.map(p => p.player_id).filter(Boolean);
 
@@ -145,14 +156,6 @@ export async function GET(request, { params }) {
                         }
                     }
                 }
-
-                // Fetch "next" picks (all remaining picks)
-                const { data: nextPicks, error: nextPicksError } = await supabase
-                    .from('draft_picks')
-                    .select('pick_id, pick_number, round_number, manager_id')
-                    .eq('league_id', leagueId)
-                    .is('player_id', null)
-                    .order('pick_number', { ascending: true });
 
                 return NextResponse.json({
                     status: 'pre-draft',
@@ -407,12 +410,23 @@ export async function GET(request, { params }) {
             }
 
             // Return Active State
-            const { data: picks, error: picksError } = await supabase
-                .from('draft_picks')
-                .select('pick_id, pick_number, round_number, player_id, manager_id, picked_at, player:player_list(name, team, batter_or_pitcher, identity, original_name)')
-                .eq('league_id', leagueId)
-                .filter('player_id', 'not.is', null)
-                .order('pick_number', { ascending: true });
+            const [picksRes, nextPicksRes] = await Promise.all([
+                supabase
+                    .from('draft_picks')
+                    .select('pick_id, pick_number, round_number, player_id, manager_id, picked_at, player:player_list(name, team, batter_or_pitcher, identity, original_name)')
+                    .eq('league_id', leagueId)
+                    .filter('player_id', 'not.is', null)
+                    .order('pick_number', { ascending: true }),
+                supabase
+                    .from('draft_picks')
+                    .select('pick_id, pick_number, round_number, manager_id')
+                    .eq('league_id', leagueId)
+                    .is('player_id', null)
+                    .order('pick_number', { ascending: true })
+            ]);
+
+            const { data: picks, error: picksError } = picksRes;
+            const { data: nextPicks, error: nextPicksError } = nextPicksRes;
 
             // Optimize: Batch fetch positions
             if (picks && picks.length > 0) {
@@ -438,33 +452,12 @@ export async function GET(request, { params }) {
                 }
             }
 
-            console.log(`[DraftState] ✅ Completed picks (player_id NOT NULL): ${picks?.length || 0}`);
             if (picksError) {
                 console.error('[DraftState] Error fetching picks:', picksError);
             }
-            if (picks && picks.length > 0) {
-                console.log(`[DraftState] Sample completed pick: ${JSON.stringify(picks[0])}`);
-            }
-
-            // Get Next Picks Preview (e.g., next 12)
-            const { data: nextPicks, error: nextPicksError } = await supabase
-                .from('draft_picks')
-                .select('pick_id, pick_number, round_number, manager_id')
-                .eq('league_id', leagueId)
-                .is('player_id', null)
-                .order('pick_number', { ascending: true });
 
             if (nextPicksError) {
                 console.error('[DraftState] Error fetching nextPicks:', nextPicksError);
-            } else {
-                console.log(`[DraftState] Next Picks found: ${nextPicks?.length}`);
-                if (nextPicks?.length > 0) {
-                    console.log(`First Next Pick: ${JSON.stringify(nextPicks[0])}`);
-                } else {
-                    // Debug: Why empty? Check total picks again
-                    const { count } = await supabase.from('draft_picks').select('*', { count: 'exact', head: true }).eq('league_id', leagueId).is('player_id', null);
-                    console.log(`[DraftState] Double check remaining count: ${count}`);
-                }
             }
 
             return NextResponse.json({
@@ -512,9 +505,6 @@ export async function GET(request, { params }) {
                 }
             }
 
-            console.log(`[DraftState] Draft completed! Total picks: ${picks?.length || 0}`);
-
-            console.log(`[DraftState] Draft completed! Total picks: ${picks?.length || 0}`);
             return NextResponse.json({ status: 'completed', picks: picks || [], foreignerActiveLimit: settings?.foreigner_active_limit });
         }
 
