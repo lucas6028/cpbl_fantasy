@@ -205,6 +205,47 @@ export default function DraftRescheduleAdminPage() {
     }
   };
 
+  const handleSaveQueueAndClearTime = async (league) => {
+    const edit = editMap[league.league_id] || {};
+    const queueNumber = Number.parseInt(edit.queueNumber, 10);
+
+    if (Number.isNaN(queueNumber) || queueNumber <= 0) {
+      setError(`聯盟 ${league.league_name} 的號碼牌必須是正整數`);
+      setSuccess('');
+      return;
+    }
+
+    setSavingLeagueId(league.league_id);
+    setError('');
+    setSuccess('');
+
+    try {
+      const res = await fetch('/api/admin/draft-reschedule', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          leagueId: league.league_id,
+          queueNumber,
+          draftTime: null,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setError(data.error || 'Failed to save queue number and clear draft time');
+        return;
+      }
+
+      setSuccess(`已更新 ${league.league_name}：號碼牌 ${data.queue_number}，並清除 draft time`);
+      await fetchData(true);
+    } catch (err) {
+      console.error(err);
+      setError('儲存失敗，請稍後再試');
+    } finally {
+      setSavingLeagueId(null);
+    }
+  };
+
   const getStatusClassName = (status) => {
     switch (status) {
       case 'pre-draft':
@@ -367,6 +408,13 @@ export default function DraftRescheduleAdminPage() {
                               className="px-3 py-1.5 rounded bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 disabled:opacity-60"
                             >
                               {isSaving ? 'Saving...' : 'Save'}
+                            </button>
+                            <button
+                              onClick={() => handleSaveQueueAndClearTime(league)}
+                              disabled={isSaving}
+                              className="px-3 py-1.5 rounded bg-amber-500 text-white text-xs font-semibold hover:bg-amber-600 disabled:opacity-60"
+                            >
+                              Save+Clear Time
                             </button>
                             <button
                               onClick={() => handleClear(league)}
