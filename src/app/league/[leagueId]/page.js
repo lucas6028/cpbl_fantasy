@@ -7,7 +7,6 @@ import supabase from '@/lib/supabase';
 import CpblScheduleWidget from '@/components/CpblScheduleWidget';
 import LeagueDailyRoster from './LeagueDailyRoster';
 import PlayerDetailModal from '@/components/PlayerDetailModal';
-import LeagueChat from '@/components/LeagueChat';
 import AmericanDatePicker from '@/components/AmericanDatePicker';
 
 // Playoff Tree Diagram Component
@@ -1572,14 +1571,6 @@ export default function LeaguePage() {
 
           {/* Daily Roster Widget */}
           <LeagueDailyRoster leagueId={leagueId} members={members} />
-
-          {/* League Chat */}
-          <LeagueChat
-            leagueId={leagueId}
-            managerId={myManagerId}
-            className="h-[450px]"
-            pollInterval={60000}
-          />
         </div>
 
         <PlayerDetailModal
@@ -1981,15 +1972,6 @@ export default function LeaguePage() {
           </div>
         </div>
 
-        {/* League Chat */}
-        <div className="mt-4 sm:mt-8 bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl shadow-2xl overflow-hidden">
-          <LeagueChat
-            leagueId={leagueId}
-            managerId={myManagerId}
-            className="h-[450px]"
-            pollInterval={60000}
-          />
-        </div>
       </div>
     </div>
   );

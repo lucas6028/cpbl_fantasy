@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import LegendModal from '../../../../components/LegendModal';
-import LeagueChat from '../../../../components/LeagueChat';
 import { useMaintenanceStatus } from '../../../../lib/useMaintenanceStatus';
 
 export default function DraftPage() {
@@ -1353,7 +1352,6 @@ export default function DraftPage() {
                         { key: 'queue', label: 'Queue' },
                         { key: 'league_rosters', label: 'L.Rosters' },
                         { key: 'picks', label: 'Picks' },
-                        { key: 'chat', label: 'Chat' },
                     ].map(tab => (
                         <button
                             key={tab.key}
@@ -1994,14 +1992,6 @@ export default function DraftPage() {
                             )}
                         </div>
 
-                        {/* League Chat */}
-                        <LeagueChat
-                            leagueId={leagueId}
-                            managerId={myManagerId}
-                            isCompact={true}
-                            pollInterval={5000}
-                            enablePolling={draftState?.status !== 'complete'}
-                        />
                     </div>
                 </div>
             )}
@@ -2801,19 +2791,6 @@ export default function DraftPage() {
                         Drag & drop or use arrows to reorder.
                     </div>}
                     {queue.map((item, i) => renderQueueItem(item, i))}
-                </div>
-            )}
-
-            {/* Mobile-only: Chat tab */}
-            {mainTab === 'chat' && (
-                <div className="lg:hidden flex-1 overflow-hidden">
-                    <LeagueChat
-                        leagueId={leagueId}
-                        managerId={myManagerId}
-                        isCompact={false}
-                        pollInterval={5000}
-                        enablePolling={draftState?.status !== 'complete'}
-                    />
                 </div>
             )}
 
