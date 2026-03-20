@@ -1,3 +1,5 @@
+
+
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
@@ -336,7 +338,7 @@ export async function PATCH(request) {
       effectiveMap,
     });
 
-    if (conflicts.length > 0) {
+    if (conflicts.length >=2) {
       return NextResponse.json(
         {
           error: `Draft time must be at least ${MIN_DRAFT_GAP_MINUTES} minutes apart from other leagues`,
