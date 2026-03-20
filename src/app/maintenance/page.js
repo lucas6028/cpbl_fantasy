@@ -9,26 +9,24 @@ export default function MaintenancePage() {
   const [checkingStatus, setCheckingStatus] = useState(true);
   const [announcements, setAnnouncements] = useState([]);
 
-  // Check maintenance status and admin status
   useEffect(() => {
     let isMounted = true;
-    let checkInterval;
 
-    const checkStatus = async () => {
+    const fetchAllData = async () => {
       try {
-        // Check maintenance status
+        // 1. 檢查維護狀態
         const mainRes = await fetch('/api/system-settings/maintenance');
         const mainData = await mainRes.json();
 
         if (!isMounted) return;
 
-        // If maintenance is disabled, redirect back
+        // 如果進來時維護已經結束，直接去首頁
         if (!mainData.underMaintenance) {
           router.push('/home');
           return;
         }
 
-        // Check if user is admin
+        // 2. 檢查管理員身分
         const userIdCookie = document.cookie
           .split('; ')
           .find(row => row.startsWith('user_id='));
@@ -38,46 +36,34 @@ export default function MaintenancePage() {
           try {
             const userRes = await fetch(`/api/admin/check?userId=${userId}`);
             const userData = await userRes.json();
-            if (isMounted && userData.isAdmin) {
-              setIsAdmin(true);
-            }
-          } catch (e) {
-            console.error('Error checking admin status:', e);
-          }
+            if (isMounted && userData.isAdmin) setIsAdmin(true);
+          } catch (e) { console.error('Admin check error:', e); }
         }
 
-        // Load active announcements for maintenance notice
+        // 3. 抓取最新公告
         try {
           const annRes = await fetch('/api/announcements');
           const annData = await annRes.json();
           if (isMounted && annData.success) {
             setAnnouncements(Array.isArray(annData.announcements) ? annData.announcements : []);
           }
-        } catch (e) {
-          console.error('Error loading announcements:', e);
-        }
+        } catch (e) { console.error('Announcements error:', e); }
 
-        if (isMounted) {
-          setCheckingStatus(false);
-        }
+        // 全部抓完，關閉 Loading 狀態
+        if (isMounted) setCheckingStatus(false);
+
       } catch (e) {
-        console.error('Error checking status:', e);
-        if (isMounted) {
-          setCheckingStatus(false);
-        }
+        console.error('Fetch error:', e);
+        if (isMounted) setCheckingStatus(false);
       }
     };
 
-    checkStatus();
-
-    // Poll every 10 seconds to check if maintenance is over
-    checkInterval = setInterval(checkStatus, 10000);
+    fetchAllData();
 
     return () => {
       isMounted = false;
-      clearInterval(checkInterval);
     };
-  }, [router]);
+  }, [router]); // 只有在 router 改變時才會重新執行，且內部無定時器
 
   if (checkingStatus) {
     return (
@@ -86,7 +72,7 @@ export default function MaintenancePage() {
           <div className="inline-block animate-spin">
             <div className="w-12 h-12 border-4 border-purple-500/30 border-t-purple-500 rounded-full"></div>
           </div>
-          <p className="mt-4 text-slate-400">Checking status...</p>
+          <p className="mt-4 text-slate-400">Checking system status...</p>
         </div>
       </div>
     );
@@ -99,91 +85,70 @@ export default function MaintenancePage() {
           {/* Icon */}
           <div className="flex justify-center mb-8">
             <div className="w-20 h-20 rounded-full bg-orange-500/20 border border-orange-500/50 flex items-center justify-center">
-              <svg
-                className="w-10 h-10 text-orange-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4v2m0 4v2m6-2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
+              <svg className="w-10 h-10 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4v2m0 4v2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
           </div>
 
-          {/* Title */}
-          <h1 className="text-4xl sm:text-5xl font-black text-white mb-4">
-            Under Maintenance
-          </h1>
-
-          {/* Message */}
+          <h1 className="text-4xl sm:text-5xl font-black text-white mb-4">Under Maintenance</h1>
           <p className="text-xl text-orange-200 mb-8">
-            We&apos;re currently performing system maintenance to improve your experience.
-            We should be back online shortly!
+            We&apos;re currently performing system maintenance. Please check back later.
           </p>
 
-          {/* Spinner */}
-          <div className="flex justify-center mb-8">
-            <div className="flex gap-2">
-              <div className="w-3 h-3 rounded-full bg-orange-500 animate-bounce" style={{ animationDelay: '0s' }}></div>
-              <div className="w-3 h-3 rounded-full bg-orange-500 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-              <div className="w-3 h-3 rounded-full bg-orange-500 animate-bounce" style={{ animationDelay: '0.4s' }}></div>
-            </div>
-          </div>
-
-          {/* Status */}
-          <p className="text-sm text-slate-400 mb-8">
-            We&apos;re automatically checking if the system is back online...
+          {/* 狀態提示改為靜態 */}
+          <p className="text-xs text-slate-500 mb-8 uppercase tracking-widest">
+            Refresh the page to check if we are back online
           </p>
 
+          {/* 公告 */}
           {announcements.length > 0 && (
             <div className="mt-8 text-left border-t border-orange-500/30 pt-6">
               <h2 className="text-lg font-bold text-orange-200 mb-4">Latest Announcement</h2>
               <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
-                {announcements.slice(0, 3).map((announcement) => (
-                  <div key={announcement.id} className="rounded-xl border border-orange-400/30 bg-orange-900/20 p-4">
-                    <p className="text-sm font-bold text-orange-100 mb-1">{announcement.title}</p>
-                    <p className="text-sm text-slate-200 whitespace-pre-wrap">{announcement.content}</p>
-                    <p className="text-xs text-slate-400 mt-2">
-                      {new Date(announcement.created_at).toLocaleString('en-US')}
-                    </p>
+                {announcements.slice(0, 3).map((ann) => (
+                  <div key={ann.id} className="rounded-xl border border-orange-400/30 bg-orange-900/20 p-4">
+                    <p className="text-sm font-bold text-orange-100 mb-1">{ann.title}</p>
+                    <p className="text-sm text-slate-200 whitespace-pre-wrap">{ann.content}</p>
+                    <p className="text-xs text-slate-400 mt-2">{new Date(ann.created_at).toLocaleString()}</p>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          <div className="mt-8 pt-6 border-t border-orange-500/30">
-            <p className="text-sm text-orange-200 font-semibold mb-3">
-              Draft Reschedule Queue
-            </p>
+          {/* 操作按鈕 */}
+          <div className="mt-8 pt-6 border-t border-orange-500/30 flex flex-col gap-4 items-center">
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-lg border border-slate-500/30 transition-all"
+            >
+              Refresh Status
+            </button>
+            
             <button
               onClick={() => router.push('/draft-reschedule')}
-              className="inline-block px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-lg border border-emerald-400/30 shadow-lg shadow-emerald-500/20 transition-all duration-300"
+              className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-lg"
             >
               Open Draft Reschedule
             </button>
-          </div>
 
-          {/* Admin Info */}
-          {isAdmin && (
-            <div className="mt-12 pt-8 border-t border-orange-500/30">
-              <p className="text-purple-300 text-sm font-bold mb-4">
-                ADMIN PANEL
-              </p>
-              <button
-                onClick={() => router.push('/admin')}
-                className="inline-block px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold rounded-lg border border-purple-400/30 shadow-lg shadow-purple-500/30 transition-all duration-300"
-              >
-                Go to Admin Panel
-              </button>
-            </div>
-          )}
+            {isAdmin && (
+              <div className="mt-4 pt-4 border-t border-orange-500/10 w-full">
+                <button
+                  onClick={() => router.push('/admin')}
+                  className="px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold rounded-lg shadow-lg shadow-purple-500/30"
+                >
+                  Go to Admin Panel
+                </button>
+              </div>
+            )}
+          </div>
         </div>
+      </div>
+    </div>
+  );
+}
       </div>
     </div>
   );
