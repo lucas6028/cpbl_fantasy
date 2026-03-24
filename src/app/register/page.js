@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-const REGISTRATION_DISABLED = true
+const REGISTRATION_DISABLED = false
 
 export default function RegisterPage() {
   const [name, setName] = useState('')

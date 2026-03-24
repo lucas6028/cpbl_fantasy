@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import { sendVerificationEmail } from '@/lib/email';
 
-const REGISTRATION_DISABLED = true;
+const REGISTRATION_DISABLED = false;
 
 export async function POST(request) {
   try {
