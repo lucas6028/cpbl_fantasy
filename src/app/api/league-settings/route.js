@@ -159,6 +159,102 @@ export async function POST(request) {
       );
     }
 
+    // 先找到管理員 email，後續用來檢查可用額度
+    const { data: managerData, error: managerError } = await supabase
+      .from('managers')
+      .select('name, email_address')
+      .eq('manager_id', manager_id)
+      .single();
+
+    if (managerError || !managerData) {
+      console.error('Manager not found:', managerError);
+      return NextResponse.json(
+        { error: '找不到管理員資料', details: managerError?.message },
+        { status: 404 }
+      );
+    }
+
+    if (!managerData.email_address) {
+      return NextResponse.json(
+        { error: '管理員缺少 email_address，無法檢查額度' },
+        { status: 400 }
+      );
+    }
+
+    // 查詢尚未使用的付款紀錄（verified_at 為 null）
+    const { data: payments, error: paymentError } = await supabase
+      .from('portaly_payments')
+      .select('id, product_id')
+      .eq('buyer_email', managerData.email_address)
+      .is('verified_at', null);
+
+    if (paymentError) {
+      console.error('Failed to fetch payments:', paymentError);
+      return NextResponse.json(
+        { error: '查詢額度失敗', details: paymentError.message },
+        { status: 500 }
+      );
+    }
+
+    if (!payments || payments.length === 0) {
+      return NextResponse.json(
+        { error: '您的新增聯盟額度不足' },
+        { status: 403 }
+      );
+    }
+
+    const productIds = payments.map((payment) => payment.product_id).filter(Boolean);
+
+    if (productIds.length === 0) {
+      return NextResponse.json(
+        { error: '您的新增聯盟額度不足' },
+        { status: 403 }
+      );
+    }
+
+    // 只接受 product_name = 新增聯盟額度 的商品
+    const { data: products, error: productError } = await supabase
+      .from('protaly_product_id_match')
+      .select('protaly_product_id, product_name')
+      .in('protaly_product_id', productIds)
+      .eq('product_name', '新增聯盟額度');
+
+    if (productError) {
+      console.error('Failed to fetch product mapping:', productError);
+      return NextResponse.json(
+        { error: '查詢額度商品失敗', details: productError.message },
+        { status: 500 }
+      );
+    }
+
+    const validProductIds = new Set((products || []).map((p) => p.protaly_product_id));
+    const paymentToUse = payments.find((payment) => validProductIds.has(payment.product_id));
+
+    if (!paymentToUse) {
+      return NextResponse.json(
+        { error: '您的新增聯盟額度不足' },
+        { status: 403 }
+      );
+    }
+
+    // 先鎖定並消耗一筆額度（避免並發重複使用同一筆）
+    const nowIso = new Date().toISOString();
+    const { data: verifiedPayment, error: verifyError } = await supabase
+      .from('portaly_payments')
+      .update({ verified_at: nowIso })
+      .eq('id', paymentToUse.id)
+      .is('verified_at', null)
+      .select('id')
+      .single();
+
+    if (verifyError || !verifiedPayment) {
+      console.error('Failed to consume quota:', verifyError);
+      return NextResponse.json(
+        { error: '額度已被使用，請重新整理後再試' },
+        { status: 409 }
+      );
+    }
+
     // 準備數據
     const draftType = settings.general['Draft Type'];
     const leagueData = {
@@ -243,21 +339,7 @@ export async function POST(request) {
       );
     }
 
-    // 將創建者加入 league_members 並設為 Commissioner
-    const { data: managerData, error: managerError } = await supabase
-      .from('managers')
-      .select('name')
-      .eq('manager_id', manager_id)
-      .single();
-
-    if (managerError || !managerData) {
-      console.error('Manager not found:', managerError);
-      return NextResponse.json(
-        { error: '找不到管理員資料', details: managerError?.message },
-        { status: 404 }
-      );
-    }
-
+    // 將創建者加入 league_members 並設為 Commissioner（重用前面已查到的 managerData）
     const { error: memberError } = await supabase
       .from('league_members')
       .insert([{

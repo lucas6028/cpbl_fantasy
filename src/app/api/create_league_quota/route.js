@@ -9,11 +9,11 @@ const supabase = createClient(
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const manager_id = searchParams.get('manager_id');
+    const userId = searchParams.get('user_id') || searchParams.get('manager_id');
 
-    if (!manager_id) {
+    if (!userId) {
       return NextResponse.json(
-        { error: 'Manager ID is required' },
+        { error: 'User ID is required' },
         { status: 400 }
       );
     }
@@ -22,7 +22,7 @@ export async function GET(request) {
     const { data: managerData, error: managerError } = await supabase
       .from('managers')
       .select('email_address')
-      .eq('manager_id', manager_id)
+      .eq('manager_id', userId)
       .single();
 
     if (managerError || !managerData) {
@@ -50,6 +50,10 @@ export async function GET(request) {
 
     const productIds = payments.map(payment => payment.product_id);
 
+    if (!productIds.length) {
+      return NextResponse.json({ success: true, quota: 0, products: [] });
+    }
+
     // Fetch product names and quotas from product_id_match
     const { data: products, error: productError } = await supabase
       .from('protaly_product_id_match')
@@ -63,16 +67,13 @@ export async function GET(request) {
       );
     }
 
-    const filteredProducts = products.filter(product => product.product_name === '新增聯盟額度');
+    const filteredProducts = (products || []).filter(product => product.product_name === '新增聯盟額度');
 
-    if (filteredProducts.length === 0) {
-      return NextResponse.json(
-        { error: 'No valid quota products found' },
-        { status: 403 }
-      );
-    }
-
-    return NextResponse.json({ products: filteredProducts });
+    return NextResponse.json({
+      success: true,
+      quota: filteredProducts.length,
+      products: filteredProducts
+    });
   } catch (error) {
     return NextResponse.json(
       { error: 'Unexpected error occurred', details: error.message },

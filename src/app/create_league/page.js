@@ -582,10 +582,19 @@ const CreateLeaguePage = () => {
   useEffect(() => {
     const fetchUserQuota = async () => {
       try {
-        const response = await fetch('/api/create_league_quota');
+        const cookie = document.cookie.split('; ').find(row => row.startsWith('user_id='));
+        const userId = cookie?.split('=')[1];
+
+        if (!userId) {
+          setCreateLeagueDisabled(true);
+          setSaveMessage('❌ 請先登入');
+          return;
+        }
+
+        const response = await fetch(`/api/create_league_quota?user_id=${encodeURIComponent(userId)}`);
         const data = await response.json();
 
-        if (data.success) {
+        if (response.ok && data.success) {
           if (data.quota <= 0) {
             setCreateLeagueDisabled(true);
             setSaveMessage('❌ 您的額度不足，無法創建聯盟');
@@ -594,9 +603,11 @@ const CreateLeaguePage = () => {
             setSaveMessage('');
           }
         } else {
+          setCreateLeagueDisabled(true);
           console.error('Failed to fetch user quota:', data.error);
         }
       } catch (error) {
+        setCreateLeagueDisabled(true);
         console.error('Error fetching user quota:', error);
       }
     };
