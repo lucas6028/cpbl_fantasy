@@ -734,7 +734,7 @@ export default function LeagueDailyRoster({ leagueId, members }) {
             displayCats = ['Innings Pitched (IP)', ...statCats];
         }
         if (isFantasyPoints) {
-            displayCats = [...displayCats, 'Fantasy Points (FP)'];
+            displayCats = ['Fantasy Points (FP)', ...displayCats];
         }
 
         const statsRow = !isEmpty && displayCats.length > 0 ? (
@@ -744,11 +744,12 @@ export default function LeagueDailyRoster({ leagueId, members }) {
                         const abbr = parseStatKey(cat);
                         const val = getStatValue(p.name, cat);
                         const isZeroOrDash = val === '-' || val === 0 || val === '0';
+                        const isFp = abbr === 'FP';
                         const isForced = !statCats.includes(cat);
                         return (
                             <div key={abbr} className="flex flex-col items-center flex-shrink-0">
-                                <span className={`text-[9px] font-semibold leading-none tracking-wide ${isForced ? 'text-slate-600' : 'text-slate-500'}`}>{abbr}</span>
-                                <span className={`text-xs font-mono font-bold leading-tight mt-0.5 ${isForced ? 'text-slate-500' : (isZeroOrDash ? 'text-slate-600' : 'text-cyan-200')}`}>{val}</span>
+                                <span className={`text-[9px] font-semibold leading-none tracking-wide ${isFp ? 'text-amber-300' : isForced ? 'text-slate-600' : 'text-slate-500'}`}>{abbr}</span>
+                                <span className={`text-xs font-mono font-bold leading-tight mt-0.5 ${isFp ? 'text-amber-300' : isForced ? 'text-slate-500' : (isZeroOrDash ? 'text-slate-600' : 'text-cyan-200')}`}>{val}</span>
                             </div>
                         );
                     })}

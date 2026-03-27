@@ -90,6 +90,7 @@ export default function PlayersPage() {
   const [filterOwnership, setFilterOwnership] = useState('market'); // all, market, waivers, available, myteam, watched
   const [filterTeam, setFilterTeam] = useState('all'); // Team filter
   const [filterPosition, setFilterPosition] = useState('all'); // Position filter
+  const [filterStartOnly, setFilterStartOnly] = useState(false); // Show only today's starters
 
   // Position ordering (same as Roster page)
   const batterPositionOrder = ['C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'OF', 'CI', 'MI', 'Util'];
@@ -547,6 +548,24 @@ export default function PlayersPage() {
     }));
   };
 
+  const isStartingToday = (player) => {
+    if (!player?.player_id) return false;
+
+    const playerType = (player.batter_or_pitcher || '').toLowerCase();
+    const pid = String(player.player_id);
+
+    if (playerType === 'batter') {
+      if (!startingStatus.lineupTeams.has(player.team)) return false;
+      return !!startingStatus.lineupByPlayerId[pid];
+    }
+
+    if (playerType === 'pitcher') {
+      return startingStatus.pitcherPlayerIds.has(pid);
+    }
+
+    return false;
+  };
+
   const filteredPlayers = useMemo(() => {
     let result = players.filter(player => {
       const matchesSearch = searchTerm === '' ||
@@ -573,6 +592,8 @@ export default function PlayersPage() {
         matchesPosition = playerPositions.includes(filterPosition);
       }
 
+      const matchesStart = !filterStartOnly || isStartingToday(player);
+
       // Ownership filter
       const ownership = ownerships.find(o => o.player_id === player.player_id);
       let matchesOwnership = true;
@@ -589,10 +610,10 @@ export default function PlayersPage() {
         matchesOwnership = watchedPlayerIds.has(player.player_id);
       }
 
-      // When user is typing a search term, bypass all filters except batter/pitcher type
-      if (searchTerm !== '') return matchesSearch && matchesType;
+      // When user is typing a search term, bypass all filters except batter/pitcher type and start-only toggle
+      if (searchTerm !== '') return matchesSearch && matchesType && matchesStart;
 
-      return matchesSearch && matchesType && matchesIdentity && matchesOwnership && matchesTeam && matchesPosition;
+      return matchesSearch && matchesType && matchesIdentity && matchesOwnership && matchesTeam && matchesPosition && matchesStart;
     });
 
     if (sortConfig.key) {
@@ -628,7 +649,7 @@ export default function PlayersPage() {
     }
 
     return result;
-  }, [players, searchTerm, filterType, filterIdentity, filterOwnership, filterTeam, filterPosition, sortConfig, playerStats, playerRankings, ownerships, myManagerId, watchedPlayerIds]);
+  }, [players, searchTerm, filterType, filterIdentity, filterOwnership, filterTeam, filterPosition, filterStartOnly, sortConfig, playerStats, playerRankings, ownerships, myManagerId, watchedPlayerIds, startingStatus]);
 
   const isFantasyPoints = leagueSettings?.scoring_type === 'Head-to-Head Fantasy Points';
 
@@ -636,14 +657,14 @@ export default function PlayersPage() {
     const forced = 'At Bats (AB)';
     const hasForced = batterStatCategories.some(c => getStatAbbr(c) === 'AB');
     const base = hasForced ? batterStatCategories : [forced, ...batterStatCategories];
-    return isFantasyPoints ? [...base, 'Fantasy Points (FP)'] : base;
+    return isFantasyPoints ? ['Fantasy Points (FP)', ...base] : base;
   }, [batterStatCategories, isFantasyPoints]);
 
   const displayPitcherCats = useMemo(() => {
     const forced = 'Innings Pitched (IP)';
     const hasForced = pitcherStatCategories.some(c => getStatAbbr(c) === 'IP');
     const base = hasForced ? pitcherStatCategories : [forced, ...pitcherStatCategories];
-    return isFantasyPoints ? [...base, 'Fantasy Points (FP)'] : base;
+    return isFantasyPoints ? ['Fantasy Points (FP)', ...base] : base;
   }, [pitcherStatCategories, isFantasyPoints]);
 
   // Ordinal suffix helper: 1 -> "1st", 2 -> "2nd", 3 -> "3rd", etc.
@@ -1807,8 +1828,8 @@ export default function PlayersPage() {
 
     if (playerType === 'batter') {
       if (!startingStatus.lineupTeams.has(player.team)) return null;
-      const battingNo = startingStatus.lineupByPlayerId[pid];
-      if (battingNo) {
+      if (isStartingToday(player)) {
+        const battingNo = startingStatus.lineupByPlayerId[pid];
         return (
           <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-600 text-white" title="In starting lineup">
             {battingNo}
@@ -1822,7 +1843,7 @@ export default function PlayersPage() {
       );
     }
 
-    if (playerType === 'pitcher' && startingStatus.pitcherPlayerIds.has(pid)) {
+    if (playerType === 'pitcher' && isStartingToday(player)) {
       return (
         <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-600 text-white" title="Today's starting pitcher">
           V
@@ -1950,6 +1971,16 @@ export default function PlayersPage() {
                 <option value="watched">★ Watched</option>
               </select>
 
+              <label className="flex-shrink-0 inline-flex items-center gap-2 px-2.5 py-1.5 bg-slate-800/60 border border-purple-500/30 rounded-md text-white text-xs sm:text-sm cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={filterStartOnly}
+                  onChange={(e) => setFilterStartOnly(e.target.checked)}
+                  className="w-4 h-4 accent-emerald-500"
+                />
+                Start only
+              </label>
+
               <select
                 value={timeWindow || ''}
                 onChange={(e) => setTimeWindow(e.target.value)}
@@ -2044,7 +2075,7 @@ export default function PlayersPage() {
               <thead className="bg-slate-900/95 sticky top-0 z-30 shadow-md backdrop-blur-md outline outline-1 outline-purple-500/20">
                 <tr>
                   <th className="px-2 py-4 w-12 sticky left-0 z-20"></th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-purple-300 hidden sm:table-cell sticky left-[48px] z-20">Name</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-purple-300 hidden sm:table-cell sticky left-[48px] z-20 bg-slate-900">Name</th>
                   <th
                     className="px-2 sm:px-4 py-3 sm:py-4 text-center text-xs sm:text-sm font-bold text-purple-300 cursor-pointer hover:text-white transition-colors group select-none"
                     onClick={() => handleSort('rank')}
@@ -2072,11 +2103,12 @@ export default function PlayersPage() {
                   {/* 動態顯示統計項目 - 桌面版 */}
                   {filterType === 'batter' && displayBatterCats.map((stat) => {
                     const displayName = getStatAbbr(stat);
+                    const isFp = displayName === 'FP';
                     const isForced = !batterStatCategories.includes(stat);
                     return (
                       <th
                         key={stat}
-                        className={`px-2 sm:px-4 py-3 sm:py-4 text-center text-xs sm:text-sm font-bold ${isForced ? 'text-purple-300/60' : 'text-purple-300'} cursor-pointer hover:text-white transition-colors select-none`}
+                        className={`px-2 sm:px-4 py-3 sm:py-4 text-center text-xs sm:text-sm font-bold ${isFp ? 'text-amber-300' : isForced ? 'text-purple-300/60' : 'text-purple-300'} cursor-pointer hover:text-white transition-colors select-none`}
                         onClick={() => handleSort(stat)}
                       >
                         <div className="flex items-center justify-center gap-1">
@@ -2090,11 +2122,12 @@ export default function PlayersPage() {
                   })}
                   {filterType === 'pitcher' && displayPitcherCats.map((stat) => {
                     const displayName = getStatAbbr(stat);
+                    const isFp = displayName === 'FP';
                     const isForced = !pitcherStatCategories.includes(stat);
                     return (
                       <th
                         key={stat}
-                        className={`px-2 sm:px-4 py-3 sm:py-4 text-center text-xs sm:text-sm font-bold ${isForced ? 'text-purple-300/60' : 'text-purple-300'} cursor-pointer hover:text-white transition-colors select-none`}
+                        className={`px-2 sm:px-4 py-3 sm:py-4 text-center text-xs sm:text-sm font-bold ${isFp ? 'text-amber-300' : isForced ? 'text-purple-300/60' : 'text-purple-300'} cursor-pointer hover:text-white transition-colors select-none`}
                         onClick={() => handleSort(stat)}
                       >
                         <div className="flex items-center justify-center gap-1">
@@ -2141,7 +2174,7 @@ export default function PlayersPage() {
                           {getPlayerActionButton(player)}
                         </td>
                         {/* 桌面版：Player info (單欄) */}
-                        <td className="px-6 py-4 hidden sm:table-cell sticky left-[48px] z-10">
+                        <td className="px-6 py-4 hidden sm:table-cell sticky left-[48px] z-10 bg-slate-900 group-hover:bg-slate-900">
                           <div className="flex items-center gap-3">
                             <img
                               src={getPlayerPhoto(player)}
@@ -2345,9 +2378,10 @@ export default function PlayersPage() {
                         {filterType === 'batter' && displayBatterCats.map((stat) => {
                           const isForced = !batterStatCategories.includes(stat);
                           const statAbbr = getStatAbbr(stat).toLowerCase();
+                          const isFp = statAbbr === 'fp';
                           const rank = !isForced && cpblStatRankings[String(player.player_id)]?.[statAbbr];
                           return (
-                            <td key={stat} className={`px-4 py-4 text-center font-mono relative hidden sm:table-cell ${isForced ? 'text-slate-500' : 'text-purple-100'}`}>
+                            <td key={stat} className={`px-4 py-4 text-center font-mono relative hidden sm:table-cell ${isFp ? 'text-amber-300 font-black' : isForced ? 'text-slate-500' : 'text-purple-100'}`}>
                               <div className="w-full text-center">{getPlayerStat(player.player_id, stat)}</div>
                               {rank && rank <= 15 && (
                                 <div className="absolute left-0 right-0 bottom-1.5 text-[11px] font-black text-amber-500 font-sans tracking-wide leading-none">{getOrdinal(rank)}</div>
@@ -2358,9 +2392,10 @@ export default function PlayersPage() {
                         {filterType === 'pitcher' && displayPitcherCats.map((stat) => {
                           const isForced = !pitcherStatCategories.includes(stat);
                           const statAbbr = getStatAbbr(stat).toLowerCase();
+                          const isFp = statAbbr === 'fp';
                           const rank = !isForced && cpblStatRankings[String(player.player_id)]?.[statAbbr];
                           return (
-                            <td key={stat} className={`px-4 py-4 text-center font-mono relative hidden sm:table-cell ${isForced ? 'text-slate-500' : 'text-purple-100'}`}>
+                            <td key={stat} className={`px-4 py-4 text-center font-mono relative hidden sm:table-cell ${isFp ? 'text-amber-300 font-black' : isForced ? 'text-slate-500' : 'text-purple-100'}`}>
                               <div className="w-full text-center">{getPlayerStat(player.player_id, stat)}</div>
                               {rank && rank <= 15 && (
                                 <div className="absolute left-0 right-0 bottom-1.5 text-[11px] font-black text-amber-500 font-sans tracking-wide leading-none">{getOrdinal(rank)}</div>
@@ -2382,10 +2417,11 @@ export default function PlayersPage() {
                         {filterType === 'batter' && displayBatterCats.map((stat) => {
                           const isForced = !batterStatCategories.includes(stat);
                           const statAbbr = getStatAbbr(stat).toLowerCase();
+                          const isFp = statAbbr === 'fp';
                           const rank = !isForced && cpblStatRankings[String(player.player_id)]?.[statAbbr];
                           return (
                             <td key={stat} className="px-2 py-1 text-center text-[11px] font-mono whitespace-nowrap relative">
-                              <div className={`font-bold ${isForced ? 'text-slate-500' : 'text-purple-100'}`}>{getPlayerStat(player.player_id, stat)}</div>
+                              <div className={`font-bold ${isFp ? 'text-amber-300' : isForced ? 'text-slate-500' : 'text-purple-100'}`}>{getPlayerStat(player.player_id, stat)}</div>
                               {rank && rank <= 15 && (
                                 <div className="text-[9px] font-black text-amber-500 leading-none mt-0.5">{getOrdinal(rank)}</div>
                               )}
@@ -2396,10 +2432,11 @@ export default function PlayersPage() {
                         {filterType === 'pitcher' && displayPitcherCats.map((stat) => {
                           const isForced = !pitcherStatCategories.includes(stat);
                           const statAbbr = getStatAbbr(stat).toLowerCase();
+                          const isFp = statAbbr === 'fp';
                           const rank = !isForced && cpblStatRankings[String(player.player_id)]?.[statAbbr];
                           return (
                             <td key={stat} className="px-2 py-1 text-center text-[11px] font-mono whitespace-nowrap relative">
-                              <div className={`font-bold ${isForced ? 'text-slate-500' : 'text-purple-100'}`}>{getPlayerStat(player.player_id, stat)}</div>
+                              <div className={`font-bold ${isFp ? 'text-amber-300' : isForced ? 'text-slate-500' : 'text-purple-100'}`}>{getPlayerStat(player.player_id, stat)}</div>
                               {rank && rank <= 15 && (
                                 <div className="text-[9px] font-black text-amber-500 leading-none mt-0.5">{getOrdinal(rank)}</div>
                               )}

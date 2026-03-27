@@ -219,16 +219,16 @@ export default function MatchupsPage() {
     // Build batter columns: AB + league categories
     const isFantasyPoints = scroingSettings?.scoring_type === 'Head-to-Head Fantasy Points';
     const batterColumns = [
+        ...(isFantasyPoints ? ['FP'] : []),
         'AB',
         ...(scroingSettings?.batter_categories?.map(cat => getAbbr(cat)) || []),
-        ...(isFantasyPoints ? ['FP'] : []),
     ];
 
     // Build pitcher columns: IP + league categories  
     const pitcherColumns = [
+        ...(isFantasyPoints ? ['FP'] : []),
         'IP',
         ...(scroingSettings?.pitcher_categories?.map(cat => getAbbr(cat)) || []),
-        ...(isFantasyPoints ? ['FP'] : []),
     ];
 
     const activeMatchup = matchups[selectedMatchupIndex];
@@ -547,7 +547,7 @@ export default function MatchupsPage() {
                                                         <tr className="bg-slate-800/60 text-purple-300 text-xs uppercase">
                                                             <th className="px-3 py-2 text-left">Player</th>
                                                             {batterColumns.map(col => (
-                                                                <th key={col} className="px-2 py-2 text-center">{col}</th>
+                                                                <th key={col} className={`px-2 py-2 text-center ${col === 'FP' ? 'text-amber-300' : ''}`}>{col}</th>
                                                             ))}
                                                         </tr>
                                                     </thead>
@@ -562,7 +562,7 @@ export default function MatchupsPage() {
                                                                         <span className={`ml-1 text-xs font-bold ${getTeamColor(stat.player_team)}`}>{getTeamAbbr(stat.player_team)}</span>
                                                                     </td>
                                                                     {batterColumns.map(col => (
-                                                                        <td key={col} className="px-2 py-2 text-center text-slate-300 font-mono">{getStatValue(stat, col)}</td>
+                                                                        <td key={col} className={`px-2 py-2 text-center font-mono ${col === 'FP' ? 'text-amber-300 font-black' : 'text-slate-300'}`}>{getStatValue(stat, col)}</td>
                                                                     ))}
                                                                 </tr>
                                                             ))}
@@ -586,7 +586,7 @@ export default function MatchupsPage() {
                                                         <tr className="bg-slate-800/60 text-cyan-300 text-xs uppercase">
                                                             <th className="px-3 py-2 text-left">Player</th>
                                                             {batterColumns.map(col => (
-                                                                <th key={col} className="px-2 py-2 text-center">{col}</th>
+                                                                <th key={col} className={`px-2 py-2 text-center ${col === 'FP' ? 'text-amber-300' : ''}`}>{col}</th>
                                                             ))}
                                                         </tr>
                                                     </thead>
@@ -601,7 +601,7 @@ export default function MatchupsPage() {
                                                                         <span className={`ml-1 text-xs font-bold ${getTeamColor(stat.player_team)}`}>{getTeamAbbr(stat.player_team)}</span>
                                                                     </td>
                                                                     {batterColumns.map(col => (
-                                                                        <td key={col} className="px-2 py-2 text-center text-slate-300 font-mono">{getStatValue(stat, col)}</td>
+                                                                        <td key={col} className={`px-2 py-2 text-center font-mono ${col === 'FP' ? 'text-amber-300 font-black' : 'text-slate-300'}`}>{getStatValue(stat, col)}</td>
                                                                     ))}
                                                                 </tr>
                                                             ))}
@@ -625,7 +625,7 @@ export default function MatchupsPage() {
                                                         <tr className="bg-slate-800/60 text-purple-300 text-xs uppercase">
                                                             <th className="px-3 py-2 text-left">Player</th>
                                                             {pitcherColumns.map(col => (
-                                                                <th key={col} className="px-2 py-2 text-center">{col}</th>
+                                                                <th key={col} className={`px-2 py-2 text-center ${col === 'FP' ? 'text-amber-300' : ''}`}>{col}</th>
                                                             ))}
                                                         </tr>
                                                     </thead>
@@ -640,7 +640,7 @@ export default function MatchupsPage() {
                                                                         <span className={`ml-1 text-xs font-bold ${getTeamColor(stat.player_team)}`}>{getTeamAbbr(stat.player_team)}</span>
                                                                     </td>
                                                                     {pitcherColumns.map(col => (
-                                                                        <td key={col} className="px-2 py-2 text-center text-slate-300 font-mono">{getStatValue(stat, col)}</td>
+                                                                        <td key={col} className={`px-2 py-2 text-center font-mono ${col === 'FP' ? 'text-amber-300 font-black' : 'text-slate-300'}`}>{getStatValue(stat, col)}</td>
                                                                     ))}
                                                                 </tr>
                                                             ))}
@@ -664,7 +664,7 @@ export default function MatchupsPage() {
                                                         <tr className="bg-slate-800/60 text-cyan-300 text-xs uppercase">
                                                             <th className="px-3 py-2 text-left">Player</th>
                                                             {pitcherColumns.map(col => (
-                                                                <th key={col} className="px-2 py-2 text-center">{col}</th>
+                                                                <th key={col} className={`px-2 py-2 text-center ${col === 'FP' ? 'text-amber-300' : ''}`}>{col}</th>
                                                             ))}
                                                         </tr>
                                                     </thead>
@@ -679,7 +679,7 @@ export default function MatchupsPage() {
                                                                         <span className={`ml-1 text-xs font-bold ${getTeamColor(stat.player_team)}`}>{getTeamAbbr(stat.player_team)}</span>
                                                                     </td>
                                                                     {pitcherColumns.map(col => (
-                                                                        <td key={col} className="px-2 py-2 text-center text-slate-300 font-mono">{getStatValue(stat, col)}</td>
+                                                                        <td key={col} className={`px-2 py-2 text-center font-mono ${col === 'FP' ? 'text-amber-300 font-black' : 'text-slate-300'}`}>{getStatValue(stat, col)}</td>
                                                                     ))}
                                                                 </tr>
                                                             ))}

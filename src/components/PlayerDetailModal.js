@@ -272,8 +272,8 @@ export default function PlayerDetailModal({
     const displayCats = isPitcher ? displayPitcherCats : displayBatterCats;
     const isFantasyPoints = scoringType === 'Head-to-Head Fantasy Points';
     const abbreviations = [
-        ...displayCats.map(parseStatKey),
         ...(isFantasyPoints ? ['FP'] : []),
+        ...displayCats.map(parseStatKey),
     ];
     const dataByWindow = isPitcher ? stats.pitching : stats.batting;
 
@@ -301,9 +301,10 @@ export default function PlayerDetailModal({
                     const displayVal = val === null || val === undefined ? '-' : val;
                     const isZeroOrDash = displayVal === '-' || displayVal === 0 || displayVal === '0';
                     const isRefStat = abbr === 'AB' || abbr === 'IP';
+                    const isFp = abbr === 'FP';
 
                     return (
-                        <td key={i} className={`py-2.5 px-3 text-center text-sm font-mono whitespace-nowrap ${isZeroOrDash ? 'text-slate-600' : isRefStat ? 'text-slate-400' : 'text-cyan-300'
+                        <td key={i} className={`py-2.5 px-3 text-center text-sm font-mono whitespace-nowrap ${isFp ? 'text-amber-300 font-black' : isZeroOrDash ? 'text-slate-600' : isRefStat ? 'text-slate-400' : 'text-cyan-300'
                             }`}>
                             {displayVal}
                         </td>
@@ -670,7 +671,7 @@ export default function PlayerDetailModal({
                                                         Split
                                                     </th>
                                                     {abbreviations.map((abbr, i) => (
-                                                        <th key={i} className="py-3 px-3 text-center text-xs font-black text-slate-400 uppercase tracking-widest sticky top-0 bg-slate-800/80 z-10 backdrop-blur-sm whitespace-nowrap">
+                                                        <th key={i} className={`py-3 px-3 text-center text-xs font-black uppercase tracking-widest sticky top-0 bg-slate-800/80 z-10 backdrop-blur-sm whitespace-nowrap ${abbr === 'FP' ? 'text-amber-300' : 'text-slate-400'}`}>
                                                             {abbr}
                                                         </th>
                                                     ))}
@@ -696,7 +697,7 @@ export default function PlayerDetailModal({
                                                         <div className="min-w-max">
                                                             <div className="grid grid-flow-col auto-cols-[56px] border-b border-white/5">
                                                                 {abbreviations.map((abbr, i) => (
-                                                                    <div key={i} className="py-1.5 px-2 text-center text-[10px] font-black text-slate-500 uppercase tracking-wider whitespace-nowrap">
+                                                                    <div key={i} className={`py-1.5 px-2 text-center text-[10px] font-black uppercase tracking-wider whitespace-nowrap ${abbr === 'FP' ? 'text-amber-300' : 'text-slate-500'}`}>
                                                                         {abbr}
                                                                     </div>
                                                                 ))}
@@ -708,8 +709,9 @@ export default function PlayerDetailModal({
                                                                     const displayVal = val === null || val === undefined ? '-' : val;
                                                                     const isZeroOrDash = displayVal === '-' || displayVal === 0 || displayVal === '0';
                                                                     const isRefStat = abbr === 'AB' || abbr === 'IP';
+                                                                    const isFp = abbr === 'FP';
                                                                     return (
-                                                                        <div key={i} className={`py-2 px-2 text-center text-sm font-mono whitespace-nowrap ${isZeroOrDash ? 'text-slate-600' : isRefStat ? 'text-slate-400' : 'text-cyan-300'}`}>
+                                                                        <div key={i} className={`py-2 px-2 text-center text-sm font-mono whitespace-nowrap ${isFp ? 'text-amber-300 font-black' : isZeroOrDash ? 'text-slate-600' : isRefStat ? 'text-slate-400' : 'text-cyan-300'}`}>
                                                                             {displayVal}
                                                                         </div>
                                                                     );
@@ -747,7 +749,7 @@ export default function PlayerDetailModal({
                                                 <tr className="bg-slate-800/80 border-b border-white/10 shadow-sm">
                                                     <th className="py-3 px-3 text-xs font-black text-purple-300 uppercase tracking-widest sticky left-0 top-0 bg-slate-800 z-20 border-r border-white/10 shadow-[2px_0_4px_rgba(0,0,0,0.3)] whitespace-nowrap w-32">Date</th>
                                                     {abbreviations.map((abbr, i) => (
-                                                        <th key={i} className="py-3 px-3 text-center text-xs font-black text-slate-400 uppercase tracking-widest sticky top-0 bg-slate-800/80 z-10 backdrop-blur-sm whitespace-nowrap">
+                                                        <th key={i} className={`py-3 px-3 text-center text-xs font-black uppercase tracking-widest sticky top-0 bg-slate-800/80 z-10 backdrop-blur-sm whitespace-nowrap ${abbr === 'FP' ? 'text-amber-300' : 'text-slate-400'}`}>
                                                             {abbr}
                                                         </th>
                                                     ))}
@@ -773,8 +775,9 @@ export default function PlayerDetailModal({
                                                                         : val;
                                                                 const isZeroOrDash = displayVal === '-' || displayVal === 0 || displayVal === '0';
                                                                 const isRefStat = abbr === 'AB' || abbr === 'IP';
+                                                                const isFp = abbr === 'FP';
                                                                 return (
-                                                                    <td key={i} className={`py-2.5 px-3 text-center text-sm font-mono whitespace-nowrap ${isZeroOrDash ? 'text-slate-600' : isRefStat ? 'text-slate-400' : 'text-cyan-300'}`}>
+                                                                    <td key={i} className={`py-2.5 px-3 text-center text-sm font-mono whitespace-nowrap ${isFp ? 'text-amber-300 font-black' : isZeroOrDash ? 'text-slate-600' : isRefStat ? 'text-slate-400' : 'text-cyan-300'}`}>
                                                                         {displayVal}
                                                                     </td>
                                                                 );
@@ -802,7 +805,7 @@ export default function PlayerDetailModal({
                                                         <div className="min-w-max">
                                                             <div className="grid grid-flow-col auto-cols-[56px] border-b border-white/5">
                                                                 {abbreviations.map((abbr, i) => (
-                                                                    <div key={i} className="py-1.5 px-2 text-center text-[10px] font-black text-slate-500 uppercase tracking-wider whitespace-nowrap">
+                                                                    <div key={i} className={`py-1.5 px-2 text-center text-[10px] font-black uppercase tracking-wider whitespace-nowrap ${abbr === 'FP' ? 'text-amber-300' : 'text-slate-500'}`}>
                                                                         {abbr}
                                                                     </div>
                                                                 ))}
@@ -819,8 +822,9 @@ export default function PlayerDetailModal({
                                                                             : val;
                                                                     const isZeroOrDash = displayVal === '-' || displayVal === 0 || displayVal === '0';
                                                                     const isRefStat = abbr === 'AB' || abbr === 'IP';
+                                                                    const isFp = abbr === 'FP';
                                                                     return (
-                                                                        <div key={i} className={`py-2 px-2 text-center text-sm font-mono whitespace-nowrap ${isZeroOrDash ? 'text-slate-600' : isRefStat ? 'text-slate-400' : 'text-cyan-300'}`}>
+                                                                        <div key={i} className={`py-2 px-2 text-center text-sm font-mono whitespace-nowrap ${isFp ? 'text-amber-300 font-black' : isZeroOrDash ? 'text-slate-600' : isRefStat ? 'text-slate-400' : 'text-cyan-300'}`}>
                                                                             {displayVal}
                                                                         </div>
                                                                     );
