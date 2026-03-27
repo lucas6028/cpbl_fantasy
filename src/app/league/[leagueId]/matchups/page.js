@@ -352,12 +352,12 @@ export default function MatchupsPage() {
                                         }
                                 `}
                                 >
-                                    <div className="flex justify-between items-center text-sm">
-                                        <div className="flex flex-col gap-0.5 truncate max-w-[100px]">
-                                            <span className="truncate text-purple-100 font-semibold">{match.manager1.nickname}</span>
+                                    <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 text-sm">
+                                        <div className="min-w-0 flex flex-col gap-0.5 text-left">
+                                            <span className="text-purple-100 font-semibold text-xs sm:text-sm break-words leading-tight">{match.manager1.nickname}</span>
                                             <span className="truncate text-cyan-300 text-xs font-bold">{match.manager1.record}</span>
                                         </div>
-                                        <div className="flex flex-col items-center px-2">
+                                        <div className="flex flex-col items-center px-1 sm:px-2 min-w-[72px]">
                                             <span className="text-purple-400 text-xs">vs</span>
                                             <div className="flex items-center gap-1 text-purple-100 font-bold text-sm">
                                                 <span>{match.score_a || 0}</span>
@@ -365,8 +365,8 @@ export default function MatchupsPage() {
                                                 <span>{match.score_b || 0}</span>
                                             </div>
                                         </div>
-                                        <div className="flex flex-col gap-0.5 truncate max-w-[100px] text-right">
-                                            <span className="truncate text-purple-100 font-semibold">{match.manager2.nickname}</span>
+                                        <div className="min-w-0 flex flex-col gap-0.5 text-right items-end">
+                                            <span className="text-purple-100 font-semibold text-xs sm:text-sm break-words leading-tight">{match.manager2.nickname}</span>
                                             <span className="truncate text-cyan-300 text-xs font-bold">{match.manager2.record}</span>
                                         </div>
                                     </div>
@@ -384,15 +384,15 @@ export default function MatchupsPage() {
                     <div className="bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl shadow-2xl overflow-hidden">
                         {/* Header */}
                         <div className="bg-gradient-to-r from-purple-600/80 to-blue-600/80 backdrop-blur-sm p-3 sm:p-6 border-b border-purple-400/30">
-                            <div className="flex justify-between items-center px-2 md:px-8">
+                            <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-4 px-2 md:px-8">
                                 {/* Manager 1 */}
-                                <div className="flex items-center gap-3 md:gap-4 flex-1">
+                                <div className="flex items-center gap-2 sm:gap-3 md:gap-4 min-w-0">
                                     <div className="min-w-0">
                                         <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
-                                            <div className="font-bold text-sm sm:text-lg md:text-xl truncate text-white">{activeMatchup.manager1.nickname}</div>
+                                            <div className="font-bold text-xs sm:text-base md:text-xl break-words leading-tight text-white">{activeMatchup.manager1.nickname}</div>
                                             <div className="text-[10px] sm:text-sm font-bold text-cyan-300 bg-cyan-500/10 px-1.5 sm:px-2 py-0.5 rounded border border-cyan-500/20">{activeMatchup.manager1.record}</div>
                                         </div>
-                                        <div className="text-xs md:text-sm text-purple-200 truncate">{activeMatchup.manager1.team_name}</div>
+                                        <div className="text-[10px] sm:text-xs md:text-sm text-purple-200 break-words leading-tight">{activeMatchup.manager1.team_name}</div>
                                     </div>
                                 </div>
 
@@ -405,13 +405,13 @@ export default function MatchupsPage() {
                                 </div>
 
                                 {/* Manager 2 */}
-                                <div className="flex items-center gap-3 md:gap-4 flex-1 justify-end text-right">
+                                <div className="flex items-center gap-2 sm:gap-3 md:gap-4 min-w-0 justify-end text-right">
                                     <div className="min-w-0 flex flex-col items-end">
                                         <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-end">
                                             <div className="text-[10px] sm:text-sm font-bold text-cyan-300 bg-cyan-500/10 px-1.5 sm:px-2 py-0.5 rounded border border-cyan-500/20">{activeMatchup.manager2.record}</div>
-                                            <div className="font-bold text-sm sm:text-lg md:text-xl truncate text-white">{activeMatchup.manager2.nickname}</div>
+                                            <div className="font-bold text-xs sm:text-base md:text-xl break-words leading-tight text-white">{activeMatchup.manager2.nickname}</div>
                                         </div>
-                                        <div className="text-xs md:text-sm text-purple-200 truncate">{activeMatchup.manager2.team_name}</div>
+                                        <div className="text-[10px] sm:text-xs md:text-sm text-purple-200 break-words leading-tight">{activeMatchup.manager2.team_name}</div>
                                     </div>
                                 </div>
                             </div>

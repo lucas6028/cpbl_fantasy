@@ -375,9 +375,10 @@ export default function PlayerDetailModal({
             return (
                 <button
                     onClick={() => { onClose(); onAdd(player, false); }}
-                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-green-600 hover:bg-green-500 text-white transition-all flex items-center gap-1.5 shadow-lg"
+                    className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold bg-green-600 hover:bg-green-500 text-white transition-all flex items-center gap-1 sm:gap-1.5 shadow-lg"
                 >
-                    <span className="text-base">+</span> Add
+                    <span className="text-base">+</span>
+                    <span className="hidden sm:inline">Add</span>
                 </button>
             );
         }
@@ -390,10 +391,11 @@ export default function PlayerDetailModal({
             return (
                 <button
                     onClick={() => { onClose(); onAdd(player, true); }}
-                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-yellow-500 hover:bg-yellow-400 text-white transition-all flex items-center gap-1.5 shadow-lg"
+                    className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold bg-yellow-500 hover:bg-yellow-400 text-white transition-all flex items-center gap-1 sm:gap-1.5 shadow-lg"
                     title="Claim via Waiver"
                 >
-                    <span className="text-base">+</span> Waiver
+                    <span className="text-base">+</span>
+                    <span className="hidden sm:inline">Waiver</span>
                 </button>
             );
         }
@@ -423,10 +425,11 @@ export default function PlayerDetailModal({
                 return (
                     <button
                         onClick={() => { onClose(); onDrop(player); }}
-                        className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-600 hover:bg-red-500 text-white transition-all flex items-center gap-1.5 shadow-lg"
+                        className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold bg-red-600 hover:bg-red-500 text-white transition-all flex items-center gap-1 sm:gap-1.5 shadow-lg"
                         title="Drop Player"
                     >
-                        <span className="text-base">−</span> Drop
+                        <span className="text-base">−</span>
+                        <span className="hidden sm:inline">Drop</span>
                     </button>
                 );
             } else {
@@ -466,14 +469,14 @@ export default function PlayerDetailModal({
             <button
                 onClick={handleWatchClick}
                 disabled={watchLoading}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-lg ${isWatched
+                className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all flex items-center gap-1 sm:gap-1.5 shadow-lg ${isWatched
                     ? 'bg-amber-500 hover:bg-amber-400 text-white'
                     : 'bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white border border-slate-600'
                     }`}
                 title={isWatched ? 'Remove from Watchlist' : 'Add to Watchlist'}
             >
                 <span className="text-base">{isWatched ? '★' : '☆'}</span>
-                {isWatched ? 'Watched' : 'Watch'}
+                <span className="hidden sm:inline">{isWatched ? 'Watched' : 'Watch'}</span>
             </button>
         );
     };
@@ -528,7 +531,7 @@ export default function PlayerDetailModal({
     if (typeof document === 'undefined') return null;
 
     return createPortal(
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-2 sm:p-4">
             {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm"
@@ -539,8 +542,8 @@ export default function PlayerDetailModal({
             <div className="relative w-full max-w-4xl bg-gradient-to-br from-slate-900 via-slate-800 to-purple-900/40 rounded-2xl shadow-2xl border border-white/10 flex flex-col max-h-[90vh] overflow-hidden">
 
                 {/* Header */}
-                <div className="flex items-center gap-4 p-5 sm:p-6 border-b border-white/10 bg-black/20 shrink-0">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden bg-slate-800 border-2 border-purple-500/50 shrink-0 shadow-lg">
+                <div className="flex items-center gap-2.5 sm:gap-4 p-3 sm:p-6 border-b border-white/10 bg-black/20 shrink-0">
+                    <div className="w-12 h-12 sm:w-20 sm:h-20 rounded-full overflow-hidden bg-slate-800 border-2 border-purple-500/50 shrink-0 shadow-lg">
                         <img
                             src={playerPhotoSrc}
                             alt={player.name}
@@ -550,26 +553,26 @@ export default function PlayerDetailModal({
                     </div>
 
                     <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center justify-between gap-2 sm:gap-4">
                             <div className="flex items-center">
-                                <h2 className="text-2xl sm:text-3xl font-black text-white truncate drop-shadow-md">
+                                <h2 className="text-lg sm:text-3xl font-black text-white truncate drop-shadow-md">
                                     {player.name}
                                 </h2>
                                 {renderBadges()}
                             </div>
                             <button
                                 onClick={onClose}
-                                className="p-2 -mr-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-full transition-colors self-start shrink-0"
+                                className="p-1.5 sm:p-2 -mr-1 sm:-mr-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-full transition-colors self-start shrink-0"
                             >
-                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
                         </div>
 
-                        <div className="flex items-center gap-3 mt-1 text-sm font-semibold flex-wrap">
+                        <div className="flex items-center gap-1.5 sm:gap-3 mt-0.5 sm:mt-1 text-xs sm:text-sm font-semibold flex-wrap">
                             {renderStartingBadge()}
-                            <span className={`${teamColor} bg-white/5 py-1 px-2.5 rounded shadow-sm border border-white/5`}>
+                            <span className={`${teamColor} bg-white/5 py-0.5 sm:py-1 px-2 sm:px-2.5 rounded shadow-sm border border-white/5`}>
                                 {teamAbbr}
                             </span>
                             <span className="text-slate-300 tracking-wider">

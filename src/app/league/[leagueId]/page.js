@@ -1056,18 +1056,18 @@ export default function LeaguePage() {
                     <div key={matchup.id} className="group relative bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-sm border border-white/10 hover:border-purple-500/40 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-[0_0_40px_rgba(168,85,247,0.15)]">
                       {/* Main Content */}
                       <div className="p-3 sm:p-6">
-                        <div className="flex items-center justify-between gap-6">
+                        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-4">
                           {/* Team A */}
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between gap-3">
-                              <div className="flex items-center gap-4 flex-1">
+                          <div className="min-w-0">
+                            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 sm:gap-3">
+                              <div className="flex items-center gap-2 sm:gap-4 min-w-0">
                                 {/* Team Rank A (Desktop Only) */}
                                 <div className="hidden sm:flex w-10 h-10 rounded-full flex-col font-black bg-slate-800 text-slate-300 border border-white/10 shadow-lg justify-center items-center">
                                   {rankA || '?'}
                                 </div>
                                 {/* Team Info A */}
                                 <div className="flex-1 min-w-0">
-                                  <div className="text-sm sm:text-lg font-black text-white group-hover:text-purple-300 transition-colors leading-tight truncate">
+                                  <div className="text-xs sm:text-base md:text-lg font-black text-white group-hover:text-purple-300 transition-colors leading-tight break-words whitespace-normal">
                                     {managerA?.nickname || 'Unknown'}
                                   </div>
                                   <div className="text-[10px] sm:text-xs font-bold text-yellow-400 uppercase tracking-wider mt-1">
@@ -1098,25 +1098,8 @@ export default function LeaguePage() {
                           </div>
 
                           {/* Team B */}
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between gap-3 flex-row-reverse">
-                              <div className="flex items-center gap-4 flex-1 flex-row-reverse">
-                                {/* Team Rank B (Desktop Only) */}
-                                <div className="hidden sm:flex w-10 h-10 rounded-full flex-col font-black bg-slate-800 text-slate-300 border border-white/10 shadow-lg justify-center items-center">
-                                  {rankB || '?'}
-                                </div>
-                                {/* Team Info B */}
-                                <div className="flex-1 text-right min-w-0">
-                                  <div className="text-sm sm:text-lg font-black text-white group-hover:text-cyan-300 transition-colors leading-tight truncate">
-                                    {managerB?.nickname || 'Unknown'}
-                                  </div>
-                                  <div className="text-[10px] sm:text-xs font-bold text-yellow-400 uppercase tracking-wider mt-1">
-                                    <span className="sm:hidden">#{rankB || '?'} | {recordB || '0-0-0'}</span>
-                                    <span className="hidden sm:inline">{recordB || '0-0-0'}</span>
-                                  </div>
-                                </div>
-                              </div>
-
+                          <div className="min-w-0">
+                            <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2 sm:gap-3">
                               {/* Score B */}
                               <div className="text-left">
                                 <div className={`text-2xl sm:text-4xl font-black tabular-nums ${isFinal
@@ -1124,6 +1107,23 @@ export default function LeaguePage() {
                                   : 'text-cyan-300'
                                   }`}>
                                   {scoreB}
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-row-reverse">
+                                {/* Team Rank B (Desktop Only) */}
+                                <div className="hidden sm:flex w-10 h-10 rounded-full flex-col font-black bg-slate-800 text-slate-300 border border-white/10 shadow-lg justify-center items-center">
+                                  {rankB || '?'}
+                                </div>
+                                {/* Team Info B */}
+                                <div className="flex-1 text-right min-w-0">
+                                  <div className="text-xs sm:text-base md:text-lg font-black text-white group-hover:text-cyan-300 transition-colors leading-tight break-words whitespace-normal">
+                                    {managerB?.nickname || 'Unknown'}
+                                  </div>
+                                  <div className="text-[10px] sm:text-xs font-bold text-yellow-400 uppercase tracking-wider mt-1">
+                                    <span className="sm:hidden">#{rankB || '?'} | {recordB || '0-0-0'}</span>
+                                    <span className="hidden sm:inline">{recordB || '0-0-0'}</span>
+                                  </div>
                                 </div>
                               </div>
                             </div>
