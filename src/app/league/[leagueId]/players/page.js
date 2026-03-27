@@ -1906,20 +1906,28 @@ export default function PlayersPage() {
         {/* Filters */}
         <div className="sticky top-[45px] sm:top-[68px] z-40 py-2 -my-2 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
           <div className="bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.5)] p-2 sm:p-6 space-y-2 sm:space-y-3 border border-purple-500/30">
-            {/* Search - full width on top */}
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="🔍 Search player name or alias"
-              className="w-full px-3 py-2 bg-slate-800/60 border border-purple-500/30 rounded-md text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            />
+            {/* Search + Start only */}
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="🔍 Search"
+                className="flex-1 min-w-0 px-3 py-2 bg-slate-800/60 border border-purple-500/30 rounded-md text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+              <label className="flex-shrink-0 inline-flex items-center gap-2 px-2.5 py-1.5 bg-slate-800/60 border border-purple-500/30 rounded-md text-white text-xs sm:text-sm cursor-pointer select-none whitespace-nowrap">
+                <input
+                  type="checkbox"
+                  checked={filterStartOnly}
+                  onChange={(e) => setFilterStartOnly(e.target.checked)}
+                  className="w-4 h-4 accent-emerald-500"
+                />
+                Start only
+              </label>
+            </div>
 
             {/* Filters - horizontal scrollable row */}
             <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
-
-
-
               <select
                 value={filterIdentity}
                 onChange={(e) => setFilterIdentity(e.target.value)}
@@ -1970,16 +1978,6 @@ export default function PlayersPage() {
                 <option value="myteam">My Team</option>
                 <option value="watched">★ Watched</option>
               </select>
-
-              <label className="flex-shrink-0 inline-flex items-center gap-2 px-2.5 py-1.5 bg-slate-800/60 border border-purple-500/30 rounded-md text-white text-xs sm:text-sm cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={filterStartOnly}
-                  onChange={(e) => setFilterStartOnly(e.target.checked)}
-                  className="w-4 h-4 accent-emerald-500"
-                />
-                Start only
-              </label>
 
               <select
                 value={timeWindow || ''}
@@ -2074,7 +2072,7 @@ export default function PlayersPage() {
             <table className="w-full relative">
               <thead className="bg-slate-900/95 sticky top-0 z-30 shadow-md backdrop-blur-md outline outline-1 outline-purple-500/20">
                 <tr>
-                  <th className="px-2 py-4 w-12 sticky left-0 z-20 bg-slate-800"></th>
+                  <th className="px-2 py-4 w-12 sticky left-0 z-20 bg-[#512888]"></th>
                   <th className="px-6 py-4 text-left text-sm font-bold text-purple-300 hidden sm:table-cell sticky left-[48px] z-20 bg-slate-800">Name</th>
                   <th
                     className="px-2 sm:px-4 py-3 sm:py-4 text-center text-xs sm:text-sm font-bold text-purple-300 cursor-pointer hover:text-white transition-colors group select-none"
@@ -2166,7 +2164,7 @@ export default function PlayersPage() {
                     <React.Fragment key={player.player_id}>
                       <tr className="hover:bg-purple-500/5 transition-colors group">
                         {/* 桌面版：Action button (無 rowSpan) */}
-                        <td className="px-4 py-4 align-middle text-center hidden sm:table-cell sticky left-0 z-20 bg-slate-800 group-hover:bg-slate-800">
+                        <td className="px-4 py-4 align-middle text-center hidden sm:table-cell sticky left-0 z-20 bg-[#512888] group-hover:bg-[#512888]">
                           {getPlayerActionButton(player)}
                         </td>
                         {/* 手機版：Action button (rowSpan=2, 置中) */}
