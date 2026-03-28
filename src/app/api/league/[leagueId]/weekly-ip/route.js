@@ -36,7 +36,7 @@ export async function GET(request, { params }) {
             .eq('week_number', weekData.week_number)
             .single();
 
-        // Count ADDs this week
+        // Count acquisitions this week (ADD + WAIVER ADD)
         const startTw = new Date(`${weekData.week_start}T00:00:00+08:00`);
         const endTw = new Date(`${weekData.week_end}T23:59:59.999+08:00`);
 
@@ -45,7 +45,7 @@ export async function GET(request, { params }) {
             .select('*', { count: 'exact', head: true })
             .eq('league_id', leagueId)
             .eq('manager_id', managerId)
-            .eq('transaction_type', 'ADD')
+            .in('transaction_type', ['ADD', 'WAIVER ADD'])
             .gte('transaction_time', startTw.toISOString())
             .lte('transaction_time', endTw.toISOString());
 
