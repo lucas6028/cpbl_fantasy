@@ -144,9 +144,13 @@ export default function AdminMatchupsPage() {
         // 提取縮寫並轉小寫
         const abbr = getAbbr(cat).toLowerCase();
 
+        const mappedAbbr = {
+            'sv+hld': 'svhld',
+        }[abbr] || abbr;
+
         // 直接加上前綴
         const prefix = type === 'batter' ? 'b_' : 'p_';
-        return `${prefix}${abbr}`;
+        return `${prefix}${mappedAbbr}`;
     };
 
     // Team abbreviation helper
