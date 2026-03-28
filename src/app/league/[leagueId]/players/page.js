@@ -259,6 +259,7 @@ export default function PlayersPage() {
   // Fetch Acquisitions Count
   const [acquisitionData, setAcquisitionData] = useState(null);
   const [activeTradePlayerIds, setActiveTradePlayerIds] = useState(new Set());
+  const [myRosterLockMap, setMyRosterLockMap] = useState({}); // player_id -> roster snapshot for in-game drop lock
   const [lockedPlayerAlert, setLockedPlayerAlert] = useState(null); // Name of locked player trying to be dropped
 
   const fetchAcquisitions = async () => {
@@ -304,6 +305,50 @@ export default function PlayersPage() {
     fetchAcquisitions();
     fetchActiveTrades();
   }, [leagueId, myManagerId]);
+
+  useEffect(() => {
+    const fetchMyRosterForLock = async () => {
+      if (!leagueId || !myManagerId) {
+        setMyRosterLockMap({});
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/league/${leagueId}/roster?manager_id=${myManagerId}&game_date=${statusDate}`);
+        const data = await res.json();
+        if (!data.success) return;
+
+        const lockMap = {};
+        (data.roster || []).forEach((item) => {
+          lockMap[String(item.player_id)] = item;
+        });
+        setMyRosterLockMap(lockMap);
+      } catch (e) {
+        console.error('Failed to fetch roster for lock map:', e);
+      }
+    };
+
+    fetchMyRosterForLock();
+  }, [leagueId, myManagerId, statusDate, ownerships]);
+
+  const isDropLockedByGameStart = (playerLike) => {
+    if (!playerLike?.player_id) return false;
+
+    const rosterPlayer = myRosterLockMap[String(playerLike.player_id)];
+    if (!rosterPlayer || !rosterPlayer.game_info) return false;
+
+    // Only lock drop for active slots (BN/NA are unlocked)
+    if (['BN', 'NA'].includes(rosterPlayer.position)) return false;
+    if (rosterPlayer.game_info.is_postponed) return false;
+    if (statusDate !== getTodayTW()) return false;
+
+    if (rosterPlayer.game_info.time) {
+      const gameTimeUTC = new Date(rosterPlayer.game_info.time);
+      return new Date() >= gameTimeUTC;
+    }
+
+    return false;
+  };
 
   // Fetch watched players
   const fetchWatchedPlayers = async () => {
@@ -1188,6 +1233,13 @@ export default function PlayersPage() {
 
     if (checkTradeInvolvement(player.player_id)) return;
 
+    if (isDropLockedByGameStart(player)) {
+      setErrorMessage(`Cannot drop ${player.name} - game has started and player is in active lineup.`);
+      setShowError(true);
+      setTimeout(() => setShowError(false), 3000);
+      return;
+    }
+
     setPlayerToDrop(player);
     setShowConfirmDrop(true);
   };
@@ -1504,6 +1556,22 @@ export default function PlayersPage() {
               }}
               className="w-8 h-8 rounded-full bg-slate-500/20 text-slate-400 flex items-center justify-center font-bold cursor-not-allowed border border-slate-500/50 hover:bg-slate-500/30 transition-colors"
               title="Player is locked in an active trade"
+            >
+              🔒
+            </button>
+          );
+        }
+
+        if (isDropLockedByGameStart(player)) {
+          return (
+            <button
+              onClick={() => {
+                setErrorMessage(`Cannot drop ${player.name} - game has started and player is in active lineup.`);
+                setShowError(true);
+                setTimeout(() => setShowError(false), 3000);
+              }}
+              className="w-8 h-8 rounded-full bg-slate-500/20 text-slate-400 flex items-center justify-center font-bold cursor-not-allowed border border-slate-500/50 hover:bg-slate-500/30 transition-colors"
+              title="Cannot drop - game has started and player is in active lineup"
             >
               🔒
             </button>
@@ -2976,6 +3044,7 @@ export default function PlayersPage() {
                     }
 
                     const isLocked = activeTradePlayerIds.has(p.player_id);
+                    const isGameLocked = isDropLockedByGameStart({ player_id: p.player_id });
                     const isSelected = dropCandidateID === p.player_id;
 
                     if (isLocked) {
@@ -2992,6 +3061,22 @@ export default function PlayersPage() {
                           </div>
                         </div>
                       )
+                    }
+
+                    if (isGameLocked) {
+                      return (
+                        <div key={p.player_id} className="flex items-center justify-between p-3 rounded-xl border border-slate-700 bg-slate-900/50 opacity-60 cursor-not-allowed">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-slate-900 overflow-hidden grayscale">
+                              <img src={getPlayerPhoto(playerDetail)} className="w-full h-full object-cover" onError={(e) => e.target.src = '/photo/defaultPlayer.png'} />
+                            </div>
+                            <div className="font-bold text-slate-400">{playerDetail.name}</div>
+                          </div>
+                          <div className="text-slate-500 font-bold text-xs flex items-center gap-1">
+                            🔒 <span className="hidden sm:inline">In Game</span>
+                          </div>
+                        </div>
+                      );
                     }
 
                     return (
@@ -3066,6 +3151,7 @@ export default function PlayersPage() {
         seasonYear={seasonYear}
         statusDate={statusDate}
         isPlayerLocked={selectedPlayerModal ? activeTradePlayerIds.has(selectedPlayerModal.player_id) : false}
+        isDropLockedByGameStart={selectedPlayerModal ? isDropLockedByGameStart(selectedPlayerModal) : false}
         onAdd={(player, isWaiver) => handleAddPlayer(player, isWaiver)}
         onDrop={(player) => handleDropPlayer(player)}
         onTrade={(player, ownerManagerId) => {

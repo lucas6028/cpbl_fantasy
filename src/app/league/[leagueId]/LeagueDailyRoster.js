@@ -37,6 +37,19 @@ function formatDate(dateStr) {
     return `${parseInt(m)}/${parseInt(d)}`;
 }
 
+function getTodayTW() {
+    const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Taipei',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    }).formatToParts(new Date());
+    const year = parts.find((p) => p.type === 'year')?.value;
+    const month = parts.find((p) => p.type === 'month')?.value;
+    const day = parts.find((p) => p.type === 'day')?.value;
+    return `${year}-${month}-${day}`;
+}
+
 export default function LeagueDailyRoster({ leagueId, members }) {
     const [selectedDate, setSelectedDate] = useState('');
     const [availableDates, setAvailableDates] = useState([]);
@@ -87,6 +100,23 @@ export default function LeagueDailyRoster({ leagueId, members }) {
         lineupTeams: new Set(),
         pitcherPlayerIds: new Set(),
     });
+
+    const isDropLockedByGameStart = (player) => {
+        if (!player || !player.game_info) return false;
+        if (selectedManagerId !== myManagerId) return false;
+        if (['BN', 'NA'].includes(player.position)) return false;
+        if (player.game_info.is_postponed) return false;
+
+        const targetDate = actualDate || selectedDate;
+        if (targetDate !== getTodayTW()) return false;
+
+        if (player.game_info.time) {
+            const gameTimeUTC = new Date(player.game_info.time);
+            return new Date() >= gameTimeUTC;
+        }
+
+        return false;
+    };
 
     // Get current user's manager ID
     useEffect(() => {
@@ -950,6 +980,7 @@ export default function LeagueDailyRoster({ leagueId, members }) {
                 tradeEndDate={tradeEndDate}
                 seasonYear={seasonYear}
                 statusDate={selectedDate}
+                isDropLockedByGameStart={selectedPlayerModal ? isDropLockedByGameStart(selectedPlayerModal) : false}
                 onTrade={handleOpenTrade}
                 isWatched={selectedPlayerModal ? watchedPlayerIds.has(selectedPlayerModal.player_id) : false}
                 onToggleWatch={handleToggleWatch}
