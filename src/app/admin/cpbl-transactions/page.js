@@ -55,6 +55,9 @@ export default function CpblTransactionsPage() {
     const [fallbackDate, setFallbackDate] = useState(getTaiwanToday())
     const [loading, setLoading] = useState(false)
     const [message, setMessage] = useState({ type: '', text: '' })
+    const [dailyTransactions, setDailyTransactions] = useState([])
+    const [loadingDailyTransactions, setLoadingDailyTransactions] = useState(false)
+    const [dailyTransactionsError, setDailyTransactionsError] = useState('')
 
     useEffect(() => {
         const checkAdminStatus = async () => {
@@ -77,6 +80,31 @@ export default function CpblTransactionsPage() {
         }
         checkAdminStatus()
     }, [router])
+
+    useEffect(() => {
+        const fetchDailyTransactions = async () => {
+            if (!fallbackDate) return
+            setLoadingDailyTransactions(true)
+            setDailyTransactionsError('')
+            try {
+                const res = await fetch(`/api/admin/cpbl-transactions?date=${fallbackDate}`)
+                const data = await res.json()
+                if (!res.ok || !data.success) {
+                    setDailyTransactions([])
+                    setDailyTransactionsError(data.error || '讀取當日異動失敗')
+                    return
+                }
+                setDailyTransactions(data.records || [])
+            } catch (err) {
+                setDailyTransactions([])
+                setDailyTransactionsError(err.message || '讀取當日異動失敗')
+            } finally {
+                setLoadingDailyTransactions(false)
+            }
+        }
+
+        fetchDailyTransactions()
+    }, [fallbackDate])
 
     // 解析預覽（與後端邏輯一致）
     const parsePreview = (rawText) => {
@@ -350,6 +378,60 @@ export default function CpblTransactionsPage() {
                         </div>
                     </div>
                 )}
+
+                {/* Daily existing transactions */}
+                <div className="mt-6 bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl p-6 shadow-2xl">
+                    <h2 className="text-lg font-bold text-cyan-300 mb-3">
+                        {fallbackDate} 已登錄完整資訊
+                    </h2>
+
+                    {loadingDailyTransactions ? (
+                        <div className="text-slate-300 text-sm">載入中...</div>
+                    ) : dailyTransactionsError ? (
+                        <div className="text-red-300 text-sm">{dailyTransactionsError}</div>
+                    ) : dailyTransactions.length === 0 ? (
+                        <div className="text-slate-400 text-sm">當日尚無異動資料</div>
+                    ) : (
+                        <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+                            <table className="text-sm min-w-[1700px]">
+                                <thead>
+                                    <tr className="text-left text-slate-400 border-b border-slate-600">
+                                        <th className="pb-2 pr-3">id</th>
+                                        <th className="pb-2 pr-3">transaction_date</th>
+                                        <th className="pb-2 pr-3">player_name</th>
+                                        <th className="pb-2 pr-3">player_team</th>
+                                        <th className="pb-2 pr-3">player_id</th>
+                                        <th className="pb-2 pr-3">transaction_type</th>
+                                        <th className="pb-2 pr-3">current_status</th>
+                                        <th className="pb-2 pr-3">notes</th>
+                                        <th className="pb-2 pr-3">created_at</th>
+                                        <th className="pb-2 pr-3">status_updated_at</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {dailyTransactions.map((row) => (
+                                        <tr key={row.id} className="border-b border-slate-700/50 align-top">
+                                            <td className="py-2 pr-3 text-slate-300 text-xs break-all">{row.id}</td>
+                                            <td className="py-2 pr-3 text-slate-300">{row.transaction_date || '-'}</td>
+                                            <td className="py-2 pr-3 text-white font-medium">{row.player_name || '-'}</td>
+                                            <td className="py-2 pr-3 text-slate-300">{row.player_team || '-'}</td>
+                                            <td className="py-2 pr-3 text-slate-400 text-xs break-all">{row.player_id || '-'}</td>
+                                            <td className="py-2 pr-3">
+                                                <span className="px-2 py-0.5 rounded text-xs font-semibold bg-slate-700 text-slate-200">
+                                                    {row.transaction_type || '-'}
+                                                </span>
+                                            </td>
+                                            <td className="py-2 pr-3 text-slate-300">{row.current_status || '-'}</td>
+                                            <td className="py-2 pr-3 text-slate-400 text-xs whitespace-pre-wrap">{row.notes || '-'}</td>
+                                            <td className="py-2 pr-3 text-slate-400 text-xs">{row.created_at ? new Date(row.created_at).toLocaleString('zh-TW') : '-'}</td>
+                                            <td className="py-2 pr-3 text-slate-400 text-xs">{row.status_updated_at ? new Date(row.status_updated_at).toLocaleString('zh-TW') : '-'}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     )

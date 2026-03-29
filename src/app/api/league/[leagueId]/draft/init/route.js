@@ -60,12 +60,12 @@ export async function POST(request, { params }) {
             }, { status: 400 });
         }
 
-        // 1. Get League Settings & Members (Sort by random or custom order in future)
+        // 1. Get League Settings & Members
         const { data: members, error: membersError } = await supabase
             .from('league_members')
             .select('manager_id, nickname')
             .eq('league_id', leagueId)
-            // Ideally use `draft_order` column if exists, otherwise random/joined_at
+            // Keep stable base order before shuffle for reproducibility in debugging
             .order('joined_at', { ascending: true });
 
         if (membersError || !members || members.length === 0) {
@@ -82,6 +82,13 @@ export async function POST(request, { params }) {
             return NextResponse.json({ success: false, error: 'Settings not found' }, { status: 400 });
         }
 
+        // 1.5 Randomize draft order (Fisher-Yates shuffle)
+        const shuffledMembers = [...members];
+        for (let i = shuffledMembers.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffledMembers[i], shuffledMembers[j]] = [shuffledMembers[j], shuffledMembers[i]];
+        }
+
         // 2. Calculate Total Rounds (exclude Minor positions)
         const rosterConfig = settings.roster_positions || {};
         const totalRounds = Object.entries(rosterConfig)
@@ -90,7 +97,7 @@ export async function POST(request, { params }) {
 
         // 3. Generate Picks (Snake Draft)
         const picks = [];
-        const teamCount = members.length;
+        const teamCount = shuffledMembers.length;
         let globalPickCount = 1;
 
         for (let round = 1; round <= totalRounds; round++) {
@@ -98,7 +105,7 @@ export async function POST(request, { params }) {
             const roundPicks = [];
             for (let i = 0; i < teamCount; i++) {
                 const teamIndex = isEven ? (teamCount - 1 - i) : i;
-                const manager = members[teamIndex];
+                const manager = shuffledMembers[teamIndex];
 
                 roundPicks.push({
                     league_id: leagueId,

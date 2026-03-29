@@ -28,6 +28,9 @@ export default function StatsEntryPage() {
   const [awayScore, setAwayScore] = useState('')
   const [homeScore, setHomeScore] = useState('')
   const [scoreUpdating, setScoreUpdating] = useState(false)
+  const [existingGameStats, setExistingGameStats] = useState({ battingByTeam: {}, pitchingByTeam: {} })
+  const [loadingExistingGameStats, setLoadingExistingGameStats] = useState(false)
+  const [existingStatsError, setExistingStatsError] = useState('')
 
   // Combined stats input
   const [statsText, setStatsText] = useState('')
@@ -167,6 +170,51 @@ export default function StatsEntryPage() {
       }
     }
   }, [selectedGameUuid, gamesForDate])
+
+  // Fetch already-registered stats for selected game
+  useEffect(() => {
+    const fetchExistingGameStats = async () => {
+      if (!selectedGameUuid) {
+        setExistingGameStats({ battingByTeam: {}, pitchingByTeam: {} })
+        setExistingStatsError('')
+        return
+      }
+
+      const game = gamesForDate.find(g => g.uuid === selectedGameUuid)
+      if (!game) return
+
+      setLoadingExistingGameStats(true)
+      setExistingStatsError('')
+      try {
+        const query = new URLSearchParams({
+          date,
+          away: game.away,
+          home: game.home,
+          is_major: String(game.major_game !== false),
+        })
+        const res = await fetch(`/api/admin/stats-entry/game-registered?${query.toString()}`)
+        const data = await res.json()
+
+        if (!res.ok || !data.success) {
+          setExistingStatsError(data.error || '讀取該場已登錄數據失敗')
+          setExistingGameStats({ battingByTeam: {}, pitchingByTeam: {} })
+          return
+        }
+
+        setExistingGameStats({
+          battingByTeam: data.batting_by_team || {},
+          pitchingByTeam: data.pitching_by_team || {},
+        })
+      } catch (err) {
+        setExistingStatsError(err.message || '讀取該場已登錄數據失敗')
+        setExistingGameStats({ battingByTeam: {}, pitchingByTeam: {} })
+      } finally {
+        setLoadingExistingGameStats(false)
+      }
+    }
+
+    fetchExistingGameStats()
+  }, [selectedGameUuid, gamesForDate, date])
 
   // Parse innings pitched (e.g., "5" -> 5, "11/3" -> 1.1, "2/3" -> 0.2)
   const parseInnings = (str) => {
@@ -633,6 +681,71 @@ export default function StatsEntryPage() {
 
   const pendingTeams = getPendingTeams()
 
+  const existingBattingColumns = [
+    { key: 'name', label: 'Name' },
+    { key: 'position', label: 'Pos' },
+    { key: 'at_bats', label: 'AB' },
+    { key: 'runs', label: 'R' },
+    { key: 'hits', label: 'H' },
+    { key: 'rbis', label: 'RBI' },
+    { key: 'doubles', label: '2B' },
+    { key: 'triples', label: '3B' },
+    { key: 'home_runs', label: 'HR' },
+    { key: 'double_plays', label: 'GDP' },
+    { key: 'walks', label: 'BB' },
+    { key: 'ibb', label: 'IBB' },
+    { key: 'hbp', label: 'HBP' },
+    { key: 'strikeouts', label: 'K' },
+    { key: 'sacrifice_bunts', label: 'SAC' },
+    { key: 'sacrifice_flies', label: 'SF' },
+    { key: 'stolen_bases', label: 'SB' },
+    { key: 'caught_stealing', label: 'CS' },
+    { key: 'errors', label: 'E' },
+    { key: 'avg', label: 'AVG' },
+    { key: 'game_date', label: 'Date' },
+    { key: 'is_major', label: 'Major' },
+  ]
+
+  const existingPitchingColumns = [
+    { key: 'name', label: 'Name' },
+    { key: 'position', label: 'Pos' },
+    { key: 'record', label: 'Record' },
+    { key: 'innings_pitched', label: 'IP' },
+    { key: 'batters_faced', label: 'BF' },
+    { key: 'pitches_thrown', label: 'P' },
+    { key: 'strikes_thrown', label: 'S' },
+    { key: 'hits_allowed', label: 'H' },
+    { key: 'home_runs_allowed', label: 'HR' },
+    { key: 'walks', label: 'BB' },
+    { key: 'ibb', label: 'IBB' },
+    { key: 'hbp', label: 'HBP' },
+    { key: 'strikeouts', label: 'K' },
+    { key: 'wild_pitches', label: 'WP' },
+    { key: 'balks', label: 'BK' },
+    { key: 'runs_allowed', label: 'R' },
+    { key: 'earned_runs', label: 'ER' },
+    { key: 'errors', label: 'E' },
+    { key: 'era', label: 'ERA' },
+    { key: 'whip', label: 'WHIP' },
+    { key: 'complete_game', label: 'CG' },
+    { key: 'game_date', label: 'Date' },
+    { key: 'is_major', label: 'Major' },
+  ]
+
+  const formatExistingStatValue = (key, value) => {
+    if (value === null || value === undefined || value === '') return '-'
+    if (key === 'is_major') return value ? 'Y' : 'N'
+    if (key === 'avg') {
+      const parsed = Number(value)
+      return Number.isFinite(parsed) ? parsed.toFixed(3) : value
+    }
+    if (key === 'era' || key === 'whip') {
+      const parsed = Number(value)
+      return Number.isFinite(parsed) ? parsed.toFixed(2) : value
+    }
+    return String(value)
+  }
+
   if (checkingAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -863,6 +976,87 @@ export default function StatsEntryPage() {
                   {scoreUpdating ? '更新中...' : '僅更新比分'}
                 </button>
               </div>
+
+              <div className="mt-5 border-t border-slate-600/50 pt-4">
+                <div className="text-sm font-semibold text-cyan-300 mb-3">該場已登錄數據</div>
+
+                {loadingExistingGameStats ? (
+                  <div className="text-slate-300 text-sm">載入中...</div>
+                ) : existingStatsError ? (
+                  <div className="text-red-300 text-sm">{existingStatsError}</div>
+                ) : (
+                  <div className="space-y-4">
+                    {[selectedGame.away, selectedGame.home].map(team => {
+                      const battingRows = existingGameStats.battingByTeam?.[team] || []
+                      const pitchingRows = existingGameStats.pitchingByTeam?.[team] || []
+
+                      return (
+                        <div key={team} className="p-3 bg-slate-900/40 rounded-lg border border-slate-600/40">
+                          <div className="text-white font-bold mb-2">{team}</div>
+
+                          <div className="text-xs text-slate-300 mb-2">
+                            打者 {battingRows.length} 筆 / 投手 {pitchingRows.length} 筆
+                          </div>
+
+                          {battingRows.length === 0 && pitchingRows.length === 0 ? (
+                            <div className="text-xs text-slate-500">尚無已登錄數據</div>
+                          ) : (
+                            <div className="space-y-3">
+                              <div className="overflow-x-auto pb-2" style={{ WebkitOverflowScrolling: 'touch' }}>
+                                <div className="text-xs text-purple-300 font-semibold mb-1">打者</div>
+                                <table className="text-xs text-slate-200 min-w-[1800px]">
+                                  <thead>
+                                    <tr className="text-slate-400 border-b border-slate-600/60">
+                                      {existingBattingColumns.map(col => (
+                                        <th key={`${team}-b-col-${col.key}`} className="py-1 px-2 text-center whitespace-nowrap">{col.label}</th>
+                                      ))}
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {battingRows.map((row, idx) => (
+                                      <tr key={`${team}-b-${idx}`} className="border-b border-slate-700/40">
+                                        {existingBattingColumns.map(col => (
+                                          <td key={`${team}-b-${idx}-${col.key}`} className="py-1 px-2 text-center whitespace-nowrap">
+                                            {formatExistingStatValue(col.key, row[col.key])}
+                                          </td>
+                                        ))}
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+
+                              <div className="overflow-x-auto pb-2" style={{ WebkitOverflowScrolling: 'touch' }}>
+                                <div className="text-xs text-blue-300 font-semibold mb-1">投手</div>
+                                <table className="text-xs text-slate-200 min-w-[2000px]">
+                                  <thead>
+                                    <tr className="text-slate-400 border-b border-slate-600/60">
+                                      {existingPitchingColumns.map(col => (
+                                        <th key={`${team}-p-col-${col.key}`} className="py-1 px-2 text-center whitespace-nowrap">{col.label}</th>
+                                      ))}
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {pitchingRows.map((row, idx) => (
+                                      <tr key={`${team}-p-${idx}`} className="border-b border-slate-700/40">
+                                        {existingPitchingColumns.map(col => (
+                                          <td key={`${team}-p-${idx}-${col.key}`} className="py-1 px-2 text-center whitespace-nowrap">
+                                            {formatExistingStatValue(col.key, row[col.key])}
+                                          </td>
+                                        ))}
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -914,9 +1108,9 @@ export default function StatsEntryPage() {
 
         {/* Preview Tables */}
         {battingPreview.length > 0 && (
-          <div className="bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl p-6 mb-6 shadow-2xl overflow-x-auto">
+          <div className="bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl p-6 mb-6 shadow-2xl overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
             <h2 className="text-xl font-bold text-white mb-4">打者 Preview ({battingPreview.length} records)</h2>
-            <table className="w-full text-sm text-white">
+            <table className="text-sm text-white min-w-[1800px]">
               <thead>
                 <tr className="border-b border-purple-500/30">
                   <th className="p-2 text-left">Name</th>
@@ -976,9 +1170,9 @@ export default function StatsEntryPage() {
         )}
 
         {pitchingPreview.length > 0 && (
-          <div className="bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl p-6 shadow-2xl overflow-x-auto">
+          <div className="bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur-lg border border-purple-500/30 rounded-2xl p-6 shadow-2xl overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
             <h2 className="text-xl font-bold text-white mb-4">投手 Preview ({pitchingPreview.length} records)</h2>
-            <table className="w-full text-sm text-white">
+            <table className="text-sm text-white min-w-[1900px]">
               <thead>
                 <tr className="border-b border-purple-500/30">
                   <th className="p-2 text-left">Name</th>

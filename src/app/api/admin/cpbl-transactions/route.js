@@ -50,6 +50,74 @@ function parseDate(raw) {
     return cleaned
 }
 
+export async function GET(req) {
+    try {
+        const { searchParams } = new URL(req.url)
+        const date = searchParams.get('date')
+
+        if (!date) {
+            return NextResponse.json({ error: '缺少必要欄位 (date)' }, { status: 400 })
+        }
+
+        const { data: rows, error } = await supabase
+            .from('real_life_transactions')
+            .select('id, player_id, transaction_date, transaction_type, notes, created_at')
+            .eq('transaction_date', date)
+            .order('created_at', { ascending: false })
+
+        if (error) {
+            return NextResponse.json({ error: error.message }, { status: 500 })
+        }
+
+        const records = rows || []
+        const playerIds = [...new Set(records.map(r => r.player_id).filter(Boolean))]
+
+        let playerMap = {}
+        let statusMap = {}
+
+        if (playerIds.length > 0) {
+            const [{ data: players, error: playerError }, { data: statuses, error: statusError }] = await Promise.all([
+                supabase
+                    .from('player_list')
+                    .select('player_id, name, team')
+                    .in('player_id', playerIds),
+                supabase
+                    .from('real_life_player_status')
+                    .select('player_id, status, updated_at')
+                    .in('player_id', playerIds),
+            ])
+
+            if (playerError) {
+                return NextResponse.json({ error: playerError.message }, { status: 500 })
+            }
+
+            if (statusError) {
+                return NextResponse.json({ error: statusError.message }, { status: 500 })
+            }
+
+            playerMap = Object.fromEntries((players || []).map(p => [p.player_id, p]))
+            statusMap = Object.fromEntries((statuses || []).map(s => [s.player_id, s]))
+        }
+
+        const enriched = records.map(r => ({
+            ...r,
+            player_name: playerMap[r.player_id]?.name || null,
+            player_team: playerMap[r.player_id]?.team || null,
+            current_status: statusMap[r.player_id]?.status || null,
+            status_updated_at: statusMap[r.player_id]?.updated_at || null,
+        }))
+
+        return NextResponse.json({
+            success: true,
+            date,
+            count: enriched.length,
+            records: enriched,
+        })
+    } catch (err) {
+        return NextResponse.json({ error: err.message }, { status: 500 })
+    }
+}
+
 export async function POST(req) {
     try {
         const { text, date: fallbackDate } = await req.json()
