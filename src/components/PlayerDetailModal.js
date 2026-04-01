@@ -346,7 +346,7 @@ export default function PlayerDetailModal({
         }
     })();
 
-    const positionStr = player.position_list || player.position || (isPitcher ? 'P' : 'Util');
+    const positionStr = player.position_list || player.position || '-';
 
     // Transaction Helpers
     const canShowActionButtons = myManagerId && (onAdd || onDrop || onTrade);
