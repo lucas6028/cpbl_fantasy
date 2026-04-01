@@ -27,8 +27,8 @@ export async function POST(request) {
         }
 
         // 2. Auth check
-        const isInitiator = trade.initiator_manager_id === manager_id;
-        const isRecipient = trade.recipient_manager_id === manager_id;
+        const isInitiator = Number(trade.initiator_manager_id) === Number(manager_id);
+        const isRecipient = Number(trade.recipient_manager_id) === Number(manager_id);
 
         if (action === 'cancel') {
             if (!isInitiator) return NextResponse.json({ success: false, error: 'Only initiator can cancel' }, { status: 403 });

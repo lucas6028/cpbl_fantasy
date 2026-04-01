@@ -207,7 +207,7 @@ export async function POST(req, { params }) {
 
     if (existing) {
       // 球員已被佔用，返回具體錯誤
-      if (existing.manager_id === manager_id) {
+      if (Number(existing.manager_id) === Number(manager_id)) {
         return NextResponse.json(
           { success: false, error: 'You already own this player' },
           { status: 409 }
@@ -503,7 +503,7 @@ export async function DELETE(req, { params }) {
       );
     }
 
-    if (ownership.manager_id !== manager_id) {
+    if (Number(ownership.manager_id) !== Number(manager_id)) {
       return NextResponse.json(
         { success: false, error: 'You do not own this player' },
         { status: 403 }
