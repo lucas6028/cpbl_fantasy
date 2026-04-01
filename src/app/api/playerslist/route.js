@@ -149,7 +149,7 @@ export async function GET(req) {
     // 將位置資料、真實狀態和賽程資料加入球員資料
     const playersWithPositions = (players || []).map(player => ({
       ...player,
-      position_list: positionMap[player.player_id] || null,
+      position_list: positionMap[player.player_id] || player.position_list || null,
       real_life_status: statusMap[player.player_id] || 'UNREGISTERED', // 預設
       game_info: gameMap[normalizeTeamKey(player.team ?? player.Team)] || null,
       roster_percentage: rosterPercentageMap[player.player_id] ?? 0
