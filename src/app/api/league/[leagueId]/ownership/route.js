@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import supabase from '@/lib/supabase';
+import supabase from '@/lib/supabaseAdmin';
 
 // POST - 新增球員到隊伍（寫入 league_player_ownership）
 export async function POST(req, { params }) {
@@ -399,7 +399,7 @@ export async function POST(req, { params }) {
         if (rosterRows.length > 0) {
           const { error: rosterError } = await supabase
             .from('league_roster_positions')
-            .upsert(rosterRows, { onConflict: 'league_id, player_id, game_date' }); // 避免重複報錯
+            .upsert(rosterRows, { onConflict: 'league_id, manager_id, player_id, game_date' }); // 避免重複報錯
 
           if (rosterError) {
             console.error('Failed to generate roster positions:', rosterError);

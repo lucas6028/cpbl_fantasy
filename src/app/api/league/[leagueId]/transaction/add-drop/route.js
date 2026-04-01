@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import supabase from '@/lib/supabase';
+import supabase from '@/lib/supabaseAdmin';
 
 export async function POST(request, { params }) {
     const { leagueId } = await params;
@@ -502,7 +502,7 @@ export async function POST(request, { params }) {
         if (rosterRows.length > 0) {
             const { error: addPosError } = await supabase
                 .from('league_roster_positions')
-                .upsert(rosterRows, { onConflict: 'league_id, player_id, game_date' });
+                .upsert(rosterRows, { onConflict: 'league_id, manager_id, player_id, game_date' });
 
             if (addPosError) throw addPosError;
         }

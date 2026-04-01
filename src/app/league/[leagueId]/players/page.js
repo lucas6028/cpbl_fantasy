@@ -350,6 +350,8 @@ export default function PlayersPage() {
     return false;
   };
 
+  const isSameManager = (a, b) => String(a ?? '') === String(b ?? '');
+
   // Fetch watched players
   const fetchWatchedPlayers = async () => {
     if (!myManagerId || !leagueId) return;
@@ -661,7 +663,7 @@ export default function PlayersPage() {
       } else if (filterOwnership === 'available') {
         matchesOwnership = !ownership; // Free agents only
       } else if (filterOwnership === 'myteam') {
-        matchesOwnership = ownership && ownership.manager_id === myManagerId;
+        matchesOwnership = ownership && isSameManager(ownership.manager_id, myManagerId);
       } else if (filterOwnership === 'watched') {
         matchesOwnership = watchedPlayerIds.has(player.player_id);
       }
@@ -1406,10 +1408,10 @@ export default function PlayersPage() {
 
   // 取得自己和對方的球員名單
   const getMyPlayers = () => {
-    return ownerships.filter(o => o.manager_id === myManagerId && o.status?.toLowerCase() === 'on team');
+    return ownerships.filter(o => isSameManager(o.manager_id, myManagerId) && o.status?.toLowerCase() === 'on team');
   };
   const getTheirPlayers = () => {
-    return ownerships.filter(o => o.manager_id === tradeTargetManagerId && o.status?.toLowerCase() === 'on team');
+    return ownerships.filter(o => isSameManager(o.manager_id, tradeTargetManagerId) && o.status?.toLowerCase() === 'on team');
   };
 
   // 彈窗送出
@@ -1555,7 +1557,7 @@ export default function PlayersPage() {
     // 如果 status 是 on team
     if (status === 'on team') {
       // 檢查是否是自己的球員
-      if (ownership.manager_id === myManagerId) {
+      if (isSameManager(ownership.manager_id, myManagerId)) {
 
         // Check Trade Lock
         if (activeTradePlayerIds.has(player.player_id)) {
@@ -2551,7 +2553,7 @@ export default function PlayersPage() {
                       disabled={isAdding}
                     >
                       <option value="">No drop (just add)</option>
-                      {ownerships.filter(o => o.manager_id === myManagerId && o.status?.toLowerCase() === 'on team').map(o => (
+                      {ownerships.filter(o => isSameManager(o.manager_id, myManagerId) && o.status?.toLowerCase() === 'on team').map(o => (
                         <option key={o.player_id} value={o.player_id}>
                           {players.find(p => p.player_id === o.player_id)?.name || o.player_id}
                         </option>
