@@ -13,17 +13,7 @@ export async function GET(request, { params }) {
     try {
         const { data, error } = await supabase
             .from('draft_roster_assignments')
-            .select(`
-                *,
-                player:player_list (
-                    player_id,
-                    name,
-                    team,
-                    batter_or_pitcher,
-                    identity,
-                    original_name
-                )
-            `)
+            .select(`*`)
             .eq('league_id', leagueId)
             .eq('manager_id', managerId);
 
@@ -32,36 +22,35 @@ export async function GET(request, { params }) {
             return NextResponse.json({ success: false, error: 'Database Error' }, { status: 500 });
         }
 
-        // Fetch positions for each player
-        const { data: batterPositions } = await supabase
-            .from('v_batter_positions')
-            .select('player_id, position_list');
-
-        const { data: pitcherPositions } = await supabase
-            .from('v_pitcher_positions')
-            .select('player_id, position_list');
-
+        // Fetch positions only for the relevant player IDs (not a full table scan)
+        const playerIds = (data || []).map(d => d.player_id).filter(Boolean);
         const positionMap = {};
-        if (batterPositions) {
-            batterPositions.forEach(bp => {
-                positionMap[bp.player_id] = bp.position_list;
-            });
-        }
-        if (pitcherPositions) {
-            pitcherPositions.forEach(pp => {
-                positionMap[pp.player_id] = pp.position_list;
-            });
+        const playerMap = {};
+
+        if (playerIds.length > 0) {
+            const [{ data: batterPositions }, { data: pitcherPositions }, { data: playerRows }] = await Promise.all([
+                supabase.from('v_batter_positions').select('player_id, position_list').in('player_id', playerIds),
+                supabase.from('v_pitcher_positions').select('player_id, position_list').in('player_id', playerIds),
+                supabase.from('player_list').select('player_id, name, team, batter_or_pitcher, identity, original_name').in('player_id', playerIds)
+            ]);
+
+            if (batterPositions) batterPositions.forEach(bp => positionMap[bp.player_id] = bp.position_list);
+            if (pitcherPositions) pitcherPositions.forEach(pp => positionMap[pp.player_id] = pp.position_list);
+            if (playerRows) playerRows.forEach(p => playerMap[p.player_id] = p);
         }
 
-        const assignments = (data || []).map(item => ({
-            ...item,
-            name: item.player?.name,
-            team: item.player?.team,
-            position_list: positionMap[item.player_id] || (item.player?.batter_or_pitcher === 'pitcher' ? 'P' : 'Util'),
-            batter_or_pitcher: item.player?.batter_or_pitcher,
-            identity: item.player?.identity,
-            original_name: item.player?.original_name
-        }));
+        const assignments = (data || []).map(item => {
+            const playerInfo = playerMap[item.player_id] || {};
+            return {
+                ...item,
+                name: playerInfo.name,
+                team: playerInfo.team,
+                position_list: positionMap[item.player_id] || (playerInfo.batter_or_pitcher === 'pitcher' ? 'P' : 'Util'),
+                batter_or_pitcher: playerInfo.batter_or_pitcher,
+                identity: playerInfo.identity,
+                original_name: playerInfo.original_name
+            };
+        });
 
         return NextResponse.json({ success: true, assignments });
     } catch (error) {

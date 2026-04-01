@@ -498,7 +498,9 @@ export default function DraftPage() {
             setLoading(true);
             try {
                 const [playersRes, settingsRes, leagueRes] = await Promise.all([
-                    fetch('/api/playerslist?available=true'),
+                    // Draft should always use the full player pool.
+                    // Per-league taken players are filtered by draft picks, not global availability.
+                    fetch('/api/playerslist?available=false'),
                     fetch(`/api/league-settings?league_id=${leagueId}`),
                     fetch(`/api/league/${leagueId}`)
                 ]);
@@ -698,6 +700,24 @@ export default function DraftPage() {
         if (!draftState?.picks) return { takenIds: new Set(), recentPicks: [], myTeam: [], upcomingPicks: [], viewingTeam: [], foreignerCount: 0, managerForeignerCounts: {} };
         const picks = draftState.picks;
 
+        const hydratePickPlayer = (pick) => {
+            const pickedPlayer = pick.player || {};
+            const fromPool = players.find(pl => String(pl.player_id) === String(pick.player_id)) || {};
+
+            return {
+                ...fromPool,
+                ...pickedPlayer,
+                player_id: pick.player_id,
+                name: pickedPlayer.name || fromPool.name || 'Unknown',
+                team: pickedPlayer.team || fromPool.team || '',
+                position_list: pickedPlayer.position_list || fromPool.position_list || '',
+                batter_or_pitcher: pickedPlayer.batter_or_pitcher || fromPool.batter_or_pitcher || '',
+                original_name: pickedPlayer.original_name || fromPool.original_name || '',
+                identity: pickedPlayer.identity || fromPool.identity || '',
+                real_life_status: pickedPlayer.real_life_status || fromPool.real_life_status || ''
+            };
+        };
+
         // Coerce player_id to string to ensure safe set properties
         const taken = new Set(picks.map(p => String(p.player_id)).filter(Boolean));
 
@@ -707,41 +727,27 @@ export default function DraftPage() {
 
         // My Team: Coerce manager_id to string for comparison
         const currentManagerId = String(myManagerId);
-        const mine = picks.filter(p => String(p.manager_id) === currentManagerId && p.player_id).map(p => ({
-            ...p.player,
-            player_id: p.player_id,  // Ensure player_id is available for stats lookup
-            round: p.round_number,
-            pick: p.pick_number,
-            name: p.player?.name || 'Unknown',
-            team: p.player?.team || '',
-            position_list: p.player?.position_list || '',
-            batter_or_pitcher: p.player?.batter_or_pitcher || '',
-            position_list: p.player?.position_list || '',
-            batter_or_pitcher: p.player?.batter_or_pitcher || '',
-            original_name: p.player?.original_name || '',
-            identity: p.player?.identity || '',
-            real_life_status: p.player?.real_life_status || ''
-        }));
+        const mine = picks.filter(p => String(p.manager_id) === currentManagerId && p.player_id).map(p => {
+            const hydrated = hydratePickPlayer(p);
+            return {
+                ...hydrated,
+                round: p.round_number,
+                pick: p.pick_number
+            };
+        });
 
         // Viewing Team (Opponent View)
         let viewingTeam = [];
         if (viewingManagerId) {
             const targetManagerId = String(viewingManagerId);
-            viewingTeam = picks.filter(p => String(p.manager_id) === targetManagerId && p.player_id).map(p => ({
-                ...p.player,
-                player_id: p.player_id,
-                round: p.round_number,
-                pick: p.pick_number,
-                name: p.player?.name || 'Unknown',
-                team: p.player?.team || '',
-                position_list: p.player?.position_list || '',
-                batter_or_pitcher: p.player?.batter_or_pitcher || '',
-                position_list: p.player?.position_list || '',
-                batter_or_pitcher: p.player?.batter_or_pitcher || '',
-                original_name: p.player?.original_name || '',
-                identity: p.player?.identity || '',
-                real_life_status: p.player?.real_life_status || ''
-            }));
+            viewingTeam = picks.filter(p => String(p.manager_id) === targetManagerId && p.player_id).map(p => {
+                const hydrated = hydratePickPlayer(p);
+                return {
+                    ...hydrated,
+                    round: p.round_number,
+                    pick: p.pick_number
+                };
+            });
         }
 
         // Upcoming
@@ -764,7 +770,7 @@ export default function DraftPage() {
         const foreignerCount = managerForeignerCounts[String(myManagerId)] || 0;
 
         return { takenIds: taken, recentPicks: recent, myTeam: mine, upcomingPicks: upcoming, viewingTeam, foreignerCount, managerForeignerCounts };
-    }, [draftState, myManagerId, viewingManagerId, foreignerLimit]);
+    }, [draftState, myManagerId, viewingManagerId, players]);
 
     const handlePick = async (playerId) => {
         if (pickSubmitting || pickingId) return;
@@ -1531,7 +1537,7 @@ export default function DraftPage() {
                                         ))}
                                     </tr>
                                 </thead>
-                                {useMemo(() => (
+                                {(
                                 <tbody>
                                     {filteredPlayers.map(player => {
                                         const isForeigner = player.identity?.toLowerCase() === 'foreigner';
@@ -1732,7 +1738,7 @@ export default function DraftPage() {
                                         );
                                     })}
                                 </tbody>
-                                ), [filteredPlayers, pickSubmitting, pickingId, draftState?.status, draftState?.currentPick?.manager_id, myManagerId, takenIds, foreignerLimit, foreignerCount, playerRankings, photoSrcMap, queuingIds, queue, filterType, batterStatCategories, pitcherStatCategories, cpblStatRankings, rosterPositions, playerStats])}
+                                )}
                             </table>
                         </div>
                     </div>

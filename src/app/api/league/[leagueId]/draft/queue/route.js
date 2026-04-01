@@ -18,12 +18,33 @@ export async function GET(request, { params }) {
             .select(`
                 queue_id,
                 player_id,
-                rank_order,
-                player:player_list(name, team, identity)
+                rank_order
             `)
             .eq('league_id', leagueId)
             .eq('manager_id', managerId)
             .order('rank_order', { ascending: true });
+
+        if (error) throw error;
+
+        // Manually fetch player data to avoid schema cache / FK join issues
+        if (queue && queue.length > 0) {
+            const playerIds = queue.map(q => q.player_id).filter(Boolean);
+            if (playerIds.length > 0) {
+                const { data: playerRows } = await supabase
+                    .from('player_list')
+                    .select('player_id, name, team, identity')
+                    .in('player_id', playerIds);
+                
+                const playerMap = {};
+                if (playerRows) {
+                    playerRows.forEach(p => playerMap[p.player_id] = p);
+                }
+                
+                queue.forEach(item => {
+                    item.player = playerMap[item.player_id] || { name: 'Unknown', team: '', identity: '' };
+                });
+            }
+        }
 
         if (error) throw error;
 
@@ -49,14 +70,12 @@ export async function GET(request, { params }) {
 
             if (toDelete.length > 0) {
                 await supabase.from('draft_queues').delete().in('queue_id', toDelete);
-                // Re-assign ranks
-                const updates = validQueue.map((item, index) => ({
-                    queue_id: item.queue_id,
-                    rank_order: index + 1
-                }));
-                for (const up of updates) {
-                    await supabase.from('draft_queues').update({ rank_order: up.rank_order }).eq('queue_id', up.queue_id);
-                }
+                // Re-assign ranks in parallel
+                await Promise.all(
+                    validQueue.map((item, index) =>
+                        supabase.from('draft_queues').update({ rank_order: index + 1 }).eq('queue_id', item.queue_id)
+                    )
+                );
                 return NextResponse.json({ success: true, queue: validQueue.map((item, i) => ({ ...item, rank_order: i + 1 })) });
             }
         }
@@ -111,13 +130,15 @@ export async function PUT(request, { params }) {
             return NextResponse.json({ success: false, error: 'Invalid items' }, { status: 400 });
         }
 
-        for (const item of items) {
-            await supabase
-                .from('draft_queues')
-                .update({ rank_order: item.rank_order })
-                .eq('queue_id', item.queue_id)
-                .eq('league_id', leagueId);
-        }
+        await Promise.all(
+            items.map(item =>
+                supabase
+                    .from('draft_queues')
+                    .update({ rank_order: item.rank_order })
+                    .eq('queue_id', item.queue_id)
+                    .eq('league_id', leagueId)
+            )
+        );
 
         return NextResponse.json({ success: true });
     } catch (error) {

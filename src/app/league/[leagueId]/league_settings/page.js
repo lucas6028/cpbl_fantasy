@@ -70,23 +70,36 @@ export default function LeagueSettingsPage() {
     if (!leagueId) return;
 
     try {
-      // 1. Fetch picks
+      // 1. Fetch picks (no join - player_list has no FK relationship with draft_picks)
       const { data: picks, error } = await supabase
         .from('draft_picks')
-        .select(`
-          pick_number, 
-          round_number,
-          manager_id,
-          player_id,
-          picked_at,
-          player:player_list (player_id, name, team, batter_or_pitcher, identity, original_name)
-        `)
+        .select('pick_number, round_number, manager_id, player_id, picked_at')
         .eq('league_id', leagueId)
         .order('pick_number', { ascending: true });
 
       if (error) {
         console.error("Error fetching draft picks:", error);
+        return;
       }
+
+      // 1.5. Fetch player details separately for any picks that have a player_id
+      const pickedPlayerIds = picks ? picks.filter(p => p.player_id).map(p => p.player_id) : [];
+      let playerMap = {};
+      if (pickedPlayerIds.length > 0) {
+        const { data: playerData } = await supabase
+          .from('player_list')
+          .select('player_id, name, team, batter_or_pitcher, identity, original_name')
+          .in('player_id', pickedPlayerIds);
+        if (playerData) {
+          playerData.forEach(pl => { playerMap[pl.player_id] = pl; });
+        }
+      }
+
+      // Attach player data to each pick
+      const picksWithPlayers = picks ? picks.map(p => ({
+        ...p,
+        player: p.player_id ? (playerMap[p.player_id] || null) : null
+      })) : [];
 
       if (picks && picks.length > 0) {
         setHasDraftOrder(true);

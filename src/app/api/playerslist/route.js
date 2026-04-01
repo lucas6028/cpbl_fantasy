@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import supabase from '@/lib/supabase'
+import supabase from '@/lib/supabaseServer'
+import { draftCache, CACHE_TTL } from '@/lib/draftCache'
 
 // GET - 獲取球員列表
 export async function GET(req) {
@@ -7,90 +8,75 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const availableOnly = searchParams.get('available') !== 'false';
 
-    let query = supabase
-      .from('player_list')
-      .select('*')
-      .order('add_date', { ascending: false });
-
-    if (availableOnly) {
-      query = query.eq('available', true);
-    }
-
-    const { data: players, error } = await query;
-
-    if (error) {
-      console.error('Supabase error:', error);
-      return NextResponse.json(
-        { success: false, error: 'Failed to fetch players', details: error.message },
-        { status: 500 }
-      );
-    }
-
-    // 獲取野手位置資料
-    const { data: batterPositions, error: batterError } = await supabase
-      .from('v_batter_positions')
-      .select('player_id, position_list');
-
-    if (batterError) {
-      console.error('Error fetching batter positions:', batterError);
-    }
-
-    // 獲取投手位置資料
-    const { data: pitcherPositions, error: pitcherError } = await supabase
-      .from('v_pitcher_positions')
-      .select('player_id, position_list');
-
-    if (pitcherError) {
-      console.error('Error fetching pitcher positions:', pitcherError);
-    }
-
-    // 建立位置對照表
-    const positionMap = {};
-    if (batterPositions) {
-      batterPositions.forEach(bp => {
-        positionMap[bp.player_id] = bp.position_list;
-      });
-    }
-    if (pitcherPositions) {
-      pitcherPositions.forEach(pp => {
-        positionMap[pp.player_id] = pp.position_list;
-      });
-    }
-
-    // 獲取球員真實狀態
-    const { data: realLifeStatus, error: statusError } = await supabase
-      .from('real_life_player_status')
-      .select('player_id, status');
-
-    if (statusError) {
-      console.error('Error fetching real life status:', statusError);
-    }
-
-    // 建立狀態對照表
-    const statusMap = {};
-    if (realLifeStatus) {
-      realLifeStatus.forEach(s => {
-        statusMap[s.player_id] = s.status;
-      });
-    }
-
     // 賽程日期固定抓台灣今天
     const now = new Date();
     const nowTaiwan = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
     const scheduleDateStr = `${nowTaiwan.getFullYear()}-${String(nowTaiwan.getMonth() + 1).padStart(2, '0')}-${String(nowTaiwan.getDate()).padStart(2, '0')}`;
 
-    const { data: scheduleData, error: scheduleError } = await supabase
-      .from('cpbl_schedule_2026')
-      .select('*')
-      .eq('date', scheduleDateStr)
-      .eq('major_game', true);
+    // Run all independent queries in parallel (previously sequential)
+    const [
+      players,
+      positionMap,
+      statusMap,
+      scheduleData,
+      ownershipData,
+    ] = await Promise.all([
+      // 1. Player list (cached)
+      draftCache.getOrFetch(`playerList:${availableOnly ? 'available' : 'all'}`, async () => {
+        let q = supabase.from('player_list').select('*').order('add_date', { ascending: false });
+        if (availableOnly) q = q.eq('available', true);
+        const { data, error } = await q;
+        if (error) throw error;
+        return data || [];
+      }, CACHE_TTL.PLAYER_LIST),
 
-    if (scheduleError) {
-      console.error('Error fetching schedule:', scheduleError);
-    }
+      // 2. Position map (cached — positions change rarely)
+      draftCache.getOrFetch('allPositions', async () => {
+        const [batterRes, pitcherRes] = await Promise.all([
+          supabase.from('v_batter_positions').select('player_id, position_list'),
+          supabase.from('v_pitcher_positions').select('player_id, position_list'),
+        ]);
+        const map = {};
+        if (batterRes.data) batterRes.data.forEach(b => map[b.player_id] = b.position_list);
+        if (pitcherRes.data) pitcherRes.data.forEach(p => map[p.player_id] = p.position_list);
+        return map;
+      }, CACHE_TTL.POSITIONS),
 
-    console.log(`[playerslist] Schedule date=${scheduleDateStr}, games=${scheduleData?.length || 0}`);
+      // 3. Real life status map (cached)
+      draftCache.getOrFetch('playerStatus', async () => {
+        const { data } = await supabase
+          .from('real_life_player_status')
+          .select('player_id, status');
+        const map = {};
+        if (data) data.forEach(s => map[s.player_id] = s.status);
+        return map;
+      }, CACHE_TTL.PLAYER_STATUS),
 
+      // 4. Today's schedule (cached per day)
+      draftCache.getOrFetch(`schedule:${scheduleDateStr}`, async () => {
+        const { data } = await supabase
+          .from('cpbl_schedule_2026')
+          .select('*')
+          .eq('date', scheduleDateStr)
+          .eq('major_game', true);
+        return data || [];
+      }, CACHE_TTL.SCHEDULE),
+
+      // 5. Ownership data (cached)
+      draftCache.getOrFetch('ownershipData', async () => {
+        const [rosterRes, leagueRes, testLeagueRes, leagueStatusRes] = await Promise.all([
+          supabase.from('league_player_ownership').select('player_id, league_id').ilike('status', 'on team'),
+          supabase.from('league_settings').select('league_id'),
+          supabase.from('test_league').select('league_id'),
+          supabase.from('league_statuses').select('league_id, status'),
+        ]);
+        return [rosterRes, leagueRes, testLeagueRes, leagueStatusRes];
+      }, CACHE_TTL.PLAYER_LIST),
+    ]);
+
+    const [rosterRes, leagueRes, testLeagueRes, leagueStatusRes] = ownershipData;
+
+    // Build schedule game map
     const normalizeTeamKey = (team) => String(team || '').trim().toLowerCase();
     const gameMap = {};
     const gameMapDisplayKeys = new Set();
@@ -109,19 +95,10 @@ export async function GET(req) {
       });
     }
 
+    console.log(`[playerslist] Schedule date=${scheduleDateStr}, games=${scheduleData?.length || 0}`);
     console.log(`[playerslist] Game map teams=${gameMapDisplayKeys.size}: ${[...gameMapDisplayKeys].join(', ') || '(none)'}`);
 
-    // 計算球員持有率（排除 test_league，且排除 pre-draft / drafting now）
-    const [rosterRes, leagueRes, testLeagueRes, leagueStatusRes] = await Promise.all([
-      supabase
-        .from('league_player_ownership')
-        .select('player_id, league_id')
-        .ilike('status', 'on team'),
-      supabase.from('league_settings').select('league_id'),
-      supabase.from('test_league').select('league_id'),
-      supabase.from('league_statuses').select('league_id, status'),
-    ]);
-
+    // Calculate ownership percentages
     const testLeagueIds = new Set((testLeagueRes.data || []).map(t => t.league_id));
     const activeLeagueIds = new Set(
       (leagueStatusRes.data || [])
@@ -136,8 +113,8 @@ export async function GET(req) {
     if (rosterRes.data && totalLeagues > 0) {
       const playerLeagueMap = {};
       rosterRes.data.forEach(r => {
-        if (testLeagueIds.has(r.league_id)) return; // 排除測試聯盟
-        if (!activeLeagueIds.has(r.league_id)) return; // 排除 pre-draft / drafting now
+        if (testLeagueIds.has(r.league_id)) return;
+        if (!activeLeagueIds.has(r.league_id)) return;
         if (!playerLeagueMap[r.player_id]) playerLeagueMap[r.player_id] = new Set();
         playerLeagueMap[r.player_id].add(r.league_id);
       });
@@ -146,11 +123,11 @@ export async function GET(req) {
       });
     }
 
-    // 將位置資料、真實狀態和賽程資料加入球員資料
+    // Merge all enrichment into player records
     const playersWithPositions = (players || []).map(player => ({
       ...player,
       position_list: positionMap[player.player_id] || player.position_list || null,
-      real_life_status: statusMap[player.player_id] || 'UNREGISTERED', // 預設
+      real_life_status: statusMap[player.player_id] || 'UNREGISTERED',
       game_info: gameMap[normalizeTeamKey(player.team ?? player.Team)] || null,
       roster_percentage: rosterPercentageMap[player.player_id] ?? 0
     }));
@@ -195,7 +172,7 @@ export async function POST(req) {
     if (maxErr) throw new Error('查詢 Player_no 失敗: ' + maxErr.message)
     const nextPlayerNo = (maxData?.Player_no || 0) + 1
 
-    // 新增球員
+    // 新增球員，then invalidate position cache
     const { error: insertErr } = await supabase.from('playerslist').insert([
       {
         Player_no: nextPlayerNo,
@@ -205,11 +182,15 @@ export async function POST(req) {
         pitch_side: pitch_side || null,
         identity: identity || null,
         B_or_P,
-        Available: Available ?? 'V', // 預設 V
+        Available: Available ?? 'V',
         add_date: add_date || new Date().toISOString().slice(0, 10)
       }
     ])
     if (insertErr) throw new Error('新增球員失敗: ' + insertErr.message)
+
+    // Invalidate caches that are now stale
+    draftCache.invalidate('allPositions')
+    draftCache.invalidate('playerStatus')
 
     return NextResponse.json({ success: true, Player_no: nextPlayerNo })
   } catch (err) {

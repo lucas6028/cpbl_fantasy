@@ -2,29 +2,88 @@
 import { NextResponse } from 'next/server';
 
 import supabase from '@/lib/supabaseServer';
+import { draftCache, CACHE_TTL } from '@/lib/draftCache';
 
-// Helper: Pick Best Ranked Available Player
-async function getBestRankedAvailablePlayer(leagueId, excludePlayerIds = [], requestUrl = null) {
-    const { data: taken } = await supabase
-        .from('draft_picks')
-        .select('player_id')
-        .eq('league_id', leagueId)
-        .not('player_id', 'is', null);
+// ─── Cached helpers ────────────────────────────────────────────────
 
-    const takenIds = taken ? taken.map(p => p.player_id) : [];
-    const allExcluded = new Set([...takenIds, ...excludePlayerIds]);
+async function getCachedPositionMap() {
+    return draftCache.getOrFetch('allPositions', async () => {
+        const [batterRes, pitcherRes] = await Promise.all([
+            supabase.from('v_batter_positions').select('player_id, position_list'),
+            supabase.from('v_pitcher_positions').select('player_id, position_list'),
+        ]);
+        const map = {};
+        if (batterRes.data) batterRes.data.forEach(b => map[b.player_id] = b.position_list);
+        if (pitcherRes.data) pitcherRes.data.forEach(p => map[p.player_id] = p.position_list);
+        return map;
+    }, CACHE_TTL.POSITIONS);
+}
 
+async function getCachedSettings(leagueId) {
+    return draftCache.getOrFetch(`settings:${leagueId}`, async () => {
+        const { data } = await supabase
+            .from('league_settings')
+            .select('live_draft_time, live_draft_pick_time, foreigner_active_limit')
+            .eq('league_id', leagueId)
+            .single();
+        return data;
+    }, CACHE_TTL.LEAGUE_SETTINGS);
+}
+
+function parseDuration(settings) {
+    let duration = 60;
+    if (settings?.live_draft_pick_time) {
+        const timeStr = settings.live_draft_pick_time.toLowerCase();
+        if (timeStr.includes('minute')) {
+            duration = parseInt(timeStr) * 60;
+        } else if (timeStr.includes('second')) {
+            duration = parseInt(timeStr);
+        }
+    }
+    return duration + 10;
+}
+
+// Enrich picks with player details fetched separately from player_list
+async function enrichPicksWithPlayerData(picks, posMap) {
+    if (!picks || picks.length === 0) return;
+
+    const playerIds = picks.map(p => p.player_id).filter(Boolean);
+    if (playerIds.length === 0) return;
+
+    const { data: playerRows } = await supabase
+        .from('player_list')
+        .select('player_id, name, team, batter_or_pitcher, identity, original_name')
+        .in('player_id', playerIds);
+
+    const playerMap = {};
+    if (playerRows) playerRows.forEach(p => playerMap[p.player_id] = p);
+
+    for (const pick of picks) {
+        if (!pick.player_id) continue;
+        const playerData = playerMap[pick.player_id] || {};
+        pick.player = {
+            name: playerData.name || null,
+            team: playerData.team || null,
+            batter_or_pitcher: playerData.batter_or_pitcher || null,
+            identity: playerData.identity || null,
+            original_name: playerData.original_name || null,
+            position_list: posMap[pick.player_id] || null,
+        };
+    }
+}
+
+// ─── Auto-pick helper ──────────────────────────────────────────────
+
+async function getBestRankedAvailablePlayer(leagueId, takenIdSet, excludePlayerIds = [], requestUrl = null) {
     const { data: allPlayers } = await supabase
         .from('player_list')
-        .select('player_id')
-        .eq('available', true);
+        .select('player_id');
 
+    const allExcluded = new Set([...takenIdSet, ...excludePlayerIds]);
     const validPlayers = allPlayers?.filter(p => !allExcluded.has(p.player_id)) || [];
     if (validPlayers.length === 0) return null;
     const validPlayerIdSet = new Set(validPlayers.map(p => p.player_id));
 
-    // To get the best ranked player, we fetch the dynamic rankings for this league
-    // Need absolute URL for fetch inside server action if URL is provided
     try {
         let rankingsUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/league/${leagueId}/rankings`;
         if (requestUrl) {
@@ -36,62 +95,58 @@ async function getBestRankedAvailablePlayer(leagueId, excludePlayerIds = [], req
         const data = await res.json();
 
         if (data.success && data.rankings && data.rankings.length > 0) {
-            // Rankings is sorted by rank ascending (1st is index 0)
-            const rankedIds = data.rankings.map(r => r.player_id);
-
-            // Find the first valid player in the sorted rankings list
-            for (const pid of rankedIds) {
-                if (validPlayerIdSet.has(pid)) return pid;
+            for (const r of data.rankings) {
+                if (validPlayerIdSet.has(r.player_id)) return r.player_id;
             }
         }
     } catch (e) {
-        console.error('[Draft AutoPick] Failed to fetch rankings for fallback, using random fallback', e);
+        console.error('[Draft AutoPick] Rankings fetch failed, using random fallback', e);
     }
 
-    // Ultimate fallback if rankings fetch fails or no valid players were in the ranking list
     const randomIndex = Math.floor(Math.random() * validPlayers.length);
     return validPlayers[randomIndex].player_id;
 }
+
+// ─── Main GET handler ──────────────────────────────────────────────
 
 export async function GET(request, { params }) {
     const { leagueId } = await params;
 
     try {
-        // 1. Fetch core state in parallel
-        const [statusRes, settingsRes, totalRes, remainingRes] = await Promise.all([
+        // 1. Fetch status + settings (settings from cache)
+        const [statusRes, settings] = await Promise.all([
             supabase
                 .from('league_statuses')
                 .select('status')
                 .eq('league_id', leagueId)
                 .maybeSingle(),
-            supabase
-                .from('league_settings')
-                .select('live_draft_time, live_draft_pick_time, foreigner_active_limit')
-                .eq('league_id', leagueId)
-                .single(),
-            supabase
-                .from('draft_picks')
-                .select('*', { count: 'exact', head: true })
-                .eq('league_id', leagueId),
-            supabase
-                .from('draft_picks')
-                .select('*', { count: 'exact', head: true })
-                .eq('league_id', leagueId)
-                .is('player_id', null)
+            getCachedSettings(leagueId),
         ]);
 
-        const { data: statusData } = statusRes;
-        const { data: settings } = settingsRes;
-
-        let leagueStatus = statusData?.status;
+        let leagueStatus = statusRes.data?.status;
         const now = new Date();
         const startTime = settings?.live_draft_time ? new Date(settings.live_draft_time) : null;
 
-        // 2. Pick counts
-        const totalPicks = totalRes.count || 0;
-        const remainingPicks = remainingRes.count || 0;
+        // 2. Single consolidated query: fetch ALL picks for this league
+        //    No relational join — enriched manually below to avoid FK requirement
+        const { data: allPicks, error: allPicksError } = await supabase
+            .from('draft_picks')
+            .select('pick_id, pick_number, round_number, player_id, manager_id, picked_at, deadline, is_auto_picked')
+            .eq('league_id', leagueId)
+            .order('pick_number', { ascending: true });
 
-        // 3. Logic Determination
+        if (allPicksError) {
+            console.error('[DraftState] Error fetching picks:', allPicksError);
+            return NextResponse.json({ success: false, error: allPicksError.message }, { status: 500 });
+        }
+
+        const allPicksData = allPicks || [];
+
+        // 3. Derive counts and split from the single query result
+        const totalPicks = allPicksData.length;
+        const completedPicks = allPicksData.filter(p => p.player_id != null);
+        const pendingPicks = allPicksData.filter(p => p.player_id == null);
+        const remainingPicks = pendingPicks.length;
 
         // CASE A: No picks generated yet
         if (totalPicks === 0) {
@@ -103,120 +158,66 @@ export async function GET(request, { params }) {
             });
         }
 
-        // CASE B: Picks exist, some remaining
+        // CASE B: Some picks remaining
         if (remainingPicks > 0) {
 
             // Check if we should START the draft
             if (startTime && now >= startTime) {
-                // Time arrived! Ensure status is 'drafting now'
                 if (leagueStatus !== 'drafting now') {
                     console.log('[DraftState] Time arrived. Switching to "drafting now"...');
                     await supabase.from('league_statuses').update({ status: 'drafting now' }).eq('league_id', leagueId);
                     leagueStatus = 'drafting now';
                 }
             } else {
-                // Time NOT arrived yet — always treat as pre-draft
-                // Fetch "taken" picks (usually empty in pre-draft, but robust to check)
-                const [picksRes, nextPicksRes] = await Promise.all([
-                    supabase
-                        .from('draft_picks')
-                        .select('pick_id, pick_number, round_number, player_id, manager_id, picked_at, player:player_list(name, team, batter_or_pitcher, identity, original_name)')
-                        .eq('league_id', leagueId)
-                        .filter('player_id', 'not.is', null)
-                        .order('pick_number', { ascending: true }),
-                    supabase
-                        .from('draft_picks')
-                        .select('pick_id, pick_number, round_number, manager_id')
-                        .eq('league_id', leagueId)
-                        .is('player_id', null)
-                        .order('pick_number', { ascending: true })
-                ]);
+                // Time NOT arrived yet — pre-draft
+                const posMap = await getCachedPositionMap();
+                await enrichPicksWithPlayerData(completedPicks, posMap);
 
-                const { data: picks } = picksRes;
-                const { data: nextPicks } = nextPicksRes;
-
-                if (picks && picks.length > 0) {
-                    const playerIds = picks.map(p => p.player_id).filter(Boolean);
-
-                    const [batterPosRes, pitcherPosRes] = await Promise.all([
-                        supabase.from('v_batter_positions').select('player_id, position_list').in('player_id', playerIds),
-                        supabase.from('v_pitcher_positions').select('player_id, position_list').in('player_id', playerIds)
-                    ]);
-
-                    const posMap = {};
-                    if (batterPosRes.data) batterPosRes.data.forEach(b => posMap[b.player_id] = b.position_list);
-                    if (pitcherPosRes.data) pitcherPosRes.data.forEach(p => posMap[p.player_id] = p.position_list);
-
-                    for (const pick of picks) {
-                        if (pick.player && posMap[pick.player_id]) {
-                            pick.player.position_list = posMap[pick.player_id];
-                        }
-                    }
-                }
+                // Strip full row data from next picks (only need scheduling info)
+                const nextPicksSummary = pendingPicks.map(p => ({
+                    pick_id: p.pick_id,
+                    pick_number: p.pick_number,
+                    round_number: p.round_number,
+                    manager_id: p.manager_id,
+                }));
 
                 return NextResponse.json({
                     status: 'pre-draft',
                     startTime: settings?.live_draft_time,
                     serverTime: now.toISOString(),
                     remainingPicks,
-                    picks: picks || [],
-                    nextPicks: nextPicks || [],
+                    picks: completedPicks,
+                    nextPicks: nextPicksSummary,
                     foreignerActiveLimit: settings?.foreigner_active_limit
                 });
             }
 
-            // If we are here, we are active
+            // ── Active Draft Logic ──
 
-            // Fetch Current Pick Logic
-            let { data: currentPicks } = await supabase
-                .from('draft_picks')
-                .select('*')
-                .eq('league_id', leagueId)
-                .is('player_id', null)
-                .order('pick_number', { ascending: true })
-                .limit(1);
-
-            let currentPick = currentPicks?.[0];
+            let currentPick = pendingPicks[0]; // First unpicked = current
 
             if (!currentPick) {
                 console.warn('[DraftState] Remaining > 0 but currentPick not found?');
                 return NextResponse.json({ status: 'completed' });
             }
 
-            // Get Pick Duration
-            let duration = 60; // Default
-            if (settings?.live_draft_pick_time) {
-                const timeStr = settings.live_draft_pick_time.toLowerCase();
-                if (timeStr.includes('minute')) {
-                    // "1 Minute", "2 Minutes", "3 Minutes" -> 1, 2, 3 * 60
-                    duration = parseInt(timeStr) * 60;
-                } else if (timeStr.includes('second')) {
-                    // "30 Seconds" -> 30
-                    duration = parseInt(timeStr);
-                }
-            }
-            duration += 10;
+            const duration = parseDuration(settings);
+            let autoPickOccurred = false;
 
             // Init Deadline if needed
             if (!currentPick.deadline) {
-                // Calculate deadline from previous pick's picked_at time
                 let baseTime = now;
 
-                // Find the most recent completed pick
-                const { data: lastPick } = await supabase
-                    .from('draft_picks')
-                    .select('picked_at, pick_number, player_id')
-                    .eq('league_id', leagueId)
-                    .not('player_id', 'is', null)
-                    .order('pick_number', { ascending: false })
-                    .limit(1)
-                    .single();
+                // Find the most recent completed pick from our already-fetched data
+                const lastCompleted = completedPicks.length > 0
+                    ? completedPicks[completedPicks.length - 1]
+                    : null;
 
-                if (lastPick?.picked_at) {
-                    baseTime = new Date(lastPick.picked_at).getTime();
+                if (lastCompleted?.picked_at) {
+                    baseTime = new Date(lastCompleted.picked_at).getTime();
                     console.log('[Deadline Calc] Previous Pick:', {
-                        pickNumber: lastPick.pick_number,
-                        pickedAt: lastPick.picked_at,
+                        pickNumber: lastCompleted.pick_number,
+                        pickedAt: lastCompleted.picked_at,
                         baseTime: new Date(baseTime).toISOString()
                     });
                 } else {
@@ -227,12 +228,13 @@ export async function GET(request, { params }) {
                 const diff = Math.floor((nextDeadline.getTime() - now) / 1000);
 
                 console.log('[Deadline Calc] Calculation:', {
-                    previousPickTime: lastPick?.picked_at || 'N/A',
-                    nowTime: new Date(now).toISOString(),
+                    previousPickTime: lastCompleted?.picked_at || 'N/A',
+                    nowTime: now.toISOString(),
                     duration: `${duration}s`,
                     calculatedDeadline: nextDeadline.toISOString(),
                     diff: `${diff}s`
                 });
+
                 const { data: updated, error: updateError } = await supabase
                     .from('draft_picks')
                     .update({ deadline: nextDeadline.toISOString() })
@@ -247,7 +249,6 @@ export async function GET(request, { params }) {
                 if (updated) {
                     currentPick = updated;
                 } else {
-                    // Fallback: Force local update so UI receives the deadline even if DB read-back failed
                     currentPick.deadline = nextDeadline.toISOString();
                 }
             }
@@ -255,42 +256,32 @@ export async function GET(request, { params }) {
             else if (new Date(currentPick.deadline) < now) {
                 console.log(`[Draft] Pick ${currentPick.pick_number} expired. Auto-picking...`);
 
-                // 0. Check Foreigner Limit Status for this Manager
+                // Build taken set from our already-fetched data (no extra query!)
+                const takenIdSet = new Set(completedPicks.map(p => p.player_id));
+
+                // Check Foreigner Limit
                 const foreignerLimit = settings?.foreigner_active_limit;
                 let excludeForeigners = false;
                 let foreignIds = new Set();
 
                 if (foreignerLimit !== null && foreignerLimit !== undefined) {
-                    // Count current foreigners for this manager
-                    const { data: myPicks } = await supabase
-                        .from('draft_picks')
-                        .select('player_id, player:player_list(identity)')
-                        .eq('league_id', leagueId)
-                        .eq('manager_id', currentPick.manager_id)
-                        .not('player_id', 'is', null);
-
-                    const myForeignerCount = myPicks?.filter(p => {
+                    const myForeignerCount = completedPicks.filter(p => {
+                        if (String(p.manager_id) !== String(currentPick.manager_id)) return false;
                         const id = (p.player?.identity || '').toLowerCase();
                         return id === 'foreigner' || id === 'f';
-                    }).length || 0;
+                    }).length;
 
                     if (myForeignerCount >= foreignerLimit) {
                         excludeForeigners = true;
-                        // Fetch all foreign player IDs to exclude
-                        // Or just filter checks dynamically.
-                        // For random fallback we need IDs if we want to update the helper efficiently,
-                        // or better: update helper to filter by property too? 
-                        // Actually, easiest is to fetch all foreign IDs once if needed.
                         const { data: fPlayers } = await supabase
                             .from('player_list')
                             .select('player_id')
                             .or('identity.ilike.foreigner,identity.ilike.f');
-
                         fPlayers?.forEach(fp => foreignIds.add(fp.player_id));
                     }
                 }
 
-                // 1. Check Draft Queue
+                // Check Draft Queue
                 const { data: queueItems } = await supabase
                     .from('draft_queues')
                     .select('player_id, queue_id, player:player_list(identity)')
@@ -302,18 +293,9 @@ export async function GET(request, { params }) {
                 let usedQueueId = null;
 
                 if (queueItems && queueItems.length > 0) {
-                    const { data: taken } = await supabase
-                        .from('draft_picks')
-                        .select('player_id')
-                        .eq('league_id', leagueId)
-                        .not('player_id', 'is', null);
-                    const takenSet = new Set(taken?.map(p => p.player_id) || []);
-
                     for (const item of queueItems) {
-                        // Skip if taken
-                        if (takenSet.has(item.player_id)) continue;
+                        if (takenIdSet.has(item.player_id)) continue;
 
-                        // Skip if foreigner limit reached and player is foreigner
                         if (excludeForeigners) {
                             const pIdentity = (item.player?.identity || '').toLowerCase();
                             if (pIdentity === 'foreigner' || pIdentity === 'f') {
@@ -329,15 +311,13 @@ export async function GET(request, { params }) {
                     }
                 }
 
-                // 2. Ranking Fallback
+                // Ranking Fallback
                 if (!pickedPlayerId) {
                     const exclusions = excludeForeigners ? Array.from(foreignIds) : [];
-                    pickedPlayerId = await getBestRankedAvailablePlayer(leagueId, exclusions, request.url);
+                    pickedPlayerId = await getBestRankedAvailablePlayer(leagueId, takenIdSet, exclusions, request.url);
                 }
 
                 if (pickedPlayerId) {
-                    // Use optimistic locking: only update if player_id is still NULL
-                    // This prevents race conditions when multiple requests try to auto-pick
                     const { data: updateResult, error: updateError } = await supabase
                         .from('draft_picks')
                         .update({
@@ -346,14 +326,12 @@ export async function GET(request, { params }) {
                             picked_at: now.toISOString()
                         })
                         .eq('pick_id', currentPick.pick_id)
-                        .is('player_id', null)  // Critical: only update if still NULL
+                        .is('player_id', null)
                         .select();
 
-                    // Check if update was successful (row was actually updated)
                     if (updateError || !updateResult || updateResult.length === 0) {
                         console.log(`[Draft] Pick ${currentPick.pick_number} already picked by another request. Skipping.`);
-                        // Another request already handled this pick, just continue
-                        // Re-fetch current state
+                        // Re-fetch just the next pending pick (lightweight)
                         const { data: refreshPicks } = await supabase
                             .from('draft_picks')
                             .select('*')
@@ -367,20 +345,15 @@ export async function GET(request, { params }) {
                         }
                     } else {
                         console.log(`[Draft] Successfully auto-picked player ${pickedPlayerId} for pick ${currentPick.pick_number}`);
+                        autoPickOccurred = true;
 
                         if (usedQueueId) await supabase.from('draft_queues').delete().eq('queue_id', usedQueueId);
 
-                        // Fetch next immediately to update return
-                        const { data: nextPicks } = await supabase
-                            .from('draft_picks')
-                            .select('*')
-                            .eq('league_id', leagueId)
-                            .is('player_id', null)
-                            .order('pick_number', { ascending: true })
-                            .limit(1);
+                        // Find next pending pick from our data (adjust for the one we just completed)
+                        const nextPending = pendingPicks.filter(p => p.pick_id !== currentPick.pick_id);
 
-                        if (nextPicks && nextPicks.length > 0) {
-                            currentPick = nextPicks[0];
+                        if (nextPending.length > 0) {
+                            currentPick = nextPending[0];
                             const nextDeadline = new Date(now.getTime() + duration * 1000);
                             const { data: nextUpdated, error: nextUpError } = await supabase
                                 .from('draft_picks')
@@ -397,112 +370,66 @@ export async function GET(request, { params }) {
                                 currentPick.deadline = nextDeadline.toISOString();
                             }
                         } else {
-                            // Finished just now
                             console.log('[DraftState] Last pick made. Finished.');
-                            // await supabase.from('league_statuses').update({ status: 'post-draft & pre-season' }).eq('league_id', leagueId);
                             return NextResponse.json({ status: 'completed' });
                         }
                     }
                 }
             }
 
-            // Return Active State
-            const [picksRes, nextPicksRes] = await Promise.all([
-                supabase
+            // ── Return Active State ──
+            // Re-fetch completed picks if auto-pick occurred so the new pick is included
+            let finalCompletedPicks = completedPicks;
+            let finalPendingPicks = pendingPicks;
+
+            if (autoPickOccurred) {
+                const { data: freshPicks } = await supabase
                     .from('draft_picks')
-                    .select('pick_id, pick_number, round_number, player_id, manager_id, picked_at, player:player_list(name, team, batter_or_pitcher, identity, original_name)')
+                    .select('pick_id, pick_number, round_number, player_id, manager_id, picked_at, deadline, is_auto_picked, player:player_list(name, team, batter_or_pitcher, identity, original_name)')
                     .eq('league_id', leagueId)
-                    .filter('player_id', 'not.is', null)
-                    .order('pick_number', { ascending: true }),
-                supabase
-                    .from('draft_picks')
-                    .select('pick_id, pick_number, round_number, manager_id')
-                    .eq('league_id', leagueId)
-                    .is('player_id', null)
-                    .order('pick_number', { ascending: true })
-            ]);
+                    .order('pick_number', { ascending: true });
 
-            const { data: picks, error: picksError } = picksRes;
-            const { data: nextPicks, error: nextPicksError } = nextPicksRes;
-
-            // Optimize: Batch fetch positions
-            if (picks && picks.length > 0) {
-                const playerIds = picks.map(p => p.player_id).filter(Boolean);
-
-                // Fetch all relevant positions in parallel
-                const [batterPosRes, pitcherPosRes] = await Promise.all([
-                    supabase.from('v_batter_positions').select('player_id, position_list').in('player_id', playerIds),
-                    supabase.from('v_pitcher_positions').select('player_id, position_list').in('player_id', playerIds)
-                ]);
-
-                const batterPos = batterPosRes?.data;
-                const pitcherPos = pitcherPosRes?.data;
-
-                const posMap = {};
-                if (batterPos) batterPos.forEach(b => posMap[b.player_id] = b.position_list);
-                if (pitcherPos) pitcherPos.forEach(p => posMap[p.player_id] = p.position_list);
-
-                for (const pick of picks) {
-                    if (pick.player && posMap[pick.player_id]) {
-                        pick.player.position_list = posMap[pick.player_id];
-                    }
+                if (freshPicks) {
+                    finalCompletedPicks = freshPicks.filter(p => p.player_id != null);
+                    finalPendingPicks = freshPicks.filter(p => p.player_id == null);
                 }
             }
 
-            if (picksError) {
-                console.error('[DraftState] Error fetching picks:', picksError);
-            }
+            // Enrich with cached positions
+            const posMap = await getCachedPositionMap();
+            await enrichPicksWithPlayerData(finalCompletedPicks, posMap);
 
-            if (nextPicksError) {
-                console.error('[DraftState] Error fetching nextPicks:', nextPicksError);
-            }
+            const nextPicksSummary = finalPendingPicks.map(p => ({
+                pick_id: p.pick_id,
+                pick_number: p.pick_number,
+                round_number: p.round_number,
+                manager_id: p.manager_id,
+            }));
 
             return NextResponse.json({
                 status: 'active',
                 currentPick,
-                picks: picks || [],
-                nextPicks: nextPicks || [],
+                picks: finalCompletedPicks,
+                nextPicks: nextPicksSummary,
                 serverTime: now.toISOString(),
                 foreignerActiveLimit: settings?.foreigner_active_limit
             });
         }
 
-        // CASE C: Total > 0 but Remaining == 0 -> Finished
+        // CASE C: All picks completed
         if (remainingPicks === 0 && totalPicks > 0) {
             if (leagueStatus !== 'post-draft & pre-season' && leagueStatus !== 'in-season') {
                 console.log('[DraftState] All picks done. Updating to post-draft & pre-season.');
-                // await supabase.from('league_statuses').update({ status: 'post-draft & pre-season' }).eq('league_id', leagueId);
             }
 
-            const { data: picks } = await supabase
-                .from('draft_picks')
-                .select('pick_id, pick_number, round_number, player_id, manager_id, picked_at, player:player_list(name, team, batter_or_pitcher, identity, original_name)')
-                .eq('league_id', leagueId)
-                .filter('player_id', 'not.is', null)
-                .order('pick_number', { ascending: true });
+            const posMap = await getCachedPositionMap();
+            await enrichPicksWithPlayerData(completedPicks, posMap);
 
-            // Optimize: Batch fetch positions
-            if (picks && picks.length > 0) {
-                const playerIds = picks.map(p => p.player_id).filter(Boolean);
-
-                // Fetch all relevant positions in parallel
-                const [{ data: batterPos }, { data: pitcherPos }] = await Promise.all([
-                    supabase.from('v_batter_positions').select('player_id, position_list').in('player_id', playerIds),
-                    supabase.from('v_pitcher_positions').select('player_id, position_list').in('player_id', playerIds)
-                ]);
-
-                const posMap = {};
-                if (batterPos) batterPos.forEach(b => posMap[b.player_id] = b.position_list);
-                if (pitcherPos) pitcherPos.forEach(p => posMap[p.player_id] = p.position_list);
-
-                for (const pick of picks) {
-                    if (pick.player && posMap[pick.player_id]) {
-                        pick.player.position_list = posMap[pick.player_id];
-                    }
-                }
-            }
-
-            return NextResponse.json({ status: 'completed', picks: picks || [], foreignerActiveLimit: settings?.foreigner_active_limit });
+            return NextResponse.json({
+                status: 'completed',
+                picks: completedPicks,
+                foreignerActiveLimit: settings?.foreigner_active_limit
+            });
         }
 
         return NextResponse.json({ status: 'unknown', message: 'Unknown State' });

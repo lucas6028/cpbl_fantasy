@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabase';
 import AmericanDatePicker from '@/components/AmericanDatePicker';
@@ -215,6 +215,13 @@ function SchedulePreview({ settings, onValidationChange, onScheduleChange }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Store callbacks in refs so they never need to be in useEffect deps,
+  // which would cause an infinite loop since parent recreates them each render.
+  const onValidationChangeRef = useRef(onValidationChange);
+  const onScheduleChangeRef = useRef(onScheduleChange);
+  useEffect(() => { onValidationChangeRef.current = onValidationChange; });
+  useEffect(() => { onScheduleChangeRef.current = onScheduleChange; });
+
   useEffect(() => {
     const fetchAllSchedule = async () => {
       try {
@@ -246,7 +253,7 @@ function SchedulePreview({ settings, onValidationChange, onScheduleChange }) {
   useEffect(() => {
     if (!allScheduleData || allScheduleData.length === 0) {
       setFilteredSchedule([]);
-      if (onScheduleChange) onScheduleChange([]);
+      if (onScheduleChangeRef.current) onScheduleChangeRef.current([]);
       return;
     }
 
@@ -256,7 +263,7 @@ function SchedulePreview({ settings, onValidationChange, onScheduleChange }) {
 
     if (!startScoringOn) {
       setFilteredSchedule([]);
-      if (onScheduleChange) onScheduleChange([]);
+      if (onScheduleChangeRef.current) onScheduleChangeRef.current([]);
       return;
     }
 
@@ -282,7 +289,7 @@ function SchedulePreview({ settings, onValidationChange, onScheduleChange }) {
 
     if (!startDate) {
       setFilteredSchedule([]);
-      if (onScheduleChange) onScheduleChange([]);
+      if (onScheduleChangeRef.current) onScheduleChangeRef.current([]);
       return;
     }
 
@@ -383,21 +390,22 @@ function SchedulePreview({ settings, onValidationChange, onScheduleChange }) {
         if (allPlayoffWeeks.length < requiredPlayoffWeeks) {
           const errorMsg = `Playoff schedule cannot complete by Week 22. Starting from ${playoffsStart}, only ${allPlayoffWeeks.length} week(s) available but ${requiredPlayoffWeeks} week(s) required. Week 23 is reserved for makeup games.`;
           setScheduleValidationError(errorMsg);
-          if (onValidationChange) onValidationChange(errorMsg);
+          if (onValidationChangeRef.current) onValidationChangeRef.current(errorMsg);
         } else {
           setScheduleValidationError('');
-          if (onValidationChange) onValidationChange('');
+          if (onValidationChangeRef.current) onValidationChangeRef.current('');
         }
       }
     } else {
       setScheduleValidationError('');
-      if (onValidationChange) onValidationChange('');
+      if (onValidationChangeRef.current) onValidationChangeRef.current('');
     }
 
     setFilteredSchedule(scheduleWithTypes);
-    if (onScheduleChange) onScheduleChange(scheduleWithTypes);
+    if (onScheduleChangeRef.current) onScheduleChangeRef.current(scheduleWithTypes);
 
-  }, [allScheduleData, settings, onValidationChange]);
+  // Only re-run when actual data or settings content changes — NOT on callback identity changes
+  }, [allScheduleData, settings]);
 
   if (loading) {
     return (
@@ -535,6 +543,11 @@ const CreateLeaguePage = () => {
   const [createLeagueDisabled, setCreateLeagueDisabled] = useState(false);
   const [quotaDisabled, setQuotaDisabled] = useState(false); // New state to track if quota-specific disabling is needed
   const [draftTimeConflicts, setDraftTimeConflicts] = useState([]);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     const fetchCreateLeagueLock = async () => {
@@ -594,13 +607,13 @@ const CreateLeaguePage = () => {
     fetchUserQuota();
   }, []);
 
-  const handleScheduleValidation = (error) => {
+  const handleScheduleValidation = useCallback((error) => {
     setScheduleError(error);
-  };
+  }, []);
 
-  const handleScheduleChange = (data) => {
+  const handleScheduleChange = useCallback((data) => {
     setScheduleData(data);
-  };
+  }, []);
 
   const handleSettingChange = (section, key, value) => {
     setSettings((prev) => {
@@ -683,12 +696,11 @@ const CreateLeaguePage = () => {
     if (liveDraftTime && startScoringOn && settings.general['Draft Type'] === 'Live Draft') {
       const draftDateTime = new Date(liveDraftTime);
       if (!isNaN(draftDateTime.getTime())) {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        tomorrow.setHours(0, 0, 0, 0);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-        if (draftDateTime < tomorrow) {
-          errors.draftTimeError = 'Live Draft Time must be at least tomorrow (00:00)';
+        if (draftDateTime < today) {
+          errors.draftTimeError = 'Live Draft Time must be at least today (00:00)';
         } else if (!errors.draftTimeError) {
           const parts = startScoringOn.split('.');
           if (parts.length === 3) {
@@ -723,7 +735,6 @@ const CreateLeaguePage = () => {
   const minDraftDateTime = () => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() + 1);
     const pad = (n) => `${n}`.padStart(2, '0');
     const y = d.getFullYear();
     const m = pad(d.getMonth() + 1);
@@ -990,6 +1001,8 @@ const CreateLeaguePage = () => {
     }
   };
 
+  if (!isMounted) return null; // Avoids server hydration mismatches with dynamic dates
+
   if (new Date() >= new Date('2026-04-16')) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-8">
@@ -1029,18 +1042,6 @@ const CreateLeaguePage = () => {
 
   return (
     <>
-      <style jsx>{`
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes scaleIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
-        .animate-scaleIn { animation: scaleIn 0.4s ease-out; }
-        @media (max-width: 639px) {
-          .settings-table tr { display: flex; flex-direction: column; }
-          .settings-table td { width: 100% !important; padding-left: 1rem !important; padding-right: 1rem !important; }
-          .settings-table td:first-child { padding-bottom: 0.25rem !important; }
-          .settings-table td:last-child { padding-top: 0.25rem !important; }
-        }
-      `}</style>
 
       {showSuccessAnimation && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn">
