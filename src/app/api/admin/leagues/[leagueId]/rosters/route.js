@@ -60,7 +60,8 @@ export async function GET(request, { params }) {
                     name,
                     team,
                     batter_or_pitcher,
-                    identity
+                    identity,
+                    position_list
                 )
             `)
             .eq('league_id', leagueId)
@@ -125,7 +126,7 @@ export async function GET(request, { params }) {
         };
 
         const formattedRoster = (rosterData || []).map(item => {
-            const defaultPos = item.player?.batter_or_pitcher === 'pitcher' ? 'P' : 'Util';
+            const defaultPos = item.player?.position_list || null;
             const posList = positionMap[item.player_id] || defaultPos;
             const team = item.player?.team;
             const gameInfo = team ? gameMap[team] : null;

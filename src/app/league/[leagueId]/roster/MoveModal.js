@@ -15,7 +15,7 @@ export default function MoveModal({
     if (!isOpen || !player) return null;
 
     // Helper: Is Position Active (Non-NA/Minor)
-    const isActivePos = (pos) => !['NA', 'MINOR', 'MN', 'IL', 'DL'].includes(String(pos || '').toUpperCase());
+    const isActivePos = (pos) => !['BN', 'NA', 'MINOR', 'MN', 'IL', 'DL'].includes(String(pos || '').toUpperCase());
 
     const isForeigner = (identity) => {
         const normalized = String(identity || '').toLowerCase();
@@ -39,9 +39,6 @@ export default function MoveModal({
         const positions = swapPlayer.position_list
             ? swapPlayer.position_list.split(',').map(p => p.trim()).filter(Boolean)
             : [];
-
-        if (swapPlayer.batter_or_pitcher === 'batter') positions.push('Util');
-        if (swapPlayer.batter_or_pitcher === 'pitcher') positions.push('P');
         positions.push('BN');
 
         return [...new Set(positions)].includes(player.position);
@@ -131,11 +128,7 @@ export default function MoveModal({
         // 2. Add 'BN' (Always available)
         if (!distinctPositions.includes('BN')) distinctPositions.push('BN');
 
-        // 3. Add 'Util'/ 'P'
-        if (player.batter_or_pitcher === 'batter' && enabledLeaguePositions.has('Util') && !distinctPositions.includes('Util')) distinctPositions.push('Util');
-        if (player.batter_or_pitcher === 'pitcher' && enabledLeaguePositions.has('P') && !distinctPositions.includes('P')) distinctPositions.push('P');
-
-        // 4. Add 'NA'
+        // 3. Add 'NA'
         const status = (player.real_life_status || '').toUpperCase();
         const isNA = status.includes('MN') || status.includes('MINOR') || status === 'NA';
         const isDR = status.includes('DEREGISTERED') || status === 'DR' || status === 'D';
@@ -257,7 +250,7 @@ export default function MoveModal({
                                         const validation = validateMove(pos, occ.player_id);
                                         return (
                                             <button
-                                                key={`${pos}-${occ.id}`}
+                                                key={`${pos}-${occ.player_id}`}
                                                 onClick={() => !validation.isValid ? null : onMove(pos, occ.player_id)}
                                                 className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all group ${!validation.isValid
                                                     ? 'bg-red-900/40 border-red-500/50 cursor-not-allowed opacity-80'

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import supabase from '@/lib/supabase';
+import supabase from '@/lib/supabaseServer';
 
 export async function POST(request, { params }) {
     const { leagueId } = await params;
@@ -10,6 +10,14 @@ export async function POST(request, { params }) {
 
         if (!managerId || !playerId || !targetPosition || !gameDate) {
             return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 });
+        }
+
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(String(playerId))) {
+            return NextResponse.json({ success: false, error: 'Invalid playerId format' }, { status: 400 });
+        }
+        if (swapWithPlayerId && !uuidRegex.test(String(swapWithPlayerId))) {
+            return NextResponse.json({ success: false, error: 'Invalid swapWithPlayerId format' }, { status: 400 });
         }
 
         const { data: rosterPosData, error: rosterPosError } = await supabase
@@ -113,23 +121,40 @@ export async function POST(request, { params }) {
         }
 
         // --- 2. Fetch Current Roster State ---
-        const { data: currentRosterData, error: rosterError } = await supabase
+        const { data: currentRosterRows, error: rosterError } = await supabase
             .from('league_roster_positions')
-            .select(`
-                player_id, 
-                position,
-                player:player_list (
-                    player_id,
-                    name,
-                    identity,
-                    batter_or_pitcher
-                )
-            `)
+            .select('player_id, position')
             .eq('league_id', leagueId)
             .eq('manager_id', managerId)
             .eq('game_date', gameDate);
 
         if (rosterError) throw rosterError;
+
+        const rosterPlayerIds = [...new Set((currentRosterRows || []).map(r => r.player_id).filter(Boolean))];
+        let playerMap = {};
+
+        if (rosterPlayerIds.length > 0) {
+            const { data: playerRows, error: playerRowsError } = await supabase
+                .from('player_list')
+                .select('player_id, name, identity, batter_or_pitcher')
+                .in('player_id', rosterPlayerIds);
+
+            if (playerRowsError) throw playerRowsError;
+
+            playerMap = (playerRows || []).reduce((acc, p) => {
+                acc[p.player_id] = p;
+                return acc;
+            }, {});
+        }
+
+        const currentRosterDataRaw = (currentRosterRows || []).map(row => ({
+            ...row,
+            player: playerMap[row.player_id] || null,
+        }));
+
+        const currentRosterData = Array.from(
+            new Map(currentRosterDataRaw.map(row => [row.player_id, row])).values()
+        );
 
         // --- 3. Validate Main Player Eligibility for NA ---
         if (targetPosition === 'NA') {
@@ -151,7 +176,7 @@ export async function POST(request, { params }) {
 
         // --- 4. Identify Target Occupants ---
         // Find existing players in the target position
-        const occupants = currentRosterData.filter(p => p.position === targetPosition);
+        const occupants = currentRosterData.filter(p => p.position === targetPosition && p.player_id !== playerId);
 
         // --- 5. Determine Logic: Move vs Swap ---
         const updates = [];
@@ -186,7 +211,7 @@ export async function POST(request, { params }) {
                 return NextResponse.json({ success: false, error: 'Slot is full. Please select a player to swap.' }, { status: 400 });
             }
 
-            console.log(`[MoveRoster] Target Occupant Identified: ${targetOccupant.player_id} (${targetOccupant.player.name})`);
+            console.log(`[MoveRoster] Target Occupant Identified: ${targetOccupant.player_id} (${targetOccupant.player?.name || 'Unknown'})`);
 
             // Check if Target Occupant can go to `currentPosition`
             // If currentPosition is 'BN', answer is always YES.
@@ -221,12 +246,6 @@ export async function POST(request, { params }) {
 
             // 3. Add Implicit Positions
             occupantPositions.push('BN'); // Everyone can go to BN
-
-            if (targetOccupant.player.batter_or_pitcher === 'batter') {
-                occupantPositions.push('Util');
-            } else if (targetOccupant.player.batter_or_pitcher === 'pitcher') {
-                occupantPositions.push('P');
-            }
             // Add NA if eligible
             if (checkEligibleForNa(targetStatus)) {
                 occupantPositions.push('NA');
@@ -273,17 +292,36 @@ export async function POST(request, { params }) {
         for (const update of updates) {
             console.log(`[MoveRoster] Updating ${update.player_id} to position ${update.new_position} for dates >= ${gameDate}`);
 
-            const { error: updateError } = await supabase
+            const { data: updatedRows, error: updateError } = await supabase
                 .from('league_roster_positions')
                 .update({ position: update.new_position })
                 .eq('league_id', leagueId)
                 .eq('manager_id', managerId)
                 .eq('player_id', update.player_id)
-                .gte('game_date', gameDate);
+                .gte('game_date', gameDate)
+                .select('player_id, game_date');
 
             if (updateError) {
                 console.error('❌ Update Error:', updateError);
                 return NextResponse.json({ success: false, error: updateError.message }, { status: 500 });
+            }
+
+            // If no daily rows exist yet, create an override row for selected date.
+            if (!updatedRows || updatedRows.length === 0) {
+                const { error: upsertError } = await supabase
+                    .from('league_roster_positions')
+                    .upsert({
+                        league_id: leagueId,
+                        manager_id: managerId,
+                        player_id: update.player_id,
+                        game_date: gameDate,
+                        position: update.new_position,
+                    }, { onConflict: 'league_id,manager_id,player_id,game_date' });
+
+                if (upsertError) {
+                    console.error('❌ Upsert Override Error:', upsertError);
+                    return NextResponse.json({ success: false, error: upsertError.message }, { status: 500 });
+                }
             }
 
             console.log(`[MoveRoster] ✅ Successfully updated ${update.player_id}`);

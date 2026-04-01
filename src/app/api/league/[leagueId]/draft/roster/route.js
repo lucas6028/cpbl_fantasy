@@ -31,7 +31,7 @@ export async function GET(request, { params }) {
             const [{ data: batterPositions }, { data: pitcherPositions }, { data: playerRows }] = await Promise.all([
                 supabase.from('v_batter_positions').select('player_id, position_list').in('player_id', playerIds),
                 supabase.from('v_pitcher_positions').select('player_id, position_list').in('player_id', playerIds),
-                supabase.from('player_list').select('player_id, name, team, batter_or_pitcher, identity, original_name').in('player_id', playerIds)
+                supabase.from('player_list').select('player_id, name, team, batter_or_pitcher, identity, original_name, position_list').in('player_id', playerIds)
             ]);
 
             if (batterPositions) batterPositions.forEach(bp => positionMap[bp.player_id] = bp.position_list);
@@ -45,7 +45,7 @@ export async function GET(request, { params }) {
                 ...item,
                 name: playerInfo.name,
                 team: playerInfo.team,
-                position_list: positionMap[item.player_id] || (playerInfo.batter_or_pitcher === 'pitcher' ? 'P' : 'Util'),
+                position_list: positionMap[item.player_id] || playerInfo.position_list || null,
                 batter_or_pitcher: playerInfo.batter_or_pitcher,
                 identity: playerInfo.identity,
                 original_name: playerInfo.original_name

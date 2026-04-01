@@ -1245,7 +1245,9 @@ export default function LeaguePage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
-                      {standings.map((team, index) => (
+                      {standings.map((team, index) => {
+                        const streak = String(team?.streak || '-');
+                        return (
                         <tr key={team.manager_id} className="hover:bg-purple-500/10 transition-colors">
                           <td className="px-6 py-4">
                             <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm ${team.rank === 1 ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' :
@@ -1276,12 +1278,12 @@ export default function LeaguePage() {
                             <span className="font-mono text-purple-300 font-semibold">{team.win_pct.toFixed(3)}</span>
                           </td>
                           <td className="px-6 py-4 text-center">
-                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${team.streak.startsWith('W') ? 'bg-green-500/20 text-green-300 border border-green-500/30' :
-                              team.streak.startsWith('L') ? 'bg-red-500/20 text-red-300 border border-red-500/30' :
-                                team.streak.startsWith('T') ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' :
+                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${streak.startsWith('W') ? 'bg-green-500/20 text-green-300 border border-green-500/30' :
+                              streak.startsWith('L') ? 'bg-red-500/20 text-red-300 border border-red-500/30' :
+                                streak.startsWith('T') ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' :
                                   'bg-slate-700/40 text-slate-400'
                               }`}>
-                              {team.streak}
+                              {streak}
                             </span>
                           </td>
                           <td className="px-6 py-4 text-center">
@@ -1290,14 +1292,16 @@ export default function LeaguePage() {
                             </span>
                           </td>
                         </tr>
-                      ))}
+                      )})}
                     </tbody>
                   </table>
                 </div>
 
                 {/* Mobile Cards */}
                 <div className="md:hidden divide-y divide-white/5">
-                  {standings.map((team) => (
+                  {standings.map((team) => {
+                    const streak = String(team?.streak || '-');
+                    return (
                     <div key={team.manager_id} className="px-3 py-2.5 hover:bg-purple-500/10 transition-colors">
                       <div className="flex items-center gap-2">
                         <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold flex-shrink-0 ${team.rank === 1 ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' :
@@ -1314,12 +1318,12 @@ export default function LeaguePage() {
                         </div>
                         <span className="font-mono text-cyan-300 text-xs font-semibold flex-shrink-0">{team.record_display}</span>
                         <span className="font-mono text-purple-300 text-xs font-semibold flex-shrink-0">{team.win_pct.toFixed(3)}</span>
-                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 ${team.streak.startsWith('W') ? 'bg-green-500/20 text-green-300' :
-                          team.streak.startsWith('L') ? 'bg-red-500/20 text-red-300' :
-                            team.streak.startsWith('T') ? 'bg-yellow-500/20 text-yellow-300' :
+                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 ${streak.startsWith('W') ? 'bg-green-500/20 text-green-300' :
+                          streak.startsWith('L') ? 'bg-red-500/20 text-red-300' :
+                            streak.startsWith('T') ? 'bg-yellow-500/20 text-yellow-300' :
                               'bg-slate-700/40 text-slate-400'
                           }`}>
-                          {team.streak}
+                          {streak}
                         </span>
                         <div className="flex flex-col items-center flex-shrink-0 min-w-[30px]">
                           <span className="text-[8px] text-slate-500 uppercase tracking-tighter leading-none mb-0.5">Waiver</span>
@@ -1327,7 +1331,7 @@ export default function LeaguePage() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                  )})}
                 </div>
               </div>
             )}

@@ -240,7 +240,7 @@ export async function GET(request) {
           playersData.forEach(p => {
             let pos = posMap[p.player_id];
             if (!pos) {
-              pos = p.batter_or_pitcher === 'pitcher' ? 'P' : 'Util';
+              pos = p.position_list || null;
             }
             playerMap[p.player_id] = {
               ...p,

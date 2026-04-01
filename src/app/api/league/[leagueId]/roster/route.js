@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import supabase from '@/lib/supabase';
+import supabase from '@/lib/supabaseServer';
 
 export async function GET(request, { params }) {
     const { leagueId } = await params;
@@ -107,25 +107,88 @@ export async function GET(request, { params }) {
         }
 
         // 4. Fetch Roster with Clamped Date
-        const { data: rosterData, error: rosterError } = await supabase
-            .from('league_roster_positions')
-            .select(`
-        *,
-        player:player_list (
-          player_id,
-          name,
-          team,
-          batter_or_pitcher,
-          identity
-        )
-      `)
-            .eq('league_id', leagueId)
-            .eq('manager_id', managerId)
-            .eq('game_date', gameDateStr);
+                const { data: rosterData, error: rosterError } = await supabase
+                        .from('league_roster_positions')
+                        .select('*')
+                        .eq('league_id', leagueId)
+                        .eq('manager_id', managerId)
+                        .eq('game_date', gameDateStr);
 
         if (rosterError) {
             console.error('Supabase error:', rosterError);
             return NextResponse.json({ success: false, error: 'Database Error', details: rosterError.message }, { status: 500 });
+        }
+
+        let effectiveRosterData = rosterData || [];
+
+        // Build base roster from ownership/draft, then overlay date-specific position rows.
+        let baseRosterData = [];
+        const { data: ownershipRows, error: ownershipError } = await supabase
+            .from('league_player_ownership')
+            .select('player_id, manager_id')
+            .eq('league_id', leagueId)
+            .eq('manager_id', managerId)
+            .ilike('status', 'on team');
+
+        if (ownershipError) {
+            console.error('Error fetching ownership fallback:', ownershipError);
+        } else if (ownershipRows && ownershipRows.length > 0) {
+            baseRosterData = ownershipRows.map(row => ({
+                league_id: leagueId,
+                manager_id: row.manager_id,
+                player_id: row.player_id,
+                game_date: gameDateStr,
+                position: 'BN'
+            }));
+        }
+
+        // If ownership is empty, fallback to completed draft picks.
+        if (baseRosterData.length === 0) {
+            const { data: draftedRows, error: draftedError } = await supabase
+                .from('draft_picks')
+                .select('player_id, manager_id')
+                .eq('league_id', leagueId)
+                .eq('manager_id', managerId)
+                .not('player_id', 'is', null);
+
+            if (draftedError) {
+                console.error('Error fetching draft fallback:', draftedError);
+            } else if (draftedRows && draftedRows.length > 0) {
+                baseRosterData = draftedRows.map(row => ({
+                    league_id: leagueId,
+                    manager_id: row.manager_id,
+                    player_id: row.player_id,
+                    game_date: gameDateStr,
+                    position: 'BN'
+                }));
+            }
+        }
+
+        if (baseRosterData.length > 0) {
+            const merged = new Map(baseRosterData.map(r => [r.player_id, r]));
+            (effectiveRosterData || []).forEach(r => {
+                merged.set(r.player_id, { ...merged.get(r.player_id), ...r });
+            });
+            effectiveRosterData = Array.from(merged.values());
+        }
+
+        const playerIds = [...new Set((effectiveRosterData || []).map(r => r.player_id).filter(Boolean))];
+        let playerMap = {};
+
+        if (playerIds.length > 0) {
+            const { data: playerRows, error: playerError } = await supabase
+                .from('player_list')
+                .select('player_id, name, team, batter_or_pitcher, identity, position_list')
+                .in('player_id', playerIds);
+
+            if (playerError) {
+                console.error('Error fetching player data:', playerError);
+            } else {
+                playerMap = (playerRows || []).reduce((acc, p) => {
+                    acc[p.player_id] = p;
+                    return acc;
+                }, {});
+            }
         }
 
         // --- ALIGNMENT WITH playerslist API ---
@@ -137,7 +200,7 @@ export async function GET(request, { params }) {
             .from('v_batter_positions')
             .select('player_id, position_list');
 
-        if (batterError) {
+        if (batterError && batterError.code !== 'PGRST205') {
             console.error('Error fetching batter positions:', batterError);
         }
 
@@ -146,7 +209,7 @@ export async function GET(request, { params }) {
             .from('v_pitcher_positions')
             .select('player_id, position_list');
 
-        if (pitcherError) {
+        if (pitcherError && pitcherError.code !== 'PGRST205') {
             console.error('Error fetching pitcher positions:', pitcherError);
         }
 
@@ -239,20 +302,22 @@ export async function GET(request, { params }) {
             });
         }
 
-        const roster = (rosterData || []).map(item => {
-            const defaultPos = item.player?.batter_or_pitcher === 'pitcher' ? 'P' : 'Util';
+        const roster = (effectiveRosterData || []).map(item => {
+            const player = playerMap[item.player_id] || null;
+            const defaultPos = player?.position_list || null;
             // Use the map populated from the full views
             const posList = positionMap[item.player_id] || defaultPos;
-            const team = item.player?.team;
+            const team = player?.team;
             const gameInfo = team ? gameMap[team] : null;
 
             return {
                 ...item,
-                name: item.player?.name,
+                player,
+                name: player?.name,
                 team: team,
                 position_list: posList,
-                batter_or_pitcher: item.player?.batter_or_pitcher,
-                identity: item.player?.identity,
+                batter_or_pitcher: player?.batter_or_pitcher,
+                identity: player?.identity,
                 real_life_status: statusMap[item.player_id] || 'UNREGISTERED',
                 game_info: gameInfo
             };

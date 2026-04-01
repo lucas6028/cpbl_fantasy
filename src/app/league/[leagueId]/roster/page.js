@@ -761,14 +761,6 @@ export default function RosterPage() {
             positions.push(player.position);
         }
 
-        if (player.batter_or_pitcher === 'batter') {
-            positions.push('Util');
-        }
-
-        if (player.batter_or_pitcher === 'pitcher') {
-            positions.push('P');
-        }
-
         return [...new Set(positions)].filter(pos => ACTIVE_POSITIONS_ORDER.includes(pos) && (parseInt(rosterPositionsConfig[pos], 10) || 0) > 0);
     };
 
@@ -1149,6 +1141,11 @@ export default function RosterPage() {
     };
 
     const fullRoster = generateRosterWithEmptySlots(roster, rosterPositionsConfig);
+
+    const getRosterRowKey = (player) => {
+        if (player?.isEmpty) return player.id;
+        return `${player.player_id}-${player.position}`;
+    };
 
     const batterRoster = fullRoster.filter(p => {
         if (isBatterPos(p.position)) return isEnabledLeaguePosition(p.position);
@@ -1538,7 +1535,7 @@ export default function RosterPage() {
                                 {batterRoster.length === 0 ? (
                                     <tr><td colSpan={10} className="p-4 text-center text-purple-300">No Batters</td></tr>
                                 ) : batterRoster.map(player => (
-                                    <React.Fragment key={player.id}>
+                                    <React.Fragment key={getRosterRowKey(player)}>
                                         <tr className="hover:bg-purple-500/5 transition">
                                             {/* 桌面版：Slot (無 rowSpan) */}
                                             <td className="px-6 py-4 align-middle text-center hidden sm:table-cell">
@@ -1763,7 +1760,7 @@ export default function RosterPage() {
                                 {pitcherRoster.length === 0 ? (
                                     <tr><td colSpan={10} className="p-4 text-center text-purple-300">No Pitchers</td></tr>
                                 ) : pitcherRoster.map(player => (
-                                    <React.Fragment key={player.id}>
+                                    <React.Fragment key={getRosterRowKey(player)}>
                                         <tr className="hover:bg-purple-500/5 transition">
                                             {/* 桌面版：Slot (無 rowSpan) */}
                                             <td className="px-6 py-4 align-middle text-center hidden sm:table-cell">
