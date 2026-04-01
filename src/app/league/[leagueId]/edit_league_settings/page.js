@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import supabase from '@/lib/supabase';
 import AmericanDatePicker from '@/components/AmericanDatePicker';
 import DraftTimeline from '@/components/DraftTimeline';
@@ -609,7 +609,7 @@ const mapDbToSettings = (data) => ({
 });
 
 const EditLeagueSettingsPage = ({ params }) => {
-  const { leagueId } = params;
+  const { leagueId } = use(params);
   const [settings, setSettings] = useState(() => cloneSettings(baseSettings));
   const [status, setStatus] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -689,7 +689,7 @@ const EditLeagueSettingsPage = ({ params }) => {
         const nicknameMap = {};
         if (members) {
           members.forEach(m => {
-            nicknameMap[m.manager_id] = m.nickname;
+            nicknameMap[String(m.manager_id)] = m.nickname;
           });
         }
 
@@ -697,7 +697,7 @@ const EditLeagueSettingsPage = ({ params }) => {
         const uniqueManagers = picks.map(p => ({
           pick_number: p.pick_number,
           manager_id: p.manager_id,
-          nickname: nicknameMap[p.manager_id] || 'Unknown Manager'
+          nickname: nicknameMap[String(p.manager_id)] || 'Unknown Manager'
         }));
         setDraftOrder(uniqueManagers);
       } else {
@@ -825,18 +825,17 @@ const EditLeagueSettingsPage = ({ params }) => {
         // console.log('Draft DateTime (Taiwan time):', draftDateTime.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' }));
         // console.log('Draft DateTime timestamp:', draftDateTime.getTime());
 
-        // 檢查 1: Live Draft Time 必須至少是明天 0:00
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        tomorrow.setHours(0, 0, 0, 0);
-        // console.log('Tomorrow (00:00:00):', tomorrow.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' }));
-        // console.log('Tomorrow timestamp:', tomorrow.getTime());
+        // 檢查 1: Live Draft Time 必須至少是今天 0:00
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        // console.log('Today (00:00:00):', today.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' }));
+        // console.log('Today timestamp:', today.getTime());
 
-        if (draftDateTime < tomorrow) {
-          errors.draftTimeError = 'Live Draft Time must be at least tomorrow (00:00)';
-          // console.log('❌ FAIL: Live Draft Time is before tomorrow');
+        if (draftDateTime < today) {
+          errors.draftTimeError = 'Live Draft Time must be at least today (00:00)';
+          // console.log('❌ FAIL: Live Draft Time is before today');
         } else {
-          // console.log('✅ PASS: Live Draft Time is at least tomorrow');
+          // console.log('✅ PASS: Live Draft Time is at least today');
         }
 
         // 檢查 2: Live Draft Time 必須至少在 Start Scoring On 的 2 天前
@@ -898,7 +897,6 @@ const EditLeagueSettingsPage = ({ params }) => {
   const minDraftDateTime = () => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() + 1);
     const pad = (n) => `${n}`.padStart(2, '0');
     const y = d.getFullYear();
     const m = pad(d.getMonth() + 1);
@@ -1314,7 +1312,7 @@ const EditLeagueSettingsPage = ({ params }) => {
         }
 
         // Check if user is a member and has proper role
-        const currentMember = leagueResult.members?.find(m => m.manager_id === currentUserId);
+        const currentMember = leagueResult.members?.find(m => String(m.manager_id) === String(currentUserId));
 
         if (!currentMember) {
           setError('You are not a member of this league');
@@ -1801,7 +1799,7 @@ const EditLeagueSettingsPage = ({ params }) => {
                                       handleSettingChange(section.key, key, e.target.value)
                                     }
                                     disabled={isFieldDisabled(section.key, key)}
-                                    className={`w-full px-3 py-2 bg-slate-800/60 border rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-slate-700/40 disabled:cursor-not-allowed disabled:text-gray-500 ${(!isFieldDisabled(section.key, key) && (!value || value.trim() === '')) || (key === 'Start Scoring On' && dateValidationErrors.scoringDateError)
+                                    className={`w-full px-3 py-2 bg-slate-800/60 border rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-slate-700/40 disabled:cursor-not-allowed disabled:text-gray-500 ${(!isFieldDisabled(section.key, key) && (!value || (typeof value === 'string' && value.trim() === ''))) || (key === 'Start Scoring On' && dateValidationErrors.scoringDateError)
                                       ? 'border-red-500 bg-red-900/30'
                                       : 'border-purple-500/30'
                                       }`}
@@ -1815,7 +1813,7 @@ const EditLeagueSettingsPage = ({ params }) => {
                                       ));
                                     })()}
                                   </select>
-                                  {!isFieldDisabled(section.key, key) && (!value || value.trim() === '') && (
+                                  {!isFieldDisabled(section.key, key) && (!value || (typeof value === 'string' && value.trim() === '')) && (
                                     <p className="text-red-600 text-sm mt-1">required</p>
                                   )}
                                   {key === 'Start Scoring On' && value && dateValidationErrors.scoringDateError && (
