@@ -72,7 +72,7 @@ export default function AdminTransactionsPage() {
             // Otherwise, bundle by exact same time and manager
             const sameGroup = transactions.filter(item =>
                 !item.trade_group_id &&
-                item.manager_id === t.manager_id &&
+                String(item.manager_id) === String(t.manager_id) &&
                 item.transaction_time === t.transaction_time
             );
 

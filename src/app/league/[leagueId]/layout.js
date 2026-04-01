@@ -57,7 +57,7 @@ export default function LeagueLayout({ children }) {
         const result = await response.json();
 
         if (result.success && result.members) {
-          const isMember = result.members.some(m => m.manager_id === currentUserId);
+          const isMember = result.members.some(m => String(m.manager_id) === String(currentUserId));
 
           if (!isMember && !adminBypass) {
             setAccessDenied(true);
@@ -66,7 +66,7 @@ export default function LeagueLayout({ children }) {
             return;
           }
 
-          const currentMember = result.members.find(m => m.manager_id === currentUserId);
+          const currentMember = result.members.find(m => String(m.manager_id) === String(currentUserId));
           setCurrentUserRole(currentMember?.role || 'member');
         }
       } catch (err) {

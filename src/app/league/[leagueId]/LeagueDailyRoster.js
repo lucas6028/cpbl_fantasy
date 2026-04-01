@@ -556,8 +556,8 @@ export default function LeagueDailyRoster({ leagueId, members }) {
         // Use roster data instead of ownerships to get full player info
         const myPlayers = tradeMyRoster.filter(p => !['IL', 'NA', 'MN'].includes(p.position));
         const theirPlayers = tradeTheirRoster.filter(p => !['IL', 'NA', 'MN'].includes(p.position));
-        const myNick = members.find(m => m.manager_id === myManagerId)?.nickname || 'You';
-        const theirNick = members.find(m => m.manager_id === tradeTargetManagerId)?.nickname || 'Opponent';
+        const myNick = members.find(m => String(m.manager_id) === String(myManagerId))?.nickname || 'You';
+        const theirNick = members.find(m => String(m.manager_id) === String(tradeTargetManagerId))?.nickname || 'Opponent';
         // Validate before submit - pass gaining roster for player info lookup
         const myViolations = validateTradeRoster(tradeMyRoster, selectedMyPlayers, selectedTheirPlayers, leagueSettings, tradeTheirRoster);
         const theirViolations = validateTradeRoster(tradeTheirRoster, selectedTheirPlayers, selectedMyPlayers, leagueSettings, tradeMyRoster);

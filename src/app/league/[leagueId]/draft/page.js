@@ -152,7 +152,7 @@ export default function DraftPage() {
 
         if (!viewingManagerId && members.length > 0 && myManagerId) {
             // Default to first member who is NOT me, or just first member
-            const other = members.find(m => m.manager_id !== myManagerId);
+            const other = members.find(m => String(m.manager_id) !== String(myManagerId));
             if (other) setViewingManagerId(other.manager_id);
             else if (members.length > 0) setViewingManagerId(members[0].manager_id);
         }
@@ -380,14 +380,16 @@ export default function DraftPage() {
         });
     };
 
-    // Poll Draft State (Smart Polling) — only when league status is 'drafting now'
+    // Poll Draft State (Smart Polling) — when league status is 'pre-draft' or 'drafting now'
+    // We must also poll during 'pre-draft' because the draft/state endpoint is what
+    // transitions the status to 'drafting now' when the scheduled time arrives.
     useEffect(() => {
         // Stop polling if under maintenance
         if (isUnderMaintenance) {
             return;
         }
 
-        if (leagueStatus !== 'drafting now') return;
+        if (leagueStatus !== 'drafting now' && leagueStatus !== 'pre-draft') return;
 
         let active = true;
         let timeoutId;
@@ -561,7 +563,7 @@ export default function DraftPage() {
 
     const getMemberNickname = (managerId) => {
         if (!managerId) return '-';
-        const m = members.find(m => m.manager_id === managerId);
+        const m = members.find(m => String(m.manager_id) === String(managerId));
         return m?.nickname || 'Unknown';
     };
 
@@ -933,7 +935,7 @@ export default function DraftPage() {
     // Helpers
     const getTeamAbbr = (team) => {
         switch (team) {
-            case '統一獅': return 'UL';
+            case '統一7-ELEVEn獅': return 'UL';
             case '富邦悍將': return 'FG';
             case '樂天桃猿': return 'RM';
             case '中信兄弟': return 'B';
@@ -945,7 +947,7 @@ export default function DraftPage() {
 
     const getTeamColor = (team) => {
         switch (team) {
-            case '統一獅': return 'text-orange-400 border-orange-500/50';
+            case '統一7-ELEVEn獅': return 'text-orange-400 border-orange-500/50';
             case '富邦悍將': return 'text-blue-400 border-blue-500/50';
             case '樂天桃猿': return 'text-rose-400 border-rose-500/50';
             case '中信兄弟': return 'text-yellow-400 border-yellow-500/50';
@@ -1063,11 +1065,6 @@ export default function DraftPage() {
         );
     };
 
-    if (loading) return (
-        <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-            <div className="animate-spin text-purple-500 text-4xl">⚾</div>
-        </div>
-    );
 
     const baseStatCats = filterType === 'batter' ? batterStatCategories : pitcherStatCategories;
     const forcedStatCat = filterType === 'batter' ? 'At Bats (AB)' : 'Innings Pitched (IP)';
@@ -1092,9 +1089,14 @@ export default function DraftPage() {
 
     return (
         <div className="h-screen bg-slate-900 text-white p-4 font-sans flex flex-col overflow-hidden relative">
+            {loading && (
+                <div className="absolute inset-0 bg-slate-900 flex items-center justify-center z-[200]">
+                    <div className="animate-spin text-purple-500 text-4xl">⚾</div>
+                </div>
+            )}
 
-            {/* Block access when league status is not 'drafting now' */}
-            {leagueStatus !== null && leagueStatus !== 'drafting now' && (
+            {/* Block access when league status is not 'drafting now' or 'pre-draft' */}
+            {leagueStatus !== null && leagueStatus !== 'drafting now' && leagueStatus !== 'pre-draft' && (
                 <div className="absolute inset-0 z-[100] flex items-center justify-center bg-slate-900/60" style={{ backdropFilter: 'blur(6px)' }}>
                     <div className="bg-slate-900/95 border border-purple-500/30 rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 text-center">
                         <h2 className="text-xl font-black text-white mb-2">Draft Room Locked</h2>
@@ -1470,7 +1472,7 @@ export default function DraftPage() {
                                 >
                                     <option value="All">All Teams</option>
                                     <option value="中信兄弟">中信兄弟</option>
-                                    <option value="統一獅">統一獅</option>
+                                    <option value="統一7-ELEVEn獅">統一7-ELEVEn獅</option>
                                     <option value="樂天桃猿">樂天桃猿</option>
                                     <option value="富邦悍將">富邦悍將</option>
                                     <option value="味全龍">味全龍</option>
@@ -1529,6 +1531,7 @@ export default function DraftPage() {
                                         ))}
                                     </tr>
                                 </thead>
+                                {useMemo(() => (
                                 <tbody>
                                     {filteredPlayers.map(player => {
                                         const isForeigner = player.identity?.toLowerCase() === 'foreigner';
@@ -1729,6 +1732,7 @@ export default function DraftPage() {
                                         );
                                     })}
                                 </tbody>
+                                ), [filteredPlayers, pickSubmitting, pickingId, draftState?.status, draftState?.currentPick?.manager_id, myManagerId, takenIds, foreignerLimit, foreignerCount, playerRankings, photoSrcMap, queuingIds, queue, filterType, batterStatCategories, pitcherStatCategories, cpblStatRankings, rosterPositions, playerStats])}
                             </table>
                         </div>
                     </div>
@@ -2381,7 +2385,7 @@ export default function DraftPage() {
                                     const fCount = managerForeignerCounts[String(m.manager_id)] || 0;
                                     return (
                                         <option key={m.manager_id} value={m.manager_id}>
-                                            {m.nickname} {m.manager_id === myManagerId ? '(You)' : ''}
+                                            {m.nickname} {String(m.manager_id) === String(myManagerId) ? '(You)' : ''}
                                         </option>
                                     );
                                 })}

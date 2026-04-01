@@ -82,7 +82,7 @@ export async function POST(request, { params }) {
     }
 
     // 4. 检查是否已经是成员
-    const alreadyMember = currentMembers.some(m => m.manager_id === manager_id);
+    const alreadyMember = currentMembers.some(m => String(m.manager_id) === String(manager_id));
     if (alreadyMember) {
       return NextResponse.json(
         { error: 'You are already a member of this league' },

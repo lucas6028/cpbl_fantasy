@@ -111,7 +111,7 @@ export default function LeagueSettingsPage() {
         // Map to flatten structure for compatibility with existing JSX
         // Use 'members' state to find nickname by manager_id
         const formattedPicks = picks.map(p => {
-          const member = members.find(m => m.manager_id === p.manager_id);
+          const member = members.find(m => String(m.manager_id) === String(p.manager_id));
           // Merge position list into player object
           const playerWithPos = p.player ? {
             ...p.player,
@@ -147,7 +147,7 @@ export default function LeagueSettingsPage() {
 
   const getTeamAbbr = (team) => {
     switch (team) {
-      case '統一獅': return 'UL';
+      case '統一7-ELEVEn獅': return 'UL';
       case '富邦悍將': return 'FG';
       case '樂天桃猿': return 'RM';
       case '中信兄弟': return 'B';
@@ -159,7 +159,7 @@ export default function LeagueSettingsPage() {
 
   const getTeamColor = (team) => {
     switch (team) {
-      case '統一獅':
+      case '統一7-ELEVEn獅':
         return 'text-orange-400';
       case '富邦悍將':
         return 'text-blue-400';
@@ -311,7 +311,7 @@ export default function LeagueSettingsPage() {
           const currentUserId = cookie?.split('=')[1];
           if (currentUserId) {
             setCurrentUserId(currentUserId);
-            const currentMember = result.members?.find(m => m.manager_id === currentUserId);
+            const currentMember = result.members?.find(m => String(m.manager_id) === String(currentUserId));
             setCurrentUserRole(currentMember?.role || 'member');
             setCurrentNickname(currentMember?.nickname || '');
           }
@@ -447,7 +447,7 @@ export default function LeagueSettingsPage() {
         // Update members list to reflect new nickname
         setMembers(prevMembers =>
           prevMembers.map(m =>
-            m.manager_id === managerId ? { ...m, nickname: newNickname.trim() } : m
+            String(m.manager_id) === String(managerId) ? { ...m, nickname: newNickname.trim() } : m
           )
         );
       } else {
@@ -583,10 +583,10 @@ export default function LeagueSettingsPage() {
 
       if (response.ok && result.success) {
         // Update local member list
-        const updatedMember = members.find(m => m.manager_id === managerId);
+        const updatedMember = members.find(m => String(m.manager_id) === String(managerId));
         setMembers(prevMembers =>
           prevMembers.map(m =>
-            m.manager_id === managerId ? { ...m, role: newRole } : m
+            String(m.manager_id) === String(managerId) ? { ...m, role: newRole } : m
           )
         );
 
@@ -1423,7 +1423,7 @@ export default function LeagueSettingsPage() {
                 })
                 .map((member) => {
                   const isCommissioner = member.role === 'Commissioner';
-                  const isSelf = member.manager_id === currentUserId;
+                  const isSelf = String(member.manager_id) === String(currentUserId);
                   const canModify = !isCommissioner && !isSelf;
                   const canRemoveMember = leagueStatus === 'pre-draft' && !isFinalized;
 

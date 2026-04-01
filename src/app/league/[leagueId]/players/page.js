@@ -1685,8 +1685,8 @@ export default function PlayersPage() {
     if (!showTradeModal) return null;
     const myPlayers = getMyPlayers();
     const theirPlayers = getTheirPlayers();
-    const myNick = members.find(m => m.manager_id === myManagerId)?.nickname || 'You';
-    const theirNick = members.find(m => m.manager_id === tradeTargetManagerId)?.nickname || 'Opponent';
+    const myNick = members.find(m => String(m.manager_id) === String(myManagerId))?.nickname || 'You';
+    const theirNick = members.find(m => String(m.manager_id) === String(tradeTargetManagerId))?.nickname || 'Opponent';
 
     // Validate
     const myViolations = validateTradeRoster(tradeMyRoster, selectedMyPlayers, selectedTheirPlayers, leagueSettings);

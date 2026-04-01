@@ -140,8 +140,8 @@ export default function MyTradesModal({ isOpen, onClose, leagueId, managerId, me
             };
 
             // Resolve nicknames for error messages
-            const initMember = members.find(m => m.manager_id === trade.initiator_manager_id);
-            const recMember = members.find(m => m.manager_id === trade.recipient_manager_id);
+            const initMember = members.find(m => String(m.manager_id) === String(trade.initiator_manager_id));
+            const recMember = members.find(m => String(m.manager_id) === String(trade.recipient_manager_id));
             const initNick = trade.initiator?.nickname || initMember?.nickname || trade.initiator?.name || 'Initiator';
             const recNick = trade.recipient?.nickname || recMember?.nickname || trade.recipient?.name || 'Recipient';
 
@@ -342,8 +342,8 @@ export default function MyTradesModal({ isOpen, onClose, leagueId, managerId, me
                             const isInitiator = trade.initiator_manager_id === managerId;
 
                             // Resolve nicknames (Prioritize backend enriched nickname, then local members)
-                            const initMember = members.find(m => m.manager_id === trade.initiator_manager_id);
-                            const recMember = members.find(m => m.manager_id === trade.recipient_manager_id);
+                            const initMember = members.find(m => String(m.manager_id) === String(trade.initiator_manager_id));
+                            const recMember = members.find(m => String(m.manager_id) === String(trade.recipient_manager_id));
 
                             const initNick = trade.initiator?.nickname || initMember?.nickname || trade.initiator?.name || 'Unknown';
                             const recNick = trade.recipient?.nickname || recMember?.nickname || trade.recipient?.name || 'Unknown';

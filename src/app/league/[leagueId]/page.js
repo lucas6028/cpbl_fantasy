@@ -304,7 +304,7 @@ export default function LeaguePage() {
           const cookie = document.cookie.split('; ').find(row => row.startsWith('user_id='));
           const currentUserId = cookie?.split('=')[1];
           if (currentUserId) {
-            const currentMember = result.members?.find(m => m.manager_id === currentUserId);
+            const currentMember = result.members?.find(m => String(m.manager_id) === String(currentUserId));
             setCurrentUserRole(currentMember?.role || 'member');
           }
         } else {
@@ -546,7 +546,7 @@ export default function LeaguePage() {
           const cookie = document.cookie.split('; ').find(row => row.startsWith('user_id='));
           const currentUserId = cookie?.split('=')[1];
           if (currentUserId) {
-            const currentMember = result.members?.find(m => m.manager_id === currentUserId);
+            const currentMember = result.members?.find(m => String(m.manager_id) === String(currentUserId));
             setCurrentUserRole(currentMember?.role || 'member');
           }
         } else {
@@ -648,7 +648,7 @@ export default function LeaguePage() {
       } else {
         const sameGroup = transactions.filter(item =>
           !item.trade_group_id &&
-          item.manager_id === t.manager_id &&
+          String(item.manager_id) === String(t.manager_id) &&
           item.transaction_time === t.transaction_time
         );
         sameGroup.forEach(item => processedIds.add(item.transaction_id));
@@ -872,7 +872,7 @@ export default function LeaguePage() {
 
   // Helper to get manager details
   const getManagerDetails = (managerId) => {
-    return members.find(m => m.manager_id === managerId);
+    return members.find(m => String(m.manager_id) === String(managerId));
   };
 
   // Helper to get week details
