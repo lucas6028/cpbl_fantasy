@@ -106,6 +106,8 @@ export async function POST(request, { params }) {
                             error: `Weekly acquisition limit reached (${count}/${currentAllotedLimit})`
                         }, { status: 400 });
                     }
+                } else {
+                    // Off-season (no active schedule week): unlimited add/drop.
                 }
             }
         }

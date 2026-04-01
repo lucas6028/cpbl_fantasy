@@ -107,6 +107,48 @@ async function getBestRankedAvailablePlayer(leagueId, takenIdSet, excludePlayerI
     return validPlayers[randomIndex].player_id;
 }
 
+async function finalizeDraftIfNeeded(leagueId, leagueStatus, allPicksData) {
+    const completedPicks = (allPicksData || []).filter(
+        p => p.player_id != null && p.manager_id != null
+    );
+
+    if (completedPicks.length === 0) {
+        return;
+    }
+
+    const acquiredAt = new Date().toISOString();
+    const ownershipRows = completedPicks.map(p => ({
+        league_id: leagueId,
+        player_id: p.player_id,
+        manager_id: p.manager_id,
+        status: 'On Team',
+        acquired_at: p.picked_at || acquiredAt,
+        off_waiver: null,
+    }));
+
+    const { error: ownershipError } = await supabase
+        .from('league_player_ownership')
+        .upsert(ownershipRows, {
+            onConflict: 'league_id,player_id',
+            ignoreDuplicates: false,
+        });
+
+    if (ownershipError) {
+        throw new Error(`Failed to finalize draft ownership: ${ownershipError.message}`);
+    }
+
+    if (leagueStatus !== 'post-draft & pre-season' && leagueStatus !== 'in-season') {
+        const { error: statusError } = await supabase
+            .from('league_statuses')
+            .update({ status: 'post-draft & pre-season' })
+            .eq('league_id', leagueId);
+
+        if (statusError) {
+            throw new Error(`Failed to update league status after draft: ${statusError.message}`);
+        }
+    }
+}
+
 // ─── Main GET handler ──────────────────────────────────────────────
 
 export async function GET(request, { params }) {
@@ -198,6 +240,7 @@ export async function GET(request, { params }) {
 
             if (!currentPick) {
                 console.warn('[DraftState] Remaining > 0 but currentPick not found?');
+                await finalizeDraftIfNeeded(leagueId, leagueStatus, allPicksData);
                 return NextResponse.json({ status: 'completed' });
             }
 
@@ -371,6 +414,18 @@ export async function GET(request, { params }) {
                             }
                         } else {
                             console.log('[DraftState] Last pick made. Finished.');
+                            const { data: finalPicks, error: finalPicksError } = await supabase
+                                .from('draft_picks')
+                                .select('pick_id, pick_number, round_number, player_id, manager_id, picked_at, deadline, is_auto_picked')
+                                .eq('league_id', leagueId)
+                                .order('pick_number', { ascending: true });
+
+                            if (finalPicksError) {
+                                console.error('[DraftState] Error fetching final picks:', finalPicksError);
+                                return NextResponse.json({ success: false, error: finalPicksError.message }, { status: 500 });
+                            }
+
+                            await finalizeDraftIfNeeded(leagueId, leagueStatus, finalPicks || []);
                             return NextResponse.json({ status: 'completed' });
                         }
                     }
@@ -418,9 +473,7 @@ export async function GET(request, { params }) {
 
         // CASE C: All picks completed
         if (remainingPicks === 0 && totalPicks > 0) {
-            if (leagueStatus !== 'post-draft & pre-season' && leagueStatus !== 'in-season') {
-                console.log('[DraftState] All picks done. Updating to post-draft & pre-season.');
-            }
+            await finalizeDraftIfNeeded(leagueId, leagueStatus, allPicksData);
 
             const posMap = await getCachedPositionMap();
             await enrichPicksWithPlayerData(completedPicks, posMap);

@@ -113,7 +113,8 @@ export async function GET(request, { params }) {
         if (isPreSeason) {
             displayLimit = 'No Maximum';
         } else if (isOffSeason) {
-            displayLimit = 0; // Off-season limit is 0
+            // Off-season should always be unlimited for add/drop.
+            displayLimit = 'No Maximum';
         }
 
         return NextResponse.json({

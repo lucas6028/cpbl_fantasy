@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import supabase from '@/lib/supabaseServer';
 
+function getTaiwanDateString(date = new Date()) {
+    return date.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' });
+}
+
 export async function GET(request, { params }) {
     const { leagueId } = await params;
     const { searchParams } = new URL(request.url);
@@ -27,8 +31,7 @@ export async function GET(request, { params }) {
             console.log('='.repeat(80));
 
             const now = new Date();
-            const nowTaiwan = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
-            const todayStr = nowTaiwan.toISOString().split('T')[0];
+            const todayStr = getTaiwanDateString(now);
             const todayDate = new Date(todayStr);
 
             // Fetch League Settings (Start Scoring On) and Schedule (Season End)
