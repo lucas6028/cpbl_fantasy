@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 /**
  * DraftTimelineInline 元件 - 顯示 now 到 4/20 的已排選秀時間（只顯示時間）
@@ -16,6 +16,7 @@ export default function DraftTimelineInline({
   const [timelineData, setTimelineData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const nowRef = useRef(new Date()); // stable reference, set once on client mount
 
   const toApiDateTime = (timeValue) => {
     if (!timeValue) return null;
@@ -71,7 +72,7 @@ export default function DraftTimelineInline({
   const lineA = timeline?.lineA || [];
   const lineB = timeline?.lineB || [];
   const allDrafts = [...lineA, ...lineB];
-  const now = new Date();
+  const now = nowRef.current;
   const endDate = new Date('2026-04-20T23:59:59');
 
   const formatTimeWithDate = (isoString) => {
