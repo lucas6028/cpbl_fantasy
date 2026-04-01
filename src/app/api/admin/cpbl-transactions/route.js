@@ -13,7 +13,7 @@ const ACTION_MAP = {
 }
 
 const TEAM_VARIANTS = {
-    '統一獅': ['統一7-ELEVEn獅', '統一7-eleven獅', '統一7-11獅'],
+    '統一7-ELEVEn獅': ['統一7-ELEVEn獅', '統一7-eleven獅', '統一7-11獅'],
 }
 
 function normalizeTeam(rawTeam) {

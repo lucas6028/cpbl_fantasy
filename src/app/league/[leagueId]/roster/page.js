@@ -101,7 +101,7 @@ export default function RosterPage() {
 
     const getTeamAbbr = (team) => { /* ... same ... */
         switch (team) {
-            case '統一獅': return 'UL';
+            case '統一7-ELEVEn獅': return 'UL';
             case '富邦悍將': return 'FG';
             case '樂天桃猿': return 'RM';
             case '中信兄弟': return 'B';
@@ -113,7 +113,7 @@ export default function RosterPage() {
 
     const getTeamColor = (team) => { /* ... same ... */
         switch (team) {
-            case '統一獅': return 'text-orange-400';
+            case '統一7-ELEVEn獅': return 'text-orange-400';
             case '富邦悍將': return 'text-blue-400';
             case '台鋼雄鷹': return 'text-green-400';
             case '味全龍': return 'text-red-400';

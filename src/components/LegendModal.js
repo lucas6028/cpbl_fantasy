@@ -94,7 +94,7 @@ export default function LegendModal({ isOpen, onClose, batterStats = [], pitcher
                                     <div className="flex flex-col items-center p-2 bg-slate-800/50 rounded-lg">
                                         <span className="text-orange-400 font-bold text-lg">UL</span>
                                         <span className="text-gray-400 text-xs mt-1">Uni-Lions</span>
-                                        <span className="text-gray-500 text-[10px]">(統一獅)</span>
+                                        <span className="text-gray-500 text-[10px]">(統一7-ELEVEn獅)</span>
                                     </div>
                                     <div className="flex flex-col items-center p-2 bg-slate-800/50 rounded-lg">
                                         <span className="text-blue-400 font-bold text-lg">FG</span>

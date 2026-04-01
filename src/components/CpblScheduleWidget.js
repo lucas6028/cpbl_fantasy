@@ -16,7 +16,7 @@ export default function CpblScheduleWidget() {
     const [pickerPosition, setPickerPosition] = useState({ top: 0, left: 0 });
 
     const teamColors = {
-        '統一獅': 'text-orange-400',
+        '統一7-ELEVEn獅': 'text-orange-400',
         '中信兄弟': 'text-yellow-400',
         '樂天桃猿': 'text-red-400',
         '富邦悍將': 'text-blue-400',

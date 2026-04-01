@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
-const TEAMS = ['統一獅', '富邦悍將', '樂天桃猿', '中信兄弟', '味全龍', '台鋼雄鷹']
+const TEAMS = ['統一7-ELEVEn獅', '富邦悍將', '樂天桃猿', '中信兄弟', '味全龍', '台鋼雄鷹']
 
 const TEAM_COLORS = {
-    '統一獅': 'border-orange-500/40 bg-orange-500/10',
+    '統一7-ELEVEn獅': 'border-orange-500/40 bg-orange-500/10',
     '富邦悍將': 'border-blue-500/40 bg-blue-500/10',
     '樂天桃猿': 'border-rose-500/40 bg-rose-500/10',
     '中信兄弟': 'border-yellow-500/40 bg-yellow-500/10',
@@ -15,7 +15,7 @@ const TEAM_COLORS = {
 }
 
 const TEAM_TEXT = {
-    '統一獅': 'text-orange-300',
+    '統一7-ELEVEn獅': 'text-orange-300',
     '富邦悍將': 'text-blue-300',
     '樂天桃猿': 'text-rose-300',
     '中信兄弟': 'text-yellow-300',

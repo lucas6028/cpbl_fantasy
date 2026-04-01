@@ -438,7 +438,7 @@ export default function PlayerManagePage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">All</option>
-                <option value="統一獅">統一獅</option>
+                <option value="統一7-ELEVEn獅">統一7-ELEVEn獅</option>
                 <option value="中信兄弟">中信兄弟</option>
                 <option value="樂天桃猿">樂天桃猿</option>
                 <option value="富邦悍將">富邦悍將</option>
@@ -668,7 +668,7 @@ export default function PlayerManagePage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="">Select a team</option>
-                    <option value="統一獅">統一獅</option>
+                    <option value="統一7-ELEVEn獅">統一7-ELEVEn獅</option>
                     <option value="中信兄弟">中信兄弟</option>
                     <option value="樂天桃猿">樂天桃猿</option>
                     <option value="富邦悍將">富邦悍將</option>

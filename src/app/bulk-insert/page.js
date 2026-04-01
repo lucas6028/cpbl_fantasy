@@ -498,7 +498,7 @@ export default function BulkInsertPage() {
               onChange={(e) => setLineupTeam(e.target.value)}
             >
               <option value="">請選擇</option>
-              <option>統一獅</option>
+              <option>統一7-ELEVEn獅</option>
               <option>樂天桃猿</option>
               <option>富邦悍將</option>
               <option>味全龍</option>

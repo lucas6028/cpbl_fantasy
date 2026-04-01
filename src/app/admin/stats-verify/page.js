@@ -46,7 +46,7 @@ export default function StatsVerifyPage() {
 
     // Team detection
     const teamVariants = {
-        '統一獅': ['統一7-ELEVEn獅', '統一7-eleven獅', '統一7-11獅', '統一獅', '統一'],
+        '統一7-ELEVEn獅': ['統一7-ELEVEn獅', '統一7-eleven獅', '統一7-11獅', '統一7-ELEVEn獅', '統一'],
         '中信兄弟': ['中信兄弟', '兄弟'],
         '樂天桃猿': ['樂天桃猿', '桃猿', '樂天'],
         '富邦悍將': ['富邦悍將', '悍將', '富邦'],
@@ -472,7 +472,7 @@ export default function StatsVerifyPage() {
 
                             {/* Team Tabs */}
                             <div className="flex flex-wrap gap-1 mb-3">
-                                {['all', '統一獅', '中信兄弟', '樂天桃猿', '富邦悍將', '味全龍', '台鋼雄鷹'].map(t => (
+                                {['all', '統一7-ELEVEn獅', '中信兄弟', '樂天桃猿', '富邦悍將', '味全龍', '台鋼雄鷹'].map(t => (
                                     <button
                                         key={t}
                                         onClick={() => setFilterTeam(t)}

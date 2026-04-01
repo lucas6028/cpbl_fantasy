@@ -45,7 +45,7 @@ export default function StatsEntryPage() {
 
   // Team name variations for detection (longer variants first for priority matching)
   const teamVariants = {
-    '統一獅': ['統一7-ELEVEn獅', '統一7-eleven獅', '統一7-11獅', '統一獅', '統一'],
+    '統一7-ELEVEn獅': ['統一7-ELEVEn獅', '統一7-eleven獅', '統一7-11獅', '統一7-ELEVEn獅', '統一'],
     '中信兄弟': ['中信兄弟', '兄弟'],
     '樂天桃猿': ['樂天桃猿', '桃猿', '樂天'],
     '富邦悍將': ['富邦悍將', '悍將', '富邦'],
@@ -236,7 +236,8 @@ export default function StatsEntryPage() {
 
   // Extract positions from raw position string - clean format (return as comma-separated string)
   const extractPositions = (rawPos) => {
-    rawPos = rawPos.replace(/（/g, '(').replace(/）/g, ')')
+    if (!rawPos) return ''
+    rawPos = String(rawPos).replace(/（/g, '(').replace(/）/g, ')')
     const matches = rawPos.match(/[A-Z]+\d*|\d+[A-Z]+/g)
     return matches ? matches.join(', ') : ''
   }

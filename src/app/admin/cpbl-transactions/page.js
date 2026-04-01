@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 const TEAM_VARIANTS = {
-    '統一獅': ['統一7-ELEVEn獅', '統一7-eleven獅', '統一7-11獅'],
+    '統一7-ELEVEn獅': ['統一7-ELEVEn獅', '統一7-eleven獅', '統一7-11獅'],
 }
 
 function normalizeTeam(rawTeam) {
@@ -316,7 +316,7 @@ export default function CpblTransactionsPage() {
                         <textarea
                             value={text}
                             onChange={(e) => setText(e.target.value)}
-                            placeholder={"2026/3/31\t張翔\t統一獅\t升一軍\n\t陳重羽\t統一獅\t降二軍"}
+                            placeholder={"2026/3/31\t張翔\t統一7-ELEVEn獅\t升一軍\n\t陳重羽\t統一7-ELEVEn獅\t降二軍"}
                             className="w-full h-64 bg-slate-800/60 border border-purple-500/30 text-white p-4 rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-slate-500 resize-none"
                         />
                     </div>

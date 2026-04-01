@@ -33,12 +33,12 @@ export default function CpblScheduleAdmin() {
 
     // Teams List
     const teams = [
-        '統一獅', '中信兄弟', '樂天桃猿',
+        '統一7-ELEVEn獅', '中信兄弟', '樂天桃猿',
         '富邦悍將', '味全龍', '台鋼雄鷹'
     ];
 
     const teamColors = {
-        '統一獅': 'text-orange-400',
+        '統一7-ELEVEn獅': 'text-orange-400',
         '中信兄弟': 'text-yellow-400',
         '樂天桃猿': 'text-red-400',
         '富邦悍將': 'text-blue-400',
