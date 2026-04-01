@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import supabase from '@/lib/supabase';
 
 export async function GET(request, { params }) {
-    const { leagueId } = params;
+    const { leagueId } = await params;
     const { searchParams } = new URL(request.url);
     const week = searchParams.get('week');
 

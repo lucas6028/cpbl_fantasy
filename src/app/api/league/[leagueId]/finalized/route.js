@@ -4,8 +4,8 @@ import { NextResponse } from 'next/server';
 
 export async function PATCH(request, { params }) {
   try {
-    const cookieStore = cookies();
-    const { leagueId } = params;
+    const cookieStore = await cookies();
+    const { leagueId } = await params;
     const { is_finalized } = await request.json();
 
     // Get current user
@@ -85,10 +85,10 @@ export async function PATCH(request, { params }) {
       // Insert record (existence = finalized)
       const { data: statusRecord, error: statusError } = await supabase
         .from('league_finalized_status')
-        .insert({
+        .upsert({
           league_id: leagueId,
           updated_by: currentUserId
-        })
+        }, { onConflict: 'league_id' })
         .select()
         .single();
 

@@ -3,7 +3,7 @@ import supabase from '@/lib/supabase';
 
 export async function GET(request, { params }) {
     try {
-        const { leagueId } = params;
+        const { leagueId } = await params;
 
         if (!leagueId) {
             return NextResponse.json(

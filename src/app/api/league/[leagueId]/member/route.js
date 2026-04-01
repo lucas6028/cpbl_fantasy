@@ -6,7 +6,7 @@ import supabase from '@/lib/supabaseServer';
 // DELETE: Remove a member from the league
 export async function DELETE(request, { params }) {
   try {
-    const { leagueId } = params;
+    const { leagueId } = await params;
     const body = await request.json();
     const { manager_id } = body;
 
@@ -86,7 +86,7 @@ export async function DELETE(request, { params }) {
 // PATCH: Update member's nickname
 export async function PATCH(request, { params }) {
   try {
-    const { leagueId } = params;
+    const { leagueId } = await params;
     const body = await request.json();
     const { manager_id, nickname } = body;
 

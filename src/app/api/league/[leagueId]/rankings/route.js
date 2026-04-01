@@ -75,7 +75,7 @@ const PITCHER_STAT_MAP = {
 
 export async function GET(request, { params }) {
     try {
-        const { leagueId } = params;
+        const { leagueId } = await params;
         const { searchParams } = new URL(request.url);
         const timeWindow = searchParams.get('time_window') || '2025 Season'; // Fallback
 

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import supabase from '@/lib/supabase';
 
 export async function POST(request, { params }) {
-    const { leagueId } = params;
+    const { leagueId } = await params;
 
     try {
         const body = await request.json();

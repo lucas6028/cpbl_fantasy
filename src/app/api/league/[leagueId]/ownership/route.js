@@ -4,7 +4,7 @@ import supabase from '@/lib/supabase';
 // POST - 新增球員到隊伍（寫入 league_player_ownership）
 export async function POST(req, { params }) {
   try {
-    const { leagueId } = params;
+    const { leagueId } = await params;
     const body = await req.json();
     const { player_id, manager_id, position } = body;
 
@@ -427,7 +427,7 @@ export async function POST(req, { params }) {
 // GET - 獲取聯盟球員擁有權狀態
 export async function GET(req, { params }) {
   try {
-    const { leagueId } = params;
+    const { leagueId } = await params;
 
     if (!leagueId) {
       return NextResponse.json(
@@ -466,7 +466,7 @@ export async function GET(req, { params }) {
 // DELETE - DROP 球員（設為 Waiver 或直接刪除）
 export async function DELETE(req, { params }) {
   try {
-    const { leagueId } = params;
+    const { leagueId } = await params;
     const body = await req.json();
     const { player_id, manager_id } = body;
 

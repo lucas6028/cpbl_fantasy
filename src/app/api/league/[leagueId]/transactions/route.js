@@ -7,7 +7,7 @@ const supabase = createClient(
 );
 
 export async function GET(request, { params }) {
-    const { leagueId } = params;
+    const { leagueId } = await params;
 
     try {
         // 1. Fetch transactions and waiver claims
