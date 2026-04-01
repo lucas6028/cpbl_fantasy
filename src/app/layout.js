@@ -10,7 +10,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="zh-Hant">
-      <body className="antialiased">
+      <body className="antialiased" suppressHydrationWarning>
         <GuardLayout>
           {children}
         </GuardLayout>

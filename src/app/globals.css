@@ -240,3 +240,16 @@ html {
 select::-ms-expand {
   display: none;
 }
+
+/* create_league page animations */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scaleIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+.animate-scaleIn { animation: scaleIn 0.4s ease-out; }
+
+@media (max-width: 639px) {
+  .settings-table tr { display: flex; flex-direction: column; }
+  .settings-table td { width: 100% !important; padding-left: 1rem !important; padding-right: 1rem !important; }
+  .settings-table td:first-child { padding-bottom: 0.25rem !important; }
+  .settings-table td:last-child { padding-top: 0.25rem !important; }
+}
