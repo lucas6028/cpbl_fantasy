@@ -1,8 +1,8 @@
 import { cookies } from 'next/headers'
-import supabase from '@/lib/supabase'
+import supabase from '@/lib/supabaseServer'
 
 async function getUsernamePayload() {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const user_id = cookieStore.get('user_id')?.value
 
   if (!user_id) {

@@ -1,13 +1,10 @@
-import { createClient } from '@supabase/supabase-js';
+
 import { NextResponse } from 'next/server';
 
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+import supabase from '@/lib/supabaseServer';
 
 export async function GET(request, { params }) {
-    const { leagueId } = params;
+    const { leagueId } = await params;
     const { searchParams } = new URL(request.url);
     const managerId = searchParams.get('managerId');
 
@@ -71,7 +68,7 @@ export async function GET(request, { params }) {
 }
 
 export async function POST(request, { params }) {
-    const { leagueId } = params;
+    const { leagueId } = await params;
     try {
         const body = await request.json();
         const { managerId, playerId } = body;
@@ -105,7 +102,7 @@ export async function POST(request, { params }) {
 }
 
 export async function PUT(request, { params }) {
-    const { leagueId } = params;
+    const { leagueId } = await params;
     try {
         const body = await request.json();
         const { items } = body; // Array of { queue_id, rank_order }
@@ -129,7 +126,7 @@ export async function PUT(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
-    const { leagueId } = params;
+    const { leagueId } = await params;
     try {
         const body = await request.json();
         const { queueId } = body;

@@ -1,13 +1,10 @@
-import { createClient } from '@supabase/supabase-js';
+
 import { NextResponse } from 'next/server';
 
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+import supabase from '@/lib/supabaseServer';
 
 export async function POST(request, { params }) {
-    const { leagueId } = params;
+    const { leagueId } = await params;
 
     try {
         const body = await request.json().catch(() => ({})); // Handle empty body
@@ -47,13 +44,13 @@ export async function POST(request, { params }) {
         }
 
         // 0.5. Check if league is finalized (exists in league_finalized_status table)
-        const { data: finalizedStatus } = await supabase
+        const { data: finalizedStatus, error: finalizedError } = await supabase
             .from('league_finalized_status')
-            .select('id')
+            .select('league_id')
             .eq('league_id', leagueId)
-            .single();
+            .maybeSingle();
 
-        if (!finalizedStatus) {
+        if (finalizedError || !finalizedStatus) {
             return NextResponse.json({
                 success: false,
                 error: 'League must be finalized before generating draft order'

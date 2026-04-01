@@ -1,15 +1,12 @@
-import { createClient } from '@supabase/supabase-js';
+
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+import supabase from '@/lib/supabaseServer';
 
 export async function GET(request, { params }) {
     try {
-        const { leagueId } = params;
+        const { leagueId } = await params;
 
         // 1. Admin check
         const cookieStore = await cookies();

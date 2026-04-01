@@ -1,21 +1,18 @@
-import { createClient } from '@supabase/supabase-js';
+
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+import supabase from '@/lib/supabaseServer';
 
 // PATCH: Update member's role
 export async function PATCH(request, { params }) {
   try {
-    const { leagueId } = params;
+    const { leagueId } = await params;
     const body = await request.json();
     const { manager_id, role } = body;
 
     // Get current user from cookies
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const currentUserId = cookieStore.get('user_id')?.value;
 
     if (!currentUserId) {

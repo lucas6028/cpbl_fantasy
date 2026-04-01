@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import supabase from '@/lib/supabase';
+import supabase from '@/lib/supabaseServer';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import { sendVerificationEmail } from '@/lib/email';

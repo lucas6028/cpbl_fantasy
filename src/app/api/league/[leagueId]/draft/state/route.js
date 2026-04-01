@@ -1,10 +1,7 @@
-import { createClient } from '@supabase/supabase-js';
+
 import { NextResponse } from 'next/server';
 
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+import supabase from '@/lib/supabaseServer';
 
 // Helper: Pick Best Ranked Available Player
 async function getBestRankedAvailablePlayer(leagueId, excludePlayerIds = [], requestUrl = null) {
@@ -57,7 +54,7 @@ async function getBestRankedAvailablePlayer(leagueId, excludePlayerIds = [], req
 }
 
 export async function GET(request, { params }) {
-    const { leagueId } = params;
+    const { leagueId } = await params;
 
     try {
         // 1. Fetch core state in parallel

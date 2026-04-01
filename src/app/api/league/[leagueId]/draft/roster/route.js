@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import supabase from '@/lib/supabase';
+import supabase from '@/lib/supabaseServer';
 
 export async function GET(request, { params }) {
-    const { leagueId } = params;
+    const { leagueId } = await params;
     const { searchParams } = new URL(request.url);
     const managerId = searchParams.get('manager_id');
 
@@ -71,7 +71,7 @@ export async function GET(request, { params }) {
 }
 
 export async function POST(request, { params }) {
-    const { leagueId } = params;
+    const { leagueId } = await params;
     const body = await request.json();
     const { managerId, playerId, rosterSlot } = body;
 
@@ -125,7 +125,7 @@ export async function POST(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
-    const { leagueId } = params;
+    const { leagueId } = await params;
     const body = await request.json();
     const { assignmentId } = body;
 

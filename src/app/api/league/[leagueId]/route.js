@@ -1,14 +1,9 @@
-import { createClient } from '@supabase/supabase-js';
+import supabase from '@/lib/supabaseServer';
 import { NextResponse } from 'next/server';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
 
 export async function GET(request, { params }) {
   try {
-    const { leagueId } = params;
+    const { leagueId } = await params;
 
     if (!leagueId) {
       return NextResponse.json(
@@ -128,7 +123,7 @@ export async function GET(request, { params }) {
 // DELETE: Delete entire league (Commissioner only)
 export async function DELETE(request, { params }) {
   try {
-    const { leagueId } = params;
+    const { leagueId } = await params;
 
     if (!leagueId) {
       return NextResponse.json(
@@ -151,19 +146,6 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    // Remove test_league linkage first to avoid FK constraint conflicts.
-    const { error: testLeagueDeleteError } = await supabase
-      .from('test_league')
-      .delete()
-      .eq('league_id', leagueId);
-
-    if (testLeagueDeleteError) {
-      console.error('Error deleting test_league row:', testLeagueDeleteError);
-      return NextResponse.json(
-        { success: false, error: 'Failed to delete test_league relation', details: testLeagueDeleteError.message },
-        { status: 500 }
-      );
-    }
 
     // Delete league_settings will cascade delete all related data
     const { error: deleteError } = await supabase
