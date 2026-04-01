@@ -793,7 +793,7 @@ export default function PlayersPage() {
 
   const getTeamAbbr = (team) => {
     switch (team) {
-      case '統一獅': return 'UL';
+      case '統一7-ELEVEn獅': return 'UL';
       case '富邦悍將': return 'FG';
       case '樂天桃猿': return 'RM';
       case '中信兄弟': return 'B';
@@ -805,7 +805,7 @@ export default function PlayersPage() {
 
   const getTeamColor = (team) => {
     switch (team) {
-      case '統一獅':
+      case '統一7-ELEVEn獅':
         return 'text-orange-400';
       case '富邦悍將':
         return 'text-blue-400';
@@ -2023,7 +2023,7 @@ export default function PlayersPage() {
                 className="flex-shrink-0 px-2 py-1.5 bg-slate-800/60 border border-purple-500/30 rounded-md text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               >
                 <option value="all">All Teams</option>
-                <option value="統一獅">統一獅</option>
+                <option value="統一7-ELEVEn獅">統一7-ELEVEn獅</option>
                 <option value="富邦悍將">富邦悍將</option>
                 <option value="樂天桃猿">樂天桃猿</option>
                 <option value="中信兄弟">中信兄弟</option>
