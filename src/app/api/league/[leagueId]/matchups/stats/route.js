@@ -79,9 +79,9 @@ export async function GET(request, { params }) {
         }
 
         const enrichedMatchups = matchups.map(match => {
-            // 使用正確的欄位名稱：manager_id_a 和 manager_id_b
-            const manager1Id = match.manager_id_a || match.manager1_id || match.manager_id_1 || match.team_a_id;
-            const manager2Id = match.manager_id_b || match.manager2_id || match.manager_id_2 || match.team_b_id;
+            // 使用正確的資料庫欄位名稱：manager1_id 和 manager2_id
+            const manager1Id = match.manager1_id;
+            const manager2Id = match.manager2_id;
 
             const stats1 = formatStats(statsMap[manager1Id] || generateEmptyStats(settings.batter_stat_categories, settings.pitcher_stat_categories));
             const stats2 = formatStats(statsMap[manager2Id] || generateEmptyStats(settings.batter_stat_categories, settings.pitcher_stat_categories));

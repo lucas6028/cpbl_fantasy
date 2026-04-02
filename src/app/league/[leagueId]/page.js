@@ -1032,8 +1032,8 @@ export default function LeaguePage() {
             ) : (
               <div className="space-y-6">
                 {matchups.map((matchup) => {
-                  const managerA = getManagerDetails(matchup.manager_id_a);
-                  const managerB = getManagerDetails(matchup.manager_id_b);
+                  const managerA = getManagerDetails(matchup.manager1_id);
+                  const managerB = getManagerDetails(matchup.manager2_id);
                   const now = new Date();
                   const weekStart = new Date(weekDetails?.week_start);
                   const weekEnd = new Date(weekDetails?.week_end);
@@ -1042,8 +1042,10 @@ export default function LeaguePage() {
                   const isFinal = now > weekEnd;
 
                   // Get actual scores from database
-                  const scoreA = matchup.score_a !== null ? parseFloat(matchup.score_a) : 0;
-                  const scoreB = matchup.score_b !== null ? parseFloat(matchup.score_b) : 0;
+                  const valA = matchup.team1_score;
+                  const valB = matchup.team2_score;
+                  const scoreA = (valA !== null && valA !== undefined) ? parseFloat(valA) : 0;
+                  const scoreB = (valB !== null && valB !== undefined) ? parseFloat(valB) : 0;
 
                   const teamAStandings = standings.find(s => s.manager_id === managerA?.manager_id);
                   const teamBStandings = standings.find(s => s.manager_id === managerB?.manager_id);

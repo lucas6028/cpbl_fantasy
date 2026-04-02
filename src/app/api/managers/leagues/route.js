@@ -103,14 +103,14 @@ export async function POST(request) {
         const { data: userMatchups } = await supabase
           .from('league_matchups')
           .select(`
-                score_a,
-                score_b,
-                manager_id_a,
-                manager_id_b,
+                team1_score,
+                team2_score,
+                manager1_id,
+                manager2_id,
                 week_number
             `)
           .eq('league_id', leagueId)
-          .or(`manager_id_a.eq.${user_id},manager_id_b.eq.${user_id}`)
+          .or(`manager1_id.eq.${user_id},manager2_id.eq.${user_id}`)
           .order('week_number', { ascending: false }); // Latest first
 
         let targetMatchupData = null;
@@ -146,8 +146,8 @@ export async function POST(request) {
 
         if (targetMatchupData) {
           // Identify opponent
-          const isManagerA = targetMatchupData.manager_id_a === user_id;
-          const opponentId = isManagerA ? targetMatchupData.manager_id_b : targetMatchupData.manager_id_a;
+          const isManagerA = targetMatchupData.manager1_id === user_id;
+          const opponentId = isManagerA ? targetMatchupData.manager2_id : targetMatchupData.manager1_id;
 
           // Get opponent nickname and stats
           let opponentName = 'Unknown';
@@ -181,8 +181,8 @@ export async function POST(request) {
           const isPastWeek = matchupWeekSchedule ? taiwanTime > new Date(new Date(matchupWeekSchedule.week_end).getTime() + (8 * 60 * 60 * 1000) + (24 * 60 * 60 * 1000 - 1)) : false;
 
           currentMatchup = {
-            myScore: isManagerA ? (targetMatchupData.score_a || 0) : (targetMatchupData.score_b || 0),
-            opponentScore: isManagerA ? (targetMatchupData.score_b || 0) : (targetMatchupData.score_a || 0),
+            myScore: isManagerA ? (targetMatchupData.team1_score || 0) : (targetMatchupData.team2_score || 0),
+            opponentScore: isManagerA ? (targetMatchupData.team2_score || 0) : (targetMatchupData.team1_score || 0),
             opponentName: opponentName,
             opponentStats: opponentStats,
             week: targetMatchupData.week_number,

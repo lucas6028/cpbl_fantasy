@@ -342,9 +342,9 @@ export default function AdminMatchupsPage() {
                                         <div className="flex flex-col items-center px-2">
                                             <span className="text-purple-400 text-xs">vs</span>
                                             <div className="flex items-center gap-1 text-purple-100 font-bold text-sm">
-                                                <span>{match.score_a || 0}</span>
+                                                <span>{match.team1_score || 0}</span>
                                                 <span className="text-purple-400">-</span>
-                                                <span>{match.score_b || 0}</span>
+                                                <span>{match.team2_score || 0}</span>
                                             </div>
                                         </div>
                                         <div className="flex flex-col gap-0.5 truncate max-w-[100px] text-right">
@@ -380,9 +380,9 @@ export default function AdminMatchupsPage() {
 
                                 <div className="px-2 sm:px-4 text-center shrink-0">
                                     <div className="flex items-center gap-1.5 sm:gap-3">
-                                        <div className="text-2xl sm:text-3xl md:text-4xl font-black text-white">{activeMatchup.score_a || 0}</div>
+                                        <div className="text-2xl sm:text-3xl md:text-4xl font-black text-white">{activeMatchup.team1_score || 0}</div>
                                         <div className="text-base sm:text-xl md:text-2xl font-bold text-white/70">VS</div>
-                                        <div className="text-2xl sm:text-3xl md:text-4xl font-black text-white">{activeMatchup.score_b || 0}</div>
+                                        <div className="text-2xl sm:text-3xl md:text-4xl font-black text-white">{activeMatchup.team2_score || 0}</div>
                                     </div>
                                 </div>
 
