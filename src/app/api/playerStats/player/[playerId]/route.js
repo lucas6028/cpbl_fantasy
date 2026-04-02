@@ -97,6 +97,13 @@ export async function GET(request, { params }) {
           ...row,
           fp: calculateFantasyPoints(row, scopedCategories, scopedWeights),
         };
+      } else if (row && !isPitcher) {
+        const obp = Number(row.obp);
+        const slg = Number(row.slg);
+        statsByWindow[tw] = {
+          ...row,
+          ops: Number.isFinite(obp) && Number.isFinite(slg) ? Number((obp + slg).toFixed(3)) : row.ops ?? null,
+        };
       } else {
         statsByWindow[tw] = row;
       }

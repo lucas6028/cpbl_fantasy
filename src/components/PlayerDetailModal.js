@@ -258,9 +258,13 @@ export default function PlayerDetailModal({
     };
 
     const displayBatterCats = (() => {
-        const forced = 'At Bats (AB)';
-        const hasForced = batterStatCategories.some(c => parseStatKey(c) === 'AB');
-        return hasForced ? batterStatCategories : [forced, ...batterStatCategories];
+        const forced = ['At Bats (AB)', 'On-base Plus Slugging (OPS)'];
+        const merged = [...forced, ...batterStatCategories];
+        const uniqueByKey = new Map();
+        merged.forEach(cat => {
+            uniqueByKey.set(parseStatKey(cat), cat);
+        });
+        return Array.from(uniqueByKey.values());
     })();
 
     const displayPitcherCats = (() => {
