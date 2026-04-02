@@ -123,7 +123,7 @@ export default function LeagueSettingsPage() {
         // 3. Merge Data
         // Map to flatten structure for compatibility with existing JSX
         // Use 'members' state to find nickname by manager_id
-        const formattedPicks = picks.map(p => {
+        const formattedPicks = picksWithPlayers.map(p => {
           const member = members.find(m => String(m.manager_id) === String(p.manager_id));
           // Merge position list into player object
           const playerWithPos = p.player ? {
