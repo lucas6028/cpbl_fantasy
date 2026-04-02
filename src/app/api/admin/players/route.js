@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import supabase from '@/lib/supabase'
+import supabaseAdmin from '@/lib/supabaseAdmin'
 
 // 验证管理员权限
 async function checkAdmin(userId) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('admin')
     .select('manager_id')
     .eq('manager_id', userId)
@@ -31,7 +31,7 @@ export async function GET(req) {
     const available = searchParams.get('available')
     const sortBy = searchParams.get('sortBy') || 'add_date'
 
-    let query = supabase
+    let query = supabaseAdmin
       .from('player_list')
       .select('*')
       .limit(500) // 限制最大返回 500 條結果
@@ -103,7 +103,7 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Player name and type are required' }, { status: 400 })
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('player_list')
       .insert([
         {
@@ -127,7 +127,7 @@ export async function POST(req) {
     // Auto-create WAIVER ownership records in all active leagues
     try {
       // Get all leagues that are NOT pre-draft or drafting now
-      const { data: activeLeagues } = await supabase
+        const { data: activeLeagues } = await supabaseAdmin
         .from('league_statuses')
         .select('league_id, status')
         .not('status', 'in', '("pre-draft","drafting now")')
@@ -135,7 +135,7 @@ export async function POST(req) {
       if (activeLeagues && activeLeagues.length > 0) {
         // Fetch waiver_players_unfreeze_time for each active league
         const leagueIds = activeLeagues.map(l => l.league_id)
-        const { data: leagueSettings } = await supabase
+          const { data: leagueSettings } = await supabaseAdmin
           .from('league_settings')
           .select('league_id, waiver_players_unfreeze_time')
           .in('league_id', leagueIds)
@@ -170,7 +170,7 @@ export async function POST(req) {
         })
 
         if (ownershipRecords.length > 0) {
-          const { error: ownershipError } = await supabase
+          const { error: ownershipError } = await supabaseAdmin
             .from('league_player_ownership')
             .upsert(ownershipRecords, { onConflict: 'league_id,player_id', ignoreDuplicates: true })
 
@@ -215,7 +215,7 @@ export async function PUT(req) {
     if (identity !== undefined) updateData.identity = identity
     if (available !== undefined) updateData.available = available
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('player_list')
       .update(updateData)
       .eq('player_id', player_id)
@@ -248,7 +248,7 @@ export async function DELETE(req) {
       return NextResponse.json({ error: 'Player ID is required' }, { status: 400 })
     }
 
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('player_list')
       .delete()
       .eq('player_id', playerId)

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import supabase from '@/lib/supabase'
+import supabase from '@/lib/supabaseAdmin'
 
 /**
  * 中文 action → enum_transaction_type 對應表
