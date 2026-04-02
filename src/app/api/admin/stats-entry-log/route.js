@@ -52,9 +52,26 @@ export async function POST(req) {
       return NextResponse.json({ error: 'game_uuid and team are required' }, { status: 400 })
     }
 
+    // Some deployments do not have a unique constraint on (game_uuid, team),
+    // so avoid `upsert(..., { onConflict })` and handle idempotency manually.
+    const { data: existing, error: existingError } = await supabase
+      .from('stats_entry_log_2026')
+      .select('*')
+      .eq('game_uuid', game_uuid)
+      .eq('team', team)
+      .limit(1)
+
+    if (existingError) {
+      return NextResponse.json({ error: existingError.message }, { status: 500 })
+    }
+
+    if (existing && existing.length > 0) {
+      return NextResponse.json({ success: true, data: existing })
+    }
+
     const { data, error } = await supabase
       .from('stats_entry_log_2026')
-      .upsert({ game_uuid, team }, { onConflict: 'game_uuid,team' })
+      .insert({ game_uuid, team })
       .select()
 
     if (error) {

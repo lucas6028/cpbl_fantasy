@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import supabase from '@/lib/supabase'
+import supabaseAdmin from '@/lib/supabaseAdmin'
 
 export async function GET(request) {
   try {
@@ -48,7 +49,9 @@ export async function GET(request) {
 
     const teamByPlayerId = {}
     if (playerIds.length > 0) {
-      const { data: players, error: playersError } = await supabase
+      // `player_list` is not readable through the anon client in this project,
+      // so use the service-role client for the lookup that powers the display.
+      const { data: players, error: playersError } = await supabaseAdmin
         .from('player_list')
         .select('player_id, team')
         .in('player_id', playerIds)
