@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import supabase from '@/lib/supabase';
+import supabaseAdmin from '@/lib/supabaseAdmin';
 
 // GET: Fetch starting lineups for a date
 export async function GET(request) {
@@ -11,16 +12,35 @@ export async function GET(request) {
     }
 
     try {
-        const { data, error } = await supabase
+        const { data: lineups, error } = await supabaseAdmin
             .from('starting_lineup')
-            .select('id, date, team, batting_no, player_id, player:player_id(player_id, name, team)')
+            .select('id, date, team, batting_no, player_id')
             .eq('date', date)
             .order('team')
             .order('batting_no', { ascending: true });
 
         if (error) throw error;
 
-        return NextResponse.json({ success: true, data: data || [] });
+        const playerIds = [...new Set((lineups || []).map(l => l.player_id).filter(Boolean))];
+        let playerMap = new Map();
+
+        if (playerIds.length > 0) {
+            const { data: players, error: playerError } = await supabaseAdmin
+                .from('player_list')
+                .select('player_id, name, team')
+                .in('player_id', playerIds);
+
+            if (playerError) throw playerError;
+
+            playerMap = new Map((players || []).map(p => [String(p.player_id), p]));
+        }
+
+        const data = (lineups || []).map(l => ({
+            ...l,
+            player: playerMap.get(String(l.player_id)) || null
+        }));
+
+        return NextResponse.json({ success: true, data });
     } catch (err) {
         console.error('Starting Lineup GET Error:', err);
         return NextResponse.json({ success: false, error: err.message }, { status: 500 });
