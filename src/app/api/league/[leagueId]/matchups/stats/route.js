@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import supabase from '@/lib/supabaseServer';
+import { syncLeagueMatchupScores } from '@/lib/matchupScoring';
 
 export async function GET(request, { params }) {
     const { leagueId } = await params;
@@ -25,6 +26,12 @@ export async function GET(request, { params }) {
         if (settingsError) {
             console.error('Error fetching league settings:', settingsError);
             return NextResponse.json({ error: 'Failed to fetch league settings' }, { status: 500 });
+        }
+
+        try {
+            await syncLeagueMatchupScores(leagueId, Number(week));
+        } catch (syncError) {
+            console.error('Error syncing matchup scores:', syncError);
         }
 
         // 1.5 Fetch Weights if Fantasy Points mode

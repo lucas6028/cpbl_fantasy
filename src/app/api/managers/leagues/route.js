@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 
 import supabase from '@/lib/supabaseServer';
+import { syncLeagueMatchupScores } from '@/lib/matchupScoring';
 
 export async function POST(request) {
   try {
@@ -54,7 +55,7 @@ export async function POST(request) {
 
       const activeStatuses = ['in season', 'post-draft & pre-season', 'playoffs', 'finished'];
 
-      if (activeStatuses.includes(status)) {
+        if (activeStatuses.includes(status)) {
         // Fetch User's Standing
         const { data: standing } = await supabase
           .from('v_league_standings')
@@ -79,7 +80,7 @@ export async function POST(request) {
 
         // Logic to find current week (similar to League Page)
         let currentWeekNumber = 1;
-        if (schedule && schedule.length > 0) {
+            if (schedule && schedule.length > 0) {
           const getDateInTaiwan = (dateStr) => new Date(new Date(dateStr).getTime() + (8 * 60 * 60 * 1000));
           const firstWeekStart = getDateInTaiwan(schedule[0].week_start);
           const lastWeekEnd = getDateInTaiwan(schedule[schedule.length - 1].week_end);
@@ -95,8 +96,14 @@ export async function POST(request) {
               end.setUTCHours(23, 59, 59, 999);
               return taiwanTime >= start && taiwanTime <= end;
             });
-            if (current) currentWeekNumber = current.week_number;
-          }
+                if (current) currentWeekNumber = current.week_number;
+            }
+        }
+
+        try {
+          await syncLeagueMatchupScores(leagueId, currentWeekNumber);
+        } catch (syncError) {
+          console.error(`Error syncing matchup scores for league ${leagueId}, week ${currentWeekNumber}:`, syncError);
         }
 
         // Fetch ALL matchups for this user to decide which one to show
