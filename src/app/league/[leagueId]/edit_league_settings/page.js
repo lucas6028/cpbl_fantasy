@@ -812,9 +812,9 @@ const EditLeagueSettingsPage = ({ params }) => {
       }
     }
 
-    // Check if Live Draft Time is at least 2 days before Start Scoring On (Taiwan time)
+    // Check if Live Draft Time is valid (Taiwan time)
     if (liveDraftTime && startScoringOn && settings.general['Draft Type'] === 'Live Draft') {
-      // console.log('\n--- Checking Live Draft Time (must be at least 2 days before Start Scoring On) ---');
+      // console.log('\n--- Checking Live Draft Time ---');
 
       // Parse Live Draft Time (local datetime-local input, treat as Taiwan time)
       const draftDateTime = new Date(liveDraftTime);
@@ -865,11 +865,11 @@ const EditLeagueSettingsPage = ({ params }) => {
                 // console.log('Difference in milliseconds:', draftDateTime.getTime() - latestDraftDate.getTime());
                 // console.log('Difference in hours:', (draftDateTime.getTime() - latestDraftDate.getTime()) / (1000 * 60 * 60));
 
-                if (draftDateTime > latestDraftDate) {
-                  errors.draftTimeError = 'Live Draft Time must be at least 2 days before season start';
+                if (false && draftDateTime > latestDraftDate) {
+                  // 2-day season-start restriction removed
                   // console.log('❌ FAIL: Live Draft Time is TOO LATE');
                 } else {
-                  // console.log('✅ PASS: Live Draft Time is at least 2 days before season start');
+                  // console.log('✅ PASS: Live Draft Time is valid');
                 }
               } else {
                 errors.draftTimeError = 'Start Scoring On date is invalid';

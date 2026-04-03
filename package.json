@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "sync:players": "node scripts/fetch_players_from_api.js"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
