@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import supabase from '@/lib/supabase';
+import supabaseAdmin from '@/lib/supabaseAdmin';
 
 // GET: Fetch starting pitchers for a date
 export async function GET(request) {
@@ -31,14 +32,50 @@ export async function POST(request) {
     try {
         const body = await request.json();
         const { date, pitchers } = body;
-        // pitchers = [{ team: '...', player_id: '...' }, ...]
+        // pitchers = [{ team: '...', player_id: '...', name?: '...' }, ...]
 
         if (!date || !pitchers || !Array.isArray(pitchers)) {
             return NextResponse.json({ success: false, error: 'Missing date or pitchers' }, { status: 400 });
         }
 
-        // Filter out empty player IDs
-        const validPitchers = pitchers.filter(p => p.player_id && p.team);
+        const normalizedPitchers = pitchers
+            .filter(p => p && p.team && (p.player_id || p.name))
+            .map(p => ({
+                team: p.team,
+                player_id: p.player_id || null,
+                name: (p.name || '').trim()
+            }));
+
+        if (normalizedPitchers.length === 0) {
+            return NextResponse.json({ success: true, inserted: 0 });
+        }
+
+        const missingNames = normalizedPitchers.filter(p => !p.name && p.player_id);
+        if (missingNames.length > 0) {
+            const playerIds = missingNames.map(p => p.player_id).filter(Boolean);
+            const { data: players, error: playerError } = await supabaseAdmin
+                .from('player_list')
+                .select('player_id, name')
+                .in('player_id', playerIds);
+
+            if (playerError) throw playerError;
+
+            const nameByPlayerId = new Map((players || []).map(p => [String(p.player_id), p.name]));
+            normalizedPitchers.forEach(p => {
+                if (!p.name && p.player_id) {
+                    p.name = nameByPlayerId.get(String(p.player_id)) || '';
+                }
+            });
+        }
+
+        const validPitchers = normalizedPitchers.filter(p => p.player_id && p.team && p.name);
+
+        if (validPitchers.length !== normalizedPitchers.length) {
+            return NextResponse.json(
+                { success: false, error: 'Each starting pitcher must include a valid team, player_id, and name' },
+                { status: 400 }
+            );
+        }
 
         // Get unique teams from the input to delete their existing entries
         const teams = [...new Set(validPitchers.map(p => p.team))];
@@ -58,7 +95,8 @@ export async function POST(request) {
             const rows = validPitchers.map(p => ({
                 date,
                 team: p.team,
-                player_id: p.player_id
+                player_id: p.player_id,
+                name: p.name
             }));
 
             const { error: insertError } = await supabase

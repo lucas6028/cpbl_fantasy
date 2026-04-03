@@ -258,7 +258,7 @@ export default function StartingLineupPage() {
                     if (!rawName) return null
                     const resolved = resolvePlayerByTeamAndName(t, rawName)
                     if (resolved.status !== 'ok') return { team: t, name: rawName, invalid: true }
-                    return { team: t, player_id: resolved.player.player_id }
+                    return { team: t, name: rawName, player_id: resolved.player.player_id }
                 })
                 .filter(Boolean)
 
