@@ -750,22 +750,6 @@ export default function LeaguePage() {
       return;
     }
 
-    // Must be at least 2 days before start_scoring_on
-    if (leagueSettings?.start_scoring_on) {
-      const parts = leagueSettings.start_scoring_on.split('.');
-      if (parts.length === 3) {
-        const scoringDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-        scoringDate.setHours(0, 0, 0, 0);
-        const latestDraftDate = new Date(scoringDate);
-        latestDraftDate.setDate(latestDraftDate.getDate() - 2);
-        latestDraftDate.setHours(23, 59, 59, 999);
-        if (draftDateTime > latestDraftDate) {
-          setDraftResetError('Draft time must be at least 2 days before season start');
-          return;
-        }
-      }
-    }
-
     setDraftResetSaving(true);
     try {
       const res = await fetch(`/api/league/${leagueId}/draft-reset`, {
@@ -1812,7 +1796,7 @@ export default function LeaguePage() {
 
                   {leagueSettings?.start_scoring_on && (
                     <p className="text-xs text-slate-500">
-                      Must be at least tomorrow & 2 days before season start ({leagueSettings.start_scoring_on})
+                      Must be at least tomorrow ({leagueSettings.start_scoring_on})
                     </p>
                   )}
 

@@ -701,27 +701,6 @@ const CreateLeaguePage = () => {
 
         if (draftDateTime < today) {
           errors.draftTimeError = 'Live Draft Time must be at least today (00:00)';
-        } else if (!errors.draftTimeError) {
-          const parts = startScoringOn.split('.');
-          if (parts.length === 3) {
-            const year = parseInt(parts[0]);
-            const month = parseInt(parts[1]) - 1;
-            const day = parseInt(parts[2]);
-
-            if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
-              const scoringDate = new Date(year, month, day);
-              if (!isNaN(scoringDate.getTime())) {
-                scoringDate.setHours(0, 0, 0, 0);
-                const latestDraftDate = new Date(scoringDate);
-                latestDraftDate.setDate(latestDraftDate.getDate() - 2);
-                latestDraftDate.setHours(23, 59, 59, 999);
-
-                if (draftDateTime > latestDraftDate) {
-                  errors.draftTimeError = 'Live Draft Time must be at least 2 days before season start';
-                }
-              }
-            }
-          }
         }
       } else {
         errors.draftTimeError = 'Live Draft Time is invalid';
