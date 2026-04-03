@@ -12,15 +12,34 @@ export async function GET(request) {
     }
 
     try {
-        const { data, error } = await supabase
+        const { data: pitchers, error } = await supabaseAdmin
             .from('starting_pitcher')
-            .select('id, date, team, player_id, created_at, player:player_id(player_id, name, team)')
+            .select('id, date, team, player_id, created_at')
             .eq('date', date)
             .order('team');
 
         if (error) throw error;
 
-        return NextResponse.json({ success: true, data: data || [] });
+        const playerIds = [...new Set((pitchers || []).map(p => p.player_id).filter(Boolean))];
+        let playerMap = new Map();
+
+        if (playerIds.length > 0) {
+            const { data: players, error: playerError } = await supabaseAdmin
+                .from('player_list')
+                .select('player_id, name, team')
+                .in('player_id', playerIds);
+
+            if (playerError) throw playerError;
+
+            playerMap = new Map((players || []).map(p => [String(p.player_id), p]));
+        }
+
+        const data = (pitchers || []).map(p => ({
+            ...p,
+            player: playerMap.get(String(p.player_id)) || null
+        }));
+
+        return NextResponse.json({ success: true, data });
     } catch (err) {
         console.error('Starting Pitcher GET Error:', err);
         return NextResponse.json({ success: false, error: err.message }, { status: 500 });
